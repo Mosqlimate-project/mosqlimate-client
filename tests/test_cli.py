@@ -2,7 +2,7 @@
 
 import pytest
 
-from [[ python_package_import_name ]] import cli
+from mosqlient import cli
 
 
 def test_main():

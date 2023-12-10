@@ -1,7 +1,7 @@
 """
-[[ project_name ]] package.
+Mosqlimate client package.
 
-[[ project_description ]]
+client library for the Mosqlimate project data platform.
 """
 
 from typing import List

@@ -22,7 +22,7 @@ def rmdir(path):
 
 
 def clean_up_providers():
-    provider = "[[ repository_provider ]]"
+    provider = "github.com"
     if provider == "github.com":
         rm(".gitlab-ci.yml")
     elif provider == "gitlab.com":
