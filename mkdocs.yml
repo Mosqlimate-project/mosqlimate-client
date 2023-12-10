@@ -1,6 +1,6 @@
 site_name: "Mosqlimate client"
 site_description: "client library for the Mosqlimate project data platform."
-# site_url: "https://Mosqlimate-project.[[ repository_provider.rsplit('.', 1)[0] ]].io/mosqlimate-client"
+site_url: "https://Mosqlimate-project.github.io/mosqlimate-client"
 repo_url: "https://github.com/Mosqlimate-project/mosqlimate-client"
 repo_name: "Mosqlimate-project/mosqlimate-client"
 
@@ -46,7 +46,5 @@ plugins:
 - coverage:
     html_report_dir: build/coverage
 - mkdocstrings:
-    watch:
-    - src/mosqlient
 - macros:
     module_name: docs/macros
