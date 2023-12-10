@@ -277,7 +277,7 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
     ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
 
 
-[% if repository_provider == "github.com" -%]
+
 @duty
 def docs_deploy(ctx):
     """
@@ -289,7 +289,6 @@ def docs_deploy(ctx):
     ctx.run("mkdocs gh-deploy", title="Deploying documentation")
 
 
-[% endif -%]
 @duty
 def format(ctx):
     """
@@ -325,9 +324,8 @@ def release(ctx, version):
         ctx.run("git push --tags", title="Pushing tags", pty=False)
         ctx.run("poetry build", title="Building dist/wheel", pty=PTY)
         ctx.run("poetry publish", title="Publishing version", pty=PTY)
-        [%- if repository_provider == "github.com" %]
         docs_deploy.run()  # type: ignore
-        [%- endif %]
+
 
 
 @duty(silent=True)
