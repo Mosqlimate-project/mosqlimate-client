@@ -1,0 +1,8 @@
+name: mosqlient
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python >= 3.10,<3.13
+  - pip
+  - poetry >= 1.7.1
