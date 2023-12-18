@@ -1,0 +1,1 @@
+::: src.mosqlient.cli
