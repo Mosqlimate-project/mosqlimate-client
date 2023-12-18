@@ -20,4 +20,4 @@ def test_show_help(capsys):
     with pytest.raises(SystemExit):
         cli.main(["-h"])
     captured = capsys.readouterr()
-    assert "[[ python_package_command_line_name ]]" in captured.out
+    assert "mosqbench" in captured.out
