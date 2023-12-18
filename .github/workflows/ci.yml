@@ -38,7 +38,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.10
+        python-version: "3.10"
 
     - name: Set up Poetry
       run: pip install poetry
@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.10.0]
+        python-version: ["3.10.0"]
 
     runs-on: ${{ matrix.os }}
 
