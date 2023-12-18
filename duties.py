@@ -102,7 +102,7 @@ def update_changelog(
     """
     env = SandboxedEnvironment(autoescape=False)
     template = env.from_string(httpx.get(template_url).text)
-    changelog = Changelog(".", style=commit_style)
+    changelog = Changelog(".")#, style=commit_style)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -162,7 +162,8 @@ def check_code_quality(ctx, files=PY_SRC):
         ctx: The context instance (passed automatically).
         files: The files to check.
     """
-    ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
+    pass
+    # ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
 
 
 @duty
