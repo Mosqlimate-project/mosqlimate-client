@@ -1,0 +1,9 @@
+class Author:
+    ...
+
+class Model:
+    ...
+
+class Prediction:
+    ...
+
