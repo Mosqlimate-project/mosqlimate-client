@@ -2,6 +2,7 @@ import asyncio
 import requests
 from urllib.parse import urljoin
 from typing import Literal, AnyStr
+from itertools import chain
 
 import aiohttp
 
@@ -78,7 +79,7 @@ async def get_all(
         tasks = []
         for page in range(2, total_pages + 1):
             params["page"] = page
-            task = asyncio.create_task(aget(session, url, params)['items'])
+            task = asyncio.create_task(aget(session, url, params))
             tasks.append(task)
         results = await asyncio.gather(*tasks)
-    return results
+    return list(chain(result['items'] for result in results))

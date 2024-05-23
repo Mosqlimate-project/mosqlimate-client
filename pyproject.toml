@@ -12,7 +12,7 @@ readme = "README.md"
 repository = "https://github.com/Mosqlimate-project/mosqlimate-client"
 homepage = "https://github.com/Mosqlimate-project/mosqlimate-client"
 keywords = ["data science", "epidemiology", "forecasting"]
-packages = [ { include = "mosqlient", from = "mosqlient" } ]
+packages = [ { include = "mosqlient" } ]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"

@@ -1,9 +1,1 @@
-class Author:
-    ...
-
-class Model:
-    ...
-
-class Prediction:
-    ...
-
+from .models import Model
