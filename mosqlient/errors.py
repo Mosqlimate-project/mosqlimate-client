@@ -19,3 +19,13 @@ class FieldTypeError(ValidationErrorBase):
 
     def __str__(self):
         return f"{self.field}: {self.args[0]}"
+
+
+class ClientError(Exception):
+    def __init__(self, message=None):
+        super().__init__(message or "Client error")
+
+
+class ModelPostError(Exception):
+    def __init__(self, message=None):
+        super().__init__(message or "registry.Model POST request error")

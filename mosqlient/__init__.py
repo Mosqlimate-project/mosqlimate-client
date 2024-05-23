@@ -6,6 +6,8 @@ client library for the Mosqlimate project data platform.
 from importlib import metadata as importlib_metadata
 from typing import List
 
+from mosqlient.client import PlatformClient as Client  # noqa
+
 
 def get_version() -> str:
     try:

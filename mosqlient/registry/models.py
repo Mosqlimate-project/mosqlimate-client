@@ -1,7 +1,15 @@
 import asyncio
-from typing import Any
+import requests
+import nest_asyncio
+from urllib.parse import urlparse
+from typing import Any, Literal, Optional
 
+from mosqlient import Client
+from mosqlient.config import API_BASE_URL
 from mosqlient.requests import get_all
+from mosqlient.errors import ClientError, ModelPostError
+
+nest_asyncio.apply()
 
 
 def _params(**kwargs) -> dict[str, Any]:
@@ -9,17 +17,17 @@ def _params(**kwargs) -> dict[str, Any]:
         if v is None:
             del k
 
-        if isinstance(v, (bool, int, float)):
-            kwargs[k] = str(v)
-        else:
-            raise TypeError(f"Unkown value type for field {k}")
+        if isinstance(v, (bool, int, float, str)):
+            v = str(v)
 
     return kwargs
 
 
 class Model:
-    def __init__(self):
-        ...
+    client: Client
+
+    def __init__(self, client: Optional[Client] = None):
+        self.client = client
 
     @classmethod
     def get(cls, **kwargs):
@@ -28,11 +36,58 @@ class Model:
 
         async def fetch_models():
             return await get_all("registry", "models", params)
+
+        if asyncio.get_event_loop().is_running():
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(fetch_models())
+            return loop.run_until_complete(future)
         return asyncio.run(fetch_models())
 
-    @classmethod
-    def post(cls):
-        print("post")
+    def post(
+        self,
+        name: str,
+        description: str,
+        repository: str,
+        implementation_language: str,
+        disease: Literal["dengue", "chikungunya", "zika"],
+        temporal: bool,
+        spatial: bool,
+        categorical: bool,
+        adm_level: Literal[0, 1, 2, 3],
+        time_resolution: Literal["day", "week", "month", "year"],
+    ):
+        if self.client is None:
+            raise ClientError(
+                "A Client instance must be provided, please instantiate Model "
+                "passing your Mosqlimate's credentials. For more infor about "
+                "retrieving or inserting data from Mosqlimate, please see the "
+                "API Documentation"
+            )
+        params = {
+            "name": name,
+            "description": description,
+            "repository": repository,
+            "implementation_language": implementation_language,
+            "disease": disease,
+            "temporal": temporal,
+            "spatial": spatial,
+            "categorical": categorical,
+            "ADM_level": adm_level,
+            "time_resolution": time_resolution
+        }
+
+        params = _params(**params)
+        self._validate_fields(**params)
+        url = API_BASE_URL + "/".join(("registry", "models")) + "/"
+        headers = {"X-UID-Key": self.client.X_UID_KEY}
+        resp = requests.post(url, json=params, headers=headers, timeout=60)
+
+        if resp.status_code != 201:
+            raise ModelPostError(
+                f"POST request returned status code {resp.status_code}"
+            )
+
+        return resp
 
     @staticmethod
     def _validate_fields(**kwargs) -> None:
@@ -43,9 +98,10 @@ class ModelFieldValidator:
     FIELDS = {
         "id": (int, str),
         "name": str,
-        # "author_name": str,
-        # "author_username": str,
-        # "author_institution": str, move this to mosqlient.Client
+        "description": str,
+        "author_name": str,
+        "author_username": str,
+        "author_institution": str,
         "repository": str,
         "implementation_language": str,
         "disease": str,
@@ -56,8 +112,8 @@ class ModelFieldValidator:
         "time_resolution": str,
     }
     DISEASES = ["dengue", "zika", "chikungunya"]
-    ADM_LEVELS = [1, 2, 3, 4]
-    TIME_RESOLITIONS = ["day", "week", "month", "year"]
+    ADM_LEVELS = [0, 1, 2, 3]
+    TIME_RESOLUTIONS = ["day", "week", "month", "year"]
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -73,24 +129,38 @@ class ModelFieldValidator:
                 if v <= 0:
                     raise ValueError("Incorrect value for field 'id'")
 
+            if k == "description":
+                if not v:
+                    raise ValueError("A Model description must be provided")
+                if len(v) > 500:
+                    raise ValueError("Model description too long")
+
+            if k == "repository":
+                repo_url = urlparse(v)
+                if repo_url.netloc != "github.com":
+                    raise ValueError(
+                        "'repository' must be a valid GitHub repository"
+                    )
+
             if k == "disease":
                 if v == "chik":
                     v = "chikungunya"
+
                 if v not in self.DISEASES:
                     raise ValueError(
-                        f"Unkown 'disease'. Options: '{self.DISEASES}'"
+                        f"Unkown 'disease'. Options: {self.DISEASES}"
                     )
 
             if k == "ADM_level":
                 v = int(v)
                 if v not in self.ADM_LEVELS:
                     raise ValueError(
-                        f"Unkown 'ADM_level'. Options: '{self.ADM_LEVELS}'"
+                        f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}"
                     )
 
             if k == "time_resolution":
-                if v not in self.TIME_RESOLITIONS:
+                if v not in self.TIME_RESOLUTIONS:
                     raise ValueError(
-                        "Unkown 'time_resolution'. Options: "
-                        f"{self.TIME_RESOLITIONS}"
+                        "Unkown 'time_resolution'. "
+                        f"Options: {self.TIME_RESOLUTIONS}"
                     )
