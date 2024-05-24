@@ -13,7 +13,8 @@ from duty import duty
 from git_changelog.build import Changelog, Version
 from jinja2.sandbox import SandboxedEnvironment
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "duties.py", "docs/macros.py"))
+PY_SRC_PATHS = (Path(_)
+                for _ in ("mosqlient", "tests", "duties.py", "docs/macros.py"))
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
@@ -102,7 +103,7 @@ def update_changelog(
     """
     env = SandboxedEnvironment(autoescape=False)
     template = env.from_string(httpx.get(template_url).text)
-    changelog = Changelog(".")#, style=commit_style)
+    changelog = Changelog(".")  # , style=commit_style)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -110,12 +111,14 @@ def update_changelog(
             planned_tag = "0.1.0"
             last_version.tag = planned_tag
             last_version.url += planned_tag
-            last_version.compare_url = last_version.compare_url.replace("HEAD", planned_tag)
+            last_version.compare_url = last_version.compare_url.replace(
+                "HEAD", planned_tag)
 
     lines = read_changelog(inplace_file)
     last_released = latest(lines, re.compile(version_regex))
     if last_released:
-        changelog.versions_list = unreleased(changelog.versions_list, last_released)
+        changelog.versions_list = unreleased(
+            changelog.versions_list, last_released)
     rendered = template.render(changelog=changelog, inplace=True)
     lines[lines.index(marker)] = rendered
     write_changelog(inplace_file, lines)
@@ -200,10 +203,14 @@ def check_dependencies(ctx):
                 )
                 return 1
 
-            ctx.run(safety_not_available, title="Checking dependencies", nofail=True)
+            ctx.run(safety_not_available,
+                    title="Checking dependencies", nofail=True)
             return
     ctx.run(
-        f"poetry export -f requirements.txt --without-hashes | {safety} check --stdin --full-report",
+        (
+            "poetry export -f requirements.txt --without-hashes | "
+            f"{safety} check --stdin --full-report"
+        ),
         title="Checking dependencies",
         pty=PTY,
         nofail=nofail,
@@ -231,7 +238,11 @@ def check_types(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --config-file config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(
+        f"mypy --config-file config/mypy.ini {PY_SRC}",
+        title="Type-checking",
+        pty=PTY
+    )
 
 
 @duty(silent=True)
@@ -275,8 +286,11 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
         host: The host to serve the docs from.
         port: The port to serve the docs on.
     """
-    ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
-
+    ctx.run(
+        f"mkdocs serve -a {host}:{port}",
+        title="Serving documentation",
+        capture=False
+    )
 
 
 @duty
@@ -299,7 +313,10 @@ def format(ctx):
         ctx: The context instance (passed automatically).
     """
     ctx.run(
-        f"autoflake -ir --exclude tests/fixtures --remove-all-unused-imports {PY_SRC}",
+        (
+            "autoflake -ir --exclude tests/fixtures "
+            f"--remove-all-unused-imports {PY_SRC}"
+        ),
         title="Removing unused imports",
         pty=PTY,
     )
@@ -316,9 +333,19 @@ def release(ctx, version):
         ctx: The context instance (passed automatically).
         version: The new version number to use.
     """
-    ctx.run(f"poetry version {version}", title=f"Bumping version in pyproject.toml to {version}", pty=PTY)
-    ctx.run("git add pyproject.toml CHANGELOG.md", title="Staging files", pty=PTY)
-    ctx.run(["git", "commit", "-m", f"chore: Prepare release {version}"], title="Committing changes", pty=PTY)
+    ctx.run(
+        f"poetry version {version}",
+        title=f"Bumping version in pyproject.toml to {version}", pty=PTY
+    )
+    ctx.run("git add pyproject.toml CHANGELOG.md",
+            title="Staging files", pty=PTY)
+    ctx.run(
+        [
+            "git", "commit", "-m", f"chore: Prepare release {version}"
+        ],
+        title="Committing changes",
+        pty=PTY
+    )
     ctx.run(f"git tag {version}", title="Tagging commit", pty=PTY)
     if not TESTING:
         ctx.run("git push", title="Pushing commits", pty=False)
@@ -326,7 +353,6 @@ def release(ctx, version):
         ctx.run("poetry build", title="Building dist/wheel", pty=PTY)
         ctx.run("poetry publish", title="Publishing version", pty=PTY)
         docs_deploy.run()  # type: ignore
-
 
 
 @duty(silent=True)

@@ -51,7 +51,7 @@
         "assets": [
           "pyproject.toml",
           "CHANGELOG.md",
-          "src/mosqlient/__init__.py"
+          "mosqlient/__init__.py"
         ],
         "message": "chore(release): ${nextRelease.version}"
       }
