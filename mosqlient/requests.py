@@ -1,17 +1,17 @@
 import asyncio
 import requests
 from urllib.parse import urljoin
-from typing import Literal, AnyStr
+from typing import AnyStr
 from itertools import chain
 
 import aiohttp
 
-from mosqlient.config import API_BASE_URL, APPS
+from mosqlient.config import API_BASE_URL, APPS, APPS_TYPE
 from mosqlient.utils import validate
 
 
 def get(
-    app: Literal[APPS],
+    app: APPS_TYPE,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     pagination: bool = True,
@@ -26,7 +26,10 @@ def get(
     if not endpoint:
         raise ValueError("endpoint is required")
 
-    base_url = urljoin(API_BASE_URL, "/".join((app, endpoint))) + "/?"
+    base_url = urljoin(
+        API_BASE_URL,
+        "/".join((str(app), str(endpoint)))
+    ) + "/?"
 
     return requests.get(base_url, params, timeout=timeout)
 
@@ -48,24 +51,28 @@ async def aget(
                 raise aiohttp.ClientConnectionError(
                     f"Response status: {res.status}. Reason: {res.reason}"
                 )
-            asyncio.sleep(10/(retries + 1))
+            await asyncio.sleep(10/(retries + 1))
             await aget(session, url, params, timeout, retries - 1)
     except aiohttp.ServerTimeoutError:
-        asyncio.sleep(8/(retries + 1))
+        await asyncio.sleep(8/(retries + 1))
         await aget(session, url, params, timeout, retries - 1)
+    raise aiohttp.ClientConnectionError("Invalid request")
 
 
 async def get_all(
-    app: Literal[APPS],
+    app: APPS_TYPE,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     timeout: int = 60,
     _max_per_page: int = 50
-) -> dict:
+) -> list[dict]:
     params["page"] = 1
     params["per_page"] = _max_per_page
 
-    url = urljoin(API_BASE_URL, "/".join((app, endpoint))) + "/?"
+    url = urljoin(
+        API_BASE_URL,
+        "/".join((str(app), str(endpoint)))
+    ) + "/?"
 
     async with aiohttp.ClientSession() as session:
         first_page = await aget(session, url, params)
@@ -75,7 +82,7 @@ async def get_all(
     if total_pages == 1:
         return first_page['items']
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = []
         for page in range(2, total_pages + 1):
             params["page"] = page

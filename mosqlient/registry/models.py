@@ -26,7 +26,7 @@ def _params(**kwargs) -> dict[str, Any]:
 
 
 class Model:
-    client: Client
+    client: Client | None
 
     def __init__(self, client: Optional[Client] = None):
         self.client = client
