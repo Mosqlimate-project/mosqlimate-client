@@ -12,10 +12,14 @@ readme = "README.md"
 repository = "https://github.com/Mosqlimate-project/mosqlimate-client"
 homepage = "https://github.com/Mosqlimate-project/mosqlimate-client"
 keywords = ["data science", "epidemiology", "forecasting"]
-packages = [ { include = "mosqlient", from = "src" } ]
+packages = [ { include = "mosqlient" } ]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
+aiohttp = "^3.9.5"
+nest-asyncio = "^1.6.0"
+requests = "^2.32.2"
+types-requests = "^2.32.0.20240523"
 
 [tool.poetry.dev-dependencies]
 # formatting, quality, tests
@@ -67,6 +71,7 @@ mosqbench = "mosqlimate.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 pip = "^23.3.2"
+mypy = "^1.10.0"
 
 [tool.black]
 line-length = 120

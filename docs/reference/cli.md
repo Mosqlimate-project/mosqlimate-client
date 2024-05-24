@@ -1,1 +1,1 @@
-::: src.mosqlient.cli
+::: mosqlient.cli
