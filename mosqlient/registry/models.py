@@ -13,14 +13,16 @@ nest_asyncio.apply()
 
 
 def _params(**kwargs) -> dict[str, Any]:
-    for k, v in kwargs.items():
+    params = {
+        k: str(v) for k, v in kwargs.items()
+        if isinstance(v, (bool, int, float, str))
+    }
+
+    for k, v in params.items():
         if v is None:
             del k
 
-        if isinstance(v, (bool, int, float, str)):
-            v = str(v)
-
-    return kwargs
+    return params
 
 
 class Model:
