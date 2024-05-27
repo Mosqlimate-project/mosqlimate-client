@@ -1,12 +1,12 @@
 import asyncio
 import requests
 from urllib.parse import urljoin
-from typing import AnyStr
+from typing import AnyStr, Literal
 from itertools import chain
 
 import aiohttp
 
-from mosqlient.config import API_BASE_URL, APPS, APPS_TYPE
+from mosqlient.config import API_DEV_URL, API_PROD_URL, APPS, APPS_TYPE
 from mosqlient.utils import validate
 
 
@@ -16,6 +16,7 @@ def get(
     params: dict[str, str | int | float],
     pagination: bool = True,
     timeout: int = 10,
+    _env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
     if app not in APPS:
         raise ValueError(f"unkown Mosqlimate app. Options: {APPS}")
@@ -26,12 +27,14 @@ def get(
     if not endpoint:
         raise ValueError("endpoint is required")
 
-    base_url = urljoin(
-        API_BASE_URL,
+    base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+
+    url = urljoin(
+        base_url,
         "/".join((str(app), str(endpoint)))
     ) + "/?"
 
-    return requests.get(base_url, params, timeout=timeout)
+    return requests.get(url, params, timeout=timeout)
 
 
 async def aget(
@@ -64,13 +67,16 @@ async def get_all(
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     timeout: int = 60,
-    _max_per_page: int = 50
+    _max_per_page: int = 50,
+    _env: Literal["dev", "prod"] = "prod"
 ) -> list[dict]:
     params["page"] = 1
     params["per_page"] = _max_per_page
 
+    base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+
     url = urljoin(
-        API_BASE_URL,
+        base_url,
         "/".join((str(app), str(endpoint)))
     ) + "/?"
 
