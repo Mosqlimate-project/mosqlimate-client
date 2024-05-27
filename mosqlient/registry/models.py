@@ -1,8 +1,9 @@
 import asyncio
+from urllib.parse import urlparse
+from typing import Literal, Optional, Any
+
 import requests
 import nest_asyncio
-from urllib.parse import urlparse
-from typing import Any, Literal, Optional
 
 from mosqlient import Client
 from mosqlient.config import API_PROD_URL, API_DEV_URL
@@ -13,14 +14,14 @@ nest_asyncio.apply()
 
 
 def _params(**kwargs) -> dict[str, Any]:
-    params = {
-        k: str(v) for k, v in kwargs.items()
-        if isinstance(v, (bool, int, float, str))
-    }
-
-    for k, v in params.items():
-        if v is None:
-            del k
+    params = {}
+    for k, v in kwargs.items():
+        if isinstance(v, (bool, int, float, str)):
+            params[k] = str(v)
+        elif v is None:
+            continue
+        else:
+            raise TypeError(f"Unknown type f{type(v)}")
 
     return params
 
@@ -79,8 +80,8 @@ class Model:
             "time_resolution": time_resolution
         }
 
-        params = _params(**params)
         self._validate_fields(**params)
+        params = _params(**params)
         base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
@@ -126,7 +127,8 @@ class ModelFieldValidator:
 
             if not isinstance(v, self.FIELDS[k]):
                 raise TypeError(
-                    f"Field '{k}' must have instance of '{self.FIELDS[k]}'"
+                    f"Field '{k}' must have instance of "
+                    f"{' or '.join(self.FIELDS[k])}"
                 )
 
             if k == "id":
