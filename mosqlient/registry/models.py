@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from typing import Any, Literal, Optional
 
 from mosqlient import Client
-from mosqlient.config import API_BASE_URL
+from mosqlient.config import API_PROD_URL, API_DEV_URL
 from mosqlient.requests import get_all
 from mosqlient.errors import ClientError, ModelPostError
 
@@ -57,6 +57,7 @@ class Model:
         categorical: bool,
         adm_level: Literal[0, 1, 2, 3],
         time_resolution: Literal["day", "week", "month", "year"],
+        _env: Literal["dev", "prod"] = "prod"
     ):
         if self.client is None:
             raise ClientError(
@@ -80,7 +81,8 @@ class Model:
 
         params = _params(**params)
         self._validate_fields(**params)
-        url = API_BASE_URL + "/".join(("registry", "models")) + "/"
+        base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+        url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.post(url, json=params, headers=headers, timeout=60)
 
