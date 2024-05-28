@@ -17,18 +17,10 @@ class PlatformClient:
         return f"{self.username}:{self.uid_key}"
 
     def _check_username(self):
-        author = get(
-            "registry",
-            "authors",
-            {"username": self.username},
-            pagination=False
-        )
+        author = get("registry", "authors", {"username": self.username}, pagination=False)
 
         if author.status_code != 200:
-            raise ValueError(
-                f"Could not get user '{self.username}' info. "
-                f"Status code: {author.status_code}"
-            )
+            raise ValueError(f"Could not get user '{self.username}' info. " f"Status code: {author.status_code}")
 
     def _check_uuid4(self):
         try:

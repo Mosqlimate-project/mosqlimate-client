@@ -1,14 +1,14 @@
 import asyncio
+from typing import Any, Literal, Optional
 from urllib.parse import urlparse
-from typing import Literal, Optional, Any
 
-import requests
 import nest_asyncio
+import requests
 
 from mosqlient import Client
-from mosqlient.config import API_PROD_URL, API_DEV_URL
-from mosqlient.requests import get_all
+from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
+from mosqlient.requests import get_all
 
 nest_asyncio.apply()
 
@@ -58,7 +58,7 @@ class Model:
         categorical: bool,
         adm_level: Literal[0, 1, 2, 3],
         time_resolution: Literal["day", "week", "month", "year"],
-        _env: Literal["dev", "prod"] = "prod"
+        _env: Literal["dev", "prod"] = "prod",
     ):
         if self.client is None:
             raise ClientError(
@@ -77,20 +77,19 @@ class Model:
             "spatial": spatial,
             "categorical": categorical,
             "ADM_level": adm_level,
-            "time_resolution": time_resolution
+            "time_resolution": time_resolution,
         }
 
         self._validate_fields(**params)
-        params = _params(**params)
+
         base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.post(url, json=params, headers=headers, timeout=60)
 
         if resp.status_code != 201:
-            raise ModelPostError(
-                f"POST request returned status code {resp.status_code}"
-            )
+            
+            raise ModelPostError(f"POST request returned status code {resp.status_code} \n {resp.reason}")
 
         return resp
 
@@ -126,10 +125,7 @@ class ModelFieldValidator:
                 continue
 
             if not isinstance(v, self.FIELDS[k]):
-                raise TypeError(
-                    f"Field '{k}' must have instance of "
-                    f"{' or '.join(self.FIELDS[k])}"
-                )
+                raise TypeError(f"Field '{k}' must have instance of " f"{' or '.join(self.FIELDS[k])}")
 
             if k == "id":
                 if v <= 0:
@@ -144,29 +140,20 @@ class ModelFieldValidator:
             if k == "repository":
                 repo_url = urlparse(v)
                 if repo_url.netloc != "github.com":
-                    raise ValueError(
-                        "'repository' must be a valid GitHub repository"
-                    )
+                    raise ValueError("'repository' must be a valid GitHub repository")
 
             if k == "disease":
                 if v == "chik":
                     v = "chikungunya"
 
                 if v not in self.DISEASES:
-                    raise ValueError(
-                        f"Unkown 'disease'. Options: {self.DISEASES}"
-                    )
+                    raise ValueError(f"Unkown 'disease'. Options: {self.DISEASES}")
 
             if k == "ADM_level":
                 v = int(v)
                 if v not in self.ADM_LEVELS:
-                    raise ValueError(
-                        f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}"
-                    )
+                    raise ValueError(f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}")
 
             if k == "time_resolution":
                 if v not in self.TIME_RESOLUTIONS:
-                    raise ValueError(
-                        "Unkown 'time_resolution'. "
-                        f"Options: {self.TIME_RESOLUTIONS}"
-                    )
+                    raise ValueError("Unkown 'time_resolution'. " f"Options: {self.TIME_RESOLUTIONS}")

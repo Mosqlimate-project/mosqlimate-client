@@ -12,5 +12,4 @@ import sys
 from mosqlient.cli import main
 
 if __name__ == "__main__":
-    pass
     sys.exit(main(sys.argv[1:]))

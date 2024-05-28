@@ -1,8 +1,7 @@
 from mosqlient.models import ModelBase
 
 
-class TemporalModel(ModelBase):
-    ...
+class TemporalModel(ModelBase): ...
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ Mosqlimate client package.
 
 client library for the Mosqlimate project data platform.
 """
+
 from importlib import metadata as importlib_metadata
 from typing import List
 
