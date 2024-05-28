@@ -1,1 +1,1 @@
-from .models import Model #  noqa
+from .api import Model  # noqafrom .api import Model

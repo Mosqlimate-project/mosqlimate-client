@@ -34,11 +34,13 @@ class Model:
 
     @classmethod
     def get(cls, **kwargs):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
         cls._validate_fields(**kwargs)
         params = _params(**kwargs)
 
         async def fetch_models():
-            return await get_all("registry", "models", params)
+            return await get_all("registry", "models", params, env=env)
 
         if asyncio.get_event_loop().is_running():
             loop = asyncio.get_event_loop()
@@ -58,8 +60,11 @@ class Model:
         categorical: bool,
         adm_level: Literal[0, 1, 2, 3],
         time_resolution: Literal["day", "week", "month", "year"],
-        _env: Literal["dev", "prod"] = "prod",
+        **kwargs,
     ):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+        print(env)
+
         if self.client is None:
             raise ClientError(
                 "A Client instance must be provided, please instantiate Model "
@@ -81,15 +86,68 @@ class Model:
         }
 
         self._validate_fields(**params)
-
-        base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+        params = _params(**params)
+        base_url = API_DEV_URL if env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.post(url, json=params, headers=headers, timeout=60)
 
         if resp.status_code != 201:
-            
-            raise ModelPostError(f"POST request returned status code {resp.status_code} \n {resp.reason}")
+
+            raise ModelPostError(
+                "POST request returned status code "
+                f"{resp.status_code} \n {resp.reason}"
+            )
+
+        return resp
+
+    def update(
+        self,
+        id: int,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+            repository: Optional[str] = None,
+        implementation_language: Optional[str] = None,
+        disease: Optional[Literal["dengue", "chikungunya", "zika"]] = None,
+        temporal: Optional[bool] = None,
+        spatial: Optional[bool] = None,
+        categorical: Optional[bool] = None,
+        adm_level: Optional[Literal[0, 1, 2, 3]] = None,
+        # fmt: off
+        time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
+        # fmt: on
+        **kwargs
+    ):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
+        if self.client is None:
+            raise ClientError(
+                "A Client instance must be provided, please instantiate Model "
+                "passing your Mosqlimate's credentials. For more infor about "
+                "retrieving or inserting data from Mosqlimate, please see the "
+                "API Documentation"
+            )
+
+        params = {
+            "name": name,
+            "description": description,
+            "repository": repository,
+            "implementation_language": implementation_language,
+            "disease": disease,
+            "temporal": temporal,
+            "spatial": spatial,
+            "categorical": categorical,
+            "ADM_level": adm_level,
+            "time_resolution": time_resolution
+        }
+
+        self._validate_fields(**params)
+        params = _params(**params)
+
+        base_url = API_DEV_URL if env == "dev" else API_PROD_URL
+        url = base_url + "/".join(("registry", "models")) + f"/{id}"
+        headers = {"X-UID-Key": self.client.X_UID_KEY}
+        resp = requests.put(url, json=params, headers=headers, timeout=60)
 
         return resp
 
@@ -114,6 +172,8 @@ class ModelFieldValidator:
         "spatial": bool,
         "categorical": bool,
         "time_resolution": str,
+        # --
+        "env": str
     }
     DISEASES = ["dengue", "zika", "chikungunya"]
     ADM_LEVELS = [0, 1, 2, 3]
@@ -124,8 +184,13 @@ class ModelFieldValidator:
             if v is None:
                 continue
 
+            if k == "env":
+                if v not in ["dev", "prod"]:
+                    raise ValueError(f"`env` must be 'dev' or 'prod'")
+
             if not isinstance(v, self.FIELDS[k]):
-                raise TypeError(f"Field '{k}' must have instance of " f"{' or '.join(self.FIELDS[k])}")
+                raise TypeError(f"Field '{k}' must have instance of " f"{
+                                ' or '.join(self.FIELDS[k])}")
 
             if k == "id":
                 if v <= 0:
@@ -140,20 +205,24 @@ class ModelFieldValidator:
             if k == "repository":
                 repo_url = urlparse(v)
                 if repo_url.netloc != "github.com":
-                    raise ValueError("'repository' must be a valid GitHub repository")
+                    raise ValueError(
+                        "'repository' must be a valid GitHub repository")
 
             if k == "disease":
                 if v == "chik":
                     v = "chikungunya"
 
                 if v not in self.DISEASES:
-                    raise ValueError(f"Unkown 'disease'. Options: {self.DISEASES}")
+                    raise ValueError(
+                        f"Unkown 'disease'. Options: {self.DISEASES}")
 
             if k == "ADM_level":
                 v = int(v)
                 if v not in self.ADM_LEVELS:
-                    raise ValueError(f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}")
+                    raise ValueError(f"Unkown 'ADM_level'. Options: {
+                                     self.ADM_LEVELS}")
 
             if k == "time_resolution":
                 if v not in self.TIME_RESOLUTIONS:
-                    raise ValueError("Unkown 'time_resolution'. " f"Options: {self.TIME_RESOLUTIONS}")
+                    raise ValueError("Unkown 'time_resolution'. " f"Options: {
+                                     self.TIME_RESOLUTIONS}")

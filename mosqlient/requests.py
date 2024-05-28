@@ -18,7 +18,7 @@ def get(
     params: dict[str, str | int | float],
     pagination: bool = True,
     timeout: int = 10,
-    _env: Literal["dev", "prod"] = "prod",
+    env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
     if app not in APPS:
         raise ValueError(f"unkown Mosqlimate app. Options: {APPS}")
@@ -29,7 +29,7 @@ def get(
     if not endpoint:
         raise ValueError("endpoint is required")
 
-    base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+    base_url = API_DEV_URL if env == "dev" else API_PROD_URL
 
     url = urljoin(base_url, "/".join((str(app), str(endpoint)))) + "/?"
 
@@ -46,7 +46,8 @@ async def aget(
             if res.status == 200:
                 return await res.json()
             if retries == 0:
-                raise aiohttp.ClientConnectionError(f"Response status: {res.status}. Reason: {res.reason}")
+                raise aiohttp.ClientConnectionError(
+                    f"Response status: {res.status}. Reason: {res.reason}")
             await asyncio.sleep(10 / (retries + 1))
             await aget(session, url, params, timeout, retries - 1)
     except aiohttp.ServerTimeoutError:
@@ -61,12 +62,12 @@ async def get_all(
     params: dict[str, str | int | float],
     timeout: int = 60,
     _max_per_page: int = 50,
-    _env: Literal["dev", "prod"] = "prod",
+    env: Literal["dev", "prod"] = "prod"
 ) -> list[dict]:
     params["page"] = 1
     params["per_page"] = _max_per_page
 
-    base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+    base_url = API_DEV_URL if env == "dev" else API_PROD_URL
 
     url = urljoin(base_url, "/".join((str(app), str(endpoint)))) + "/?"
 
@@ -91,7 +92,8 @@ async def get_all(
 def compose_url(base_url: str, parameters: dict, page: int = 1) -> str:
     """Helper method to compose the API url with parameters"""
     url = base_url + "?" if not base_url.endswith("?") else base_url
-    params = "&".join([f"{p}={v}" for p, v in parameters.items()]) + f"&page={page}"
+    params = "&".join(
+        [f"{p}={v}" for p, v in parameters.items()]) + f"&page={page}"
     return url + params
 
 
