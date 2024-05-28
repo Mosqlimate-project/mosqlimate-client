@@ -1,1 +1,1 @@
-from .api import Infodengue, Copernicus 
+from .api import Infodengue, Copernicus #  noqa
