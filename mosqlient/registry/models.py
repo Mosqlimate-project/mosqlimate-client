@@ -81,14 +81,15 @@ class Model:
         }
 
         self._validate_fields(**params)
-        params = _params(**params)
+
         base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.post(url, json=params, headers=headers, timeout=60)
 
         if resp.status_code != 201:
-            raise ModelPostError(f"POST request returned status code {resp.status_code}")
+            
+            raise ModelPostError(f"POST request returned status code {resp.status_code} \n {resp.reason}")
 
         return resp
 
