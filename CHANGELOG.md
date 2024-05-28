@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.1.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.0.1...1.1.0) (2024-05-28)
+
+
+### Features
+
+* **datastore:** Add functions to get the data from the datastore ([#8](https://github.com/Mosqlimate-project/mosqlimate-client/issues/8)) ([8573932](https://github.com/Mosqlimate-project/mosqlimate-client/commit/857393242b6b35a915476c1984a38426ab6ab8be))
+
 ## [1.0.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.0.0...1.0.1) (2024-05-27)
 
 
