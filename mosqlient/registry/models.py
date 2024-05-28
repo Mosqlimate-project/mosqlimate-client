@@ -88,7 +88,8 @@ class Model:
         resp = requests.post(url, json=params, headers=headers, timeout=60)
 
         if resp.status_code != 201:
-            raise ModelPostError(f"POST request returned status code {resp.status_code}")
+            
+            raise ModelPostError(f"POST request returned status code {resp.status_code} \n {resp.reason}")
 
         return resp
 
