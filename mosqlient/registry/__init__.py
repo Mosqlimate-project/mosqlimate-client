@@ -1,1 +1,1 @@
-from .api import Model  # noqafrom .api import Model
+from .api import Model, Prediction  # noqa

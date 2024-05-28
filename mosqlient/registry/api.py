@@ -1,3 +1,4 @@
+import datetime
 import asyncio
 from typing import Any, Literal, Optional
 from urllib.parse import urlparse
@@ -63,7 +64,6 @@ class Model:
         **kwargs,
     ):
         env = kwargs["env"] if "env" in kwargs else "prod"
-        print(env)
 
         if self.client is None:
             raise ClientError(
@@ -119,6 +119,7 @@ class Model:
         **kwargs
     ):
         env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
 
         if self.client is None:
             raise ClientError(
@@ -147,13 +148,40 @@ class Model:
         base_url = API_DEV_URL if env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + f"/{id}"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
-        resp = requests.put(url, json=params, headers=headers, timeout=60)
+        resp = requests.put(url, json=params, headers=headers, timeout=timeout)
 
         return resp
 
     @staticmethod
     def _validate_fields(**kwargs) -> None:
         ModelFieldValidator(**kwargs)
+
+
+class Prediction:
+    client: Client | None
+
+    def __init__(self, client: Optional[Client] = None):
+        self.client = client
+
+    @classmethod
+    def get(cls, **kwargs):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
+        cls._validate_fields(**kwargs)
+        params = _params(**kwargs)
+
+        async def fetch_models():
+            return await get_all("registry", "predictions", params, env=env)
+
+        if asyncio.get_event_loop().is_running():
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(fetch_models())
+            return loop.run_until_complete(future)
+        return asyncio.run(fetch_models())
+
+    @staticmethod
+    def _validate_fields(**kwargs) -> None:
+        PredictionFieldValidator(**kwargs)
 
 
 class ModelFieldValidator:
@@ -193,12 +221,10 @@ class ModelFieldValidator:
                                 ' or '.join(self.FIELDS[k])}")
 
             if k == "id":
-                if v <= 0:
+                if int(v) <= 0:
                     raise ValueError("Incorrect value for field 'id'")
 
             if k == "description":
-                if not v:
-                    raise ValueError("A Model description must be provided")
                 if len(v) > 500:
                     raise ValueError("Model description too long")
 
@@ -224,5 +250,62 @@ class ModelFieldValidator:
 
             if k == "time_resolution":
                 if v not in self.TIME_RESOLUTIONS:
-                    raise ValueError("Unkown 'time_resolution'. " f"Options: {
-                                     self.TIME_RESOLUTIONS}")
+                    raise ValueError(
+                        "Unkown 'time_resolution'. "
+                        f"Options: {self.TIME_RESOLUTIONS}"
+                    )
+
+
+class PredictionFieldValidator:
+    FIELDS = {
+        "id": (int, str),
+        "model": int,
+        "description": str,
+        "commit": str,
+        "predict_date": str,
+        "prediction": str,
+        # --
+        "env": str
+    }
+
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            if v is None:
+                continue
+
+            if k == "env":
+                if v not in ["dev", "prod"]:
+                    raise ValueError(f"`env` must be 'dev' or 'prod'")
+
+            if not isinstance(v, self.FIELDS[k]):
+                raise TypeError(
+                    f"Field `{k}` must have instance of "
+                    f"{' or '.join(self.FIELDS[k])}"
+                )
+
+            if k == "id":
+                if int(v) <= 0:
+                    raise ValueError("Incorrect value for field `id`")
+
+            if k == "model":
+                if v < 0:
+                    raise ValueError(
+                        "Incorrect value for field `model`. Expecting Model ID"
+                    )
+
+            if k == "commit":
+                if len(v) != 40:
+                    raise ValueError(
+                        "`commit` must be a valid GitHub Commit hash"
+                    )
+
+            if k == "predict_date":
+                try:
+                    datetime.datetime.fromisoformat(v)
+                except ValueError:
+                    raise ValueError(
+                        "`predict_date` date must be in isoformat: YYYY-MM-DD"
+                    )
+
+            if k == "prediction":
+                ...
