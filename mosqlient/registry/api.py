@@ -1,15 +1,18 @@
 import datetime
 import asyncio
+import json
 from typing import Any, Literal, Optional
 from urllib.parse import urlparse
 
 import nest_asyncio
 import requests
+import pandas as pd
 
 from mosqlient import Client
 from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
 from mosqlient.requests import get_all
+from mosqlient.utils.brasil import UFs
 
 nest_asyncio.apply()
 
@@ -308,4 +311,89 @@ class PredictionFieldValidator:
                     )
 
             if k == "prediction":
-                ...
+                validate_prediction(v)
+
+
+def validate_prediction(data: str | pd.DataFrame | dict) -> None:
+    EXPECTED_FIELDS = [
+        "dates",
+        "preds",
+        "lower",
+        "upper",
+        "adm_2",
+        "adm_1",
+        "adm_0",
+    ]
+
+    if isinstance(data, pd.DataFrame):
+        df = data
+    elif isinstance(data, (str, dict)):
+        try:
+            if isinstance(data, str):
+                data = json.loads(data)
+
+            df = pd.DataFrame(data)
+        except json.JSONDecodeError as err:
+            raise ValueError(
+                "`Prediction` data must be compatible with JSON format.\n"
+                f"Error: {err}"
+            )
+        except ValueError as err:
+            raise ValueError(
+                "`Prediction` data must be compatible with pandas DataFrame."
+                f"\nError: {err}"
+            )
+    else:
+        raise ValueError(
+            "Incorrect `Prediction` data type. Expecting DataFrame compatible "
+            "data"
+        )
+
+    if set(df.columns) != set(EXPECTED_FIELDS):
+        return (
+            "Incorrect columns in `Prediction` data. Expected the exact"
+            f" columns: {EXPECTED_FIELDS}"
+        )
+
+    try:
+        pd.to_datetime(df['dates'], errors="raise")
+    except ValueError:
+        raise ValueError("Incorrect date found in `dates` column")
+
+    for column in ["preds", "lower", "upper"]:
+        if df[column].dtype != float:
+            raise ValueError(
+                f"`{column}` column should contain only float values"
+            )
+
+    for column in ["adm_2", "adm_1", "adm_0"]:
+        unique_values = set(df[column].values)
+        if len(unique_values) != 1:
+            raise ValueError(f"`{column}` must contain one value")
+
+        if df["adm_0"].values[0] != "BR":
+            raise ValueError(
+                "At this moment, only 'BR' adm_0 is accepted"
+            )
+
+        adm_1 = df["adm_1"].values[0]
+        if adm_1 not in UFs:
+            raise ValueError(f"Unkown UF {adm_1}. Expected format: 'RJ'")
+
+        adm_2 = df["adm_2"].values[0]
+        _validate_geocode(adm_2)
+
+
+def _validate_geocode(geocode: str | int) -> None:
+    error = f"Incorrect value for field `adm_2` [{geocode}]. Example: 3304557"
+
+    if not isinstance(geocode, (str, int)):
+        raise ValueError(error)
+
+    try:
+        geocode = int(geocode)
+    except ValueError:
+        raise ValueError(error)
+
+    if len(str(geocode)) != 7:
+        raise ValueError(error)
