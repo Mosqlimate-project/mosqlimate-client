@@ -42,7 +42,7 @@ class Infodengue:
         DataFieldValidator(**kwargs)
 
 
-class Copernicus:
+class Climate:
     @classmethod
     def get(cls, **kwargs):
         cls._validate_fields(**kwargs)
