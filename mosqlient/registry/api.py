@@ -71,10 +71,11 @@ class Model:
         if self.client is None:
             raise ClientError(
                 "A Client instance must be provided, please instantiate Model "
-                "passing your Mosqlimate's credentials. For more infor about "
+                "passing your Mosqlimate's credentials. For more info about "
                 "retrieving or inserting data from Mosqlimate, please see the "
                 "API Documentation"
             )
+
         params = {
             "name": name,
             "description": description,
@@ -109,7 +110,7 @@ class Model:
         id: int,
         name: Optional[str] = None,
         description: Optional[str] = None,
-            repository: Optional[str] = None,
+        repository: Optional[str] = None,
         implementation_language: Optional[str] = None,
         disease: Optional[Literal["dengue", "chikungunya", "zika"]] = None,
         temporal: Optional[bool] = None,
@@ -182,6 +183,37 @@ class Prediction:
             return loop.run_until_complete(future)
         return asyncio.run(fetch_models())
 
+    def post(
+        self,
+        model: int,
+        description: str,
+        commit: str,
+        predict_date: str,
+        prediction: str | pd.DataFrame | dict,
+        **kwargs,
+    ):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
+        if self.client is None:
+            raise ClientError(
+                "A Client instance must be provided, please instantiate Model "
+                "passing your Mosqlimate's credentials. For more info about "
+                "retrieving or inserting data from Mosqlimate, please see the "
+                "API Documentation"
+            )
+
+        params = {
+            "model": model,
+            "description": description,
+            "commit": commit,
+            "predict_date": predict_date,
+            "prediction": prediction,
+        }
+
+        self._validate_fields(**params)
+        params = _params(**params)
+        print(params)
+
     @staticmethod
     def _validate_fields(**kwargs) -> None:
         PredictionFieldValidator(**kwargs)
@@ -220,8 +252,10 @@ class ModelFieldValidator:
                     raise ValueError(f"`env` must be 'dev' or 'prod'")
 
             if not isinstance(v, self.FIELDS[k]):
-                raise TypeError(f"Field '{k}' must have instance of " f"{
-                                ' or '.join(self.FIELDS[k])}")
+                raise TypeError(
+                    f"Field '{k}' must have instance of "
+                    f"{' or '.join(self.FIELDS[k])}"
+                )
 
             if k == "id":
                 if int(v) <= 0:
@@ -248,8 +282,9 @@ class ModelFieldValidator:
             if k == "ADM_level":
                 v = int(v)
                 if v not in self.ADM_LEVELS:
-                    raise ValueError(f"Unkown 'ADM_level'. Options: {
-                                     self.ADM_LEVELS}")
+                    raise ValueError(
+                        f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}"
+                    )
 
             if k == "time_resolution":
                 if v not in self.TIME_RESOLUTIONS:
@@ -266,7 +301,7 @@ class PredictionFieldValidator:
         "description": str,
         "commit": str,
         "predict_date": str,
-        "prediction": str,
+        "prediction": str | pd.DataFrame | dict,
         # --
         "env": str
     }
@@ -278,7 +313,7 @@ class PredictionFieldValidator:
 
             if k == "env":
                 if v not in ["dev", "prod"]:
-                    raise ValueError(f"`env` must be 'dev' or 'prod'")
+                    raise ValueError("`env` must be 'dev' or 'prod'")
 
             if not isinstance(v, self.FIELDS[k]):
                 raise TypeError(

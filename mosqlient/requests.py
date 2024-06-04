@@ -21,7 +21,7 @@ def get(
     env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
     if app not in APPS:
-        raise ValueError(f"unkown Mosqlimate app. Options: {APPS}")
+        raise ValueError(f"Unkown Mosqlimate app. Options: {APPS}")
 
     if pagination:
         validate.url_pagination(params)
