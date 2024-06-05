@@ -3,12 +3,13 @@ import asyncio
 import json
 from typing import Any, Literal, Optional
 from urllib.parse import urlparse
+from pydantic import BaseModel, ConfigDict
 
 import nest_asyncio
 import requests
 import pandas as pd
 
-from mosqlient import Client
+from mosqlient import types
 from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
 from mosqlient.requests import get_all
@@ -30,11 +31,10 @@ def _params(**kwargs) -> dict[str, Any]:
     return params
 
 
-class Model:
-    client: Client | None
+class Model(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def __init__(self, client: Optional[Client] = None):
-        self.client = client
+    client: types.Client | None
 
     @classmethod
     def get(cls, **kwargs):
@@ -162,10 +162,9 @@ class Model:
 
 
 class Prediction:
-    client: Client | None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def __init__(self, client: Optional[Client] = None):
-        self.client = client
+    client: types.Client | None
 
     @classmethod
     def get(cls, **kwargs):
@@ -217,6 +216,23 @@ class Prediction:
     @staticmethod
     def _validate_fields(**kwargs) -> None:
         PredictionFieldValidator(**kwargs)
+
+
+class ModelGETParams(BaseModel):
+    id: Optional[types.ID] = None
+    name: Optional[types.Name] = None
+    description: Optional[types.Description] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    disease: Optional[types.Disease] = None
+    adm_level: Optional[types.ADMLevel] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    time_resolution: Optional[types.TimeResolution] = None
 
 
 class ModelFieldValidator:

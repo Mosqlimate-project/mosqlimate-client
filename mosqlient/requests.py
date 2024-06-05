@@ -8,12 +8,12 @@ from urllib.parse import urljoin
 import aiohttp
 import requests
 
-from mosqlient.config import API_DEV_URL, API_PROD_URL, APPS, APPS_TYPE
+from mosqlient.config import API_DEV_URL, API_PROD_URL, APPS, APP
 from mosqlient.utils import validate
 
 
 def get(
-    app: APPS_TYPE,
+    app: APP,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     pagination: bool = True,
@@ -57,7 +57,7 @@ async def aget(
 
 
 async def get_all(
-    app: APPS_TYPE,
+    app: APP,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     timeout: int = 60,
@@ -113,7 +113,7 @@ def attempt_delay(session: requests.Session, url: str):
 
 
 def get_datastore(
-    app: APPS_TYPE, endpoint: AnyStr, params: dict[str, str | int | float], _env: Literal["dev", "prod"] = "prod"
+    app: APP, endpoint: AnyStr, params: dict[str, str | int | float], _env: Literal["dev", "prod"] = "prod"
 ) -> Generator[dict, None, None]:
 
     base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
