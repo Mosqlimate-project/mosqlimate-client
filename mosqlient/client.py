@@ -1,5 +1,8 @@
-from typing import Literal, Optional
 import uuid
+from typing import Literal, Optional
+from typing_extensions import Annotated
+
+from pydantic.functional_validators import AfterValidator
 
 from mosqlient.requests import get
 
@@ -42,3 +45,11 @@ class PlatformClient:
             uuid.UUID(self.uid_key, version=4)
         except ValueError:
             raise ValueError("uid_key is not a valid key")
+
+
+# Avoiding circular imports
+def validate_client(c: PlatformClient) -> PlatformClient:
+    return c
+
+
+Client = Annotated[PlatformClient, AfterValidator(validate_client)]

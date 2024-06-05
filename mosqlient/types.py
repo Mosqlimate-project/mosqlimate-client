@@ -1,11 +1,11 @@
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
 
-from mosqlient.client import PlatformClient
-from mosqlient.validations import *
+from mosqlient.validations import *  # noqa
+
 
 APP = Annotated[str, AfterValidator(validate_django_app)]
-Client = Annotated[PlatformClient, AfterValidator(validate_client)]
+
 ID = Annotated[int, AfterValidator(validate_id)]
 Name = Annotated[str, AfterValidator(validate_name)]
 Description = Annotated[str, AfterValidator(validate_description)]

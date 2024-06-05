@@ -10,6 +10,7 @@ import requests
 import pandas as pd
 
 from mosqlient import types
+from mosqlient.client import Client
 from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
 from mosqlient.requests import get_all
@@ -34,13 +35,13 @@ def _params(**kwargs) -> dict[str, Any]:
 class Model(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    client: types.Client | None
+    client: Client | None
 
     @classmethod
     def get(cls, **kwargs):
         env = kwargs["env"] if "env" in kwargs else "prod"
 
-        cls._validate_fields(**kwargs)
+        ModelGETParams(**kwargs)
         params = _params(**kwargs)
 
         async def fetch_models():
@@ -164,7 +165,7 @@ class Model(BaseModel):
 class Prediction:
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    client: types.Client | None
+    client: Client | None
 
     @classmethod
     def get(cls, **kwargs):

@@ -8,7 +8,8 @@ from urllib.parse import urljoin
 import aiohttp
 import requests
 
-from mosqlient.config import API_DEV_URL, API_PROD_URL, APPS, APP
+from mosqlient.config import API_DEV_URL, API_PROD_URL
+from mosqlient.types import APP
 from mosqlient.utils import validate
 
 
@@ -20,9 +21,6 @@ def get(
     timeout: int = 10,
     env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
-    if app not in APPS:
-        raise ValueError(f"Unkown Mosqlimate app. Options: {APPS}")
-
     if pagination:
         validate.url_pagination(params)
 

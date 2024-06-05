@@ -1,6 +1,4 @@
-from mosqlient.client import PlatformClient
-
-from mosqlient.config import DJANGO_APPS
+from mosqlient.config import *
 
 
 def validate_django_app(app: str) -> str:
@@ -8,10 +6,6 @@ def validate_django_app(app: str) -> str:
         f"Unknown Mosqlimate app '{app}'. Options: {DJANGO_APPS}"
     )
     return app
-
-
-def validate_client(c: PlatformClient) -> PlatformClient:
-    return c
 
 
 def validate_id(ID: int) -> int:
@@ -57,25 +51,58 @@ def validate_repository(repository: str) -> str:
 
 def validate_implementation_language(implementation_language: str) -> str:
     languages = [
-        "Zig",
-        "Rust",
-        "Ruby",
-        "R",
-        "Lua",
-        "Kotlin",
-        "Java",
-        "JavaScript",
-        "Haskell",
-        "Go",
-        "Erlang",
-        ".NET",
-        "C",
-        "C#",
-        "CoffeeScript",
-        "C++",
-        "Python",
+        "zig",
+        "rust",
+        "ruby",
+        "r",
+        "lua",
+        "kotlin",
+        "java",
+        "javascript",
+        "haskell",
+        "go",
+        "erlang",
+        ".net",
+        "c",
+        "c#",
+        "coffeescript",
+        "c++",
+        "python",
     ]
-    assert implementation_language in languages, (
+    assert implementation_language.lower() in languages, (
         f"Unknown implementation_language {implementation_language}"
     )
     return implementation_language
+
+
+def validate_disease(disease: str) -> str:
+    assert disease.lower() in DISEASES, (
+        f"Unknown disease {disease}. Options: {DISEASES}"
+    )
+    return disease
+
+
+def validate_adm_level(adm_level: str) -> str:
+    assert adm_level in ADM_LEVELS, (
+        f"Unknown disease {adm_level}. Options {ADM_LEVELS}"
+    )
+    return adm_level
+
+
+def validate_time_resolution(time_resolution: str) -> str:
+    assert time_resolution in TIME_RESOLUTIONS, (
+        f"Unkown time_resolution {time_resolution}. ",
+        f"Options: {TIME_RESOLUTIONS}"
+    )
+
+
+def validate_temporal(temporal: bool) -> bool:
+    return temporal
+
+
+def validate_spatial(spatial: bool) -> bool:
+    return spatial
+
+
+def validate_categorical(categorical: bool) -> bool:
+    return categorical

@@ -7,7 +7,7 @@ client library for the Mosqlimate project data platform.
 from importlib import metadata as importlib_metadata
 from typing import List
 
-from mosqlient.client import PlatformClient as Client  # noqa
+from mosqlient.client import Client
 
 
 def get_version() -> str:
