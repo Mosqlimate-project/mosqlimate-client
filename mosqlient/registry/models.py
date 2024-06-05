@@ -35,13 +35,22 @@ class Model(BaseModel):
 
     @classmethod
     def get(cls, **kwargs):
+        """
+        https://api.mosqlimate.org/docs/registry/GET/models/
+        """
         env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
-        ModelGETParams(**kwargs)
-        params = _params(**kwargs)
+        ModelGETParams(**kwargs) params = _params(**kwargs)
 
         async def fetch_models():
-            return await get_all("registry", "models", params, env=env)
+            return await get_all(
+                "registry",
+                "models",
+                params,
+                env=env,
+                timeout=timeout
+            )
 
         if asyncio.get_event_loop().is_running():
             loop = asyncio.get_event_loop()
@@ -63,7 +72,11 @@ class Model(BaseModel):
         time_resolution: Literal["day", "week", "month", "year"],
         **kwargs,
     ):
+        """
+        https://api.mosqlimate.org/docs/registry/POST/models/
+        """
         env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
 
         if self.client is None:
             raise ClientError(
@@ -91,15 +104,18 @@ class Model(BaseModel):
         base_url = API_DEV_URL if env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
-        resp = requests.post(url, json=params, headers=headers, timeout=60)
+        resp = requests.post(
+            url,
+            json=params,
+            headers=headers,
+            timeout=timeout
+        )
 
         if resp.status_code != 201:
-
             raise ModelPostError(
                 "POST request returned status code "
                 f"{resp.status_code} \n {resp.reason}"
             )
-
         return resp
 
     def update(
@@ -119,6 +135,9 @@ class Model(BaseModel):
         # fmt: on
         **kwargs
     ):
+        """
+        https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L258
+        """
         env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 10
 
@@ -154,6 +173,8 @@ class Model(BaseModel):
 
 
 class ModelGETParams(BaseModel):
+    # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
+
     id: Optional[types.ID] = None
     name: Optional[types.Name] = None
     description: Optional[types.Description] = None
@@ -171,6 +192,8 @@ class ModelGETParams(BaseModel):
 
 
 class ModelPOSTParams(BaseModel):
+    # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L154
+
     name: types.Name
     description: Optional[types.Description] = None
     repository: types.Repository
@@ -187,9 +210,6 @@ class ModelPUTParams(BaseModel):
     id: types.ID
     name: Optional[types.Name] = None
     description: Optional[types.Description] = None
-    author_name: Optional[types.AuthorName] = None
-    author_username: Optional[types.AuthorUserName] = None
-    author_institution: Optional[types.AuthorInstitution] = None
     repository: Optional[types.Repository] = None
     implementation_language: Optional[types.ImplementationLanguage] = None
     disease: Optional[types.Disease] = None

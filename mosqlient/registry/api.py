@@ -1,12 +1,13 @@
 import datetime
 import asyncio
 import json
-from typing import Any
-from pydantic import ConfigDict
+from typing import Any, Optional
+from pydantic import BaseModel, ConfigDict
 
 import nest_asyncio
 import pandas as pd
 
+from mosqlient import types
 from mosqlient.client import Client
 from mosqlient.requests import get_all
 from mosqlient.utils.brasil import UFs
@@ -36,13 +37,23 @@ class Prediction:
 
     @classmethod
     def get(cls, **kwargs):
+        """
+        https://api.mosqlimate.org/docs/registry/GET/predictions/
+        """
         env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         cls._validate_fields(**kwargs)
         params = _params(**kwargs)
 
         async def fetch_models():
-            return await get_all("registry", "predictions", params, env=env)
+            return await get_all(
+                "registry",
+                "predictions",
+                params,
+                env=env,
+                timeout=timeout
+            )
 
         if asyncio.get_event_loop().is_running():
             loop = asyncio.get_event_loop()
@@ -60,6 +71,7 @@ class Prediction:
         **kwargs,
     ):
         env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         if self.client is None:
             raise ClientError(
@@ -84,6 +96,43 @@ class Prediction:
     @staticmethod
     def _validate_fields(**kwargs) -> None:
         PredictionFieldValidator(**kwargs)
+
+
+class PredictionGETParams(BaseModel):
+    id: Optional[types.ID] = None
+    model_id: Optional[types.ID] = None
+    model_name: Optional[types.Name] = None
+    model_ADM_level: Optional[types.ADMLevel] = None
+    model_time_resolution: Optional[types.TimeResolution] = None
+    model_disease: Optional[types.Disease] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    commit: Optional[types.Commit] = None
+    predict_date: Optional[types.Date] = None
+    start: Optional[types.Date] = None
+    end: Optional[types.Date] = None
+
+
+class PredictionPOSTParams(BaseModel):
+    model_id: types.ID
+    description: types.Description
+    commit: types.Commit
+    predict_date: types.Date
+    prediction: types.PredictionData
+
+
+class PredictionPUTParams(BaseModel):
+    model_id: types.ID
+    description: Optional[types.Description] = None
+    commit: Optional[types.Commit] = None
+    predict_date: Optional[types.Date] = None
+    prediction: Optional[types.PredictionData] = None
 
 
 class PredictionFieldValidator:

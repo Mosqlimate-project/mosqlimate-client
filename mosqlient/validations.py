@@ -1,4 +1,10 @@
-from mosqlient.config import *
+import datetime as dt
+from string import ascii_lowercase, digits
+
+import pandas as pd
+from pydantic import ValidationError
+
+from mosqlient.config import *  # noqa
 
 
 def validate_django_app(app: str) -> str:
@@ -106,3 +112,30 @@ def validate_spatial(spatial: bool) -> bool:
 
 def validate_categorical(categorical: bool) -> bool:
     return categorical
+
+
+def validate_commit(commit: str) -> str:
+    err = "Invalid GitHub commit hash"
+    assert len(commit) == 40, err
+    assert all(c in ascii_lowercase + digits for c in commit), err
+    return commit
+
+
+def validate_date(date: str) -> str:
+    error = "Incorrect date format. Format: YYYY-MM-DD \n%s"
+    try:
+        date = dt.date.fromisoformat(date)
+    except Exception as err:
+        raise ValidationError(error % err)
+
+    assert date >= dt.date(2010, 1, 1), "date is too old"
+    assert date <= dt.datetime.now().date(), "date is in the future"
+
+    return str(date)
+
+
+def validate_prediction_data(data: pd.DataFrame) -> pd.DataFrame:
+    assert set(data.columns) == set(PREDICTION_DATA_COLUMNS), (
+        f"Incorrect data columns. Excepting: {PREDICTION_DATA_COLUMNS}"
+    )
+    return data

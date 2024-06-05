@@ -1,4 +1,6 @@
 from typing_extensions import Annotated
+
+import pandas as pd
 from pydantic.functional_validators import AfterValidator
 
 from mosqlient.validations import *  # noqa
@@ -22,3 +24,9 @@ Temporal = Annotated[bool, AfterValidator(validate_temporal)]
 Spatial = Annotated[bool, AfterValidator(validate_spatial)]
 Categorical = Annotated[bool, AfterValidator(validate_categorical)]
 TimeResolution = Annotated[str, AfterValidator(validate_time_resolution)]
+
+Commit = Annotated[str, AfterValidator(validate_commit)]
+Date = Annotated[str, AfterValidator(validate_date)]
+PredictionData = Annotated[
+    pd.DataFrame, AfterValidator(validate_prediction_data)
+]
