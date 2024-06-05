@@ -9,15 +9,15 @@ from datetime import date, datetime, timedelta
 
 def get_next_n_weeks(ini_date: str, next_days: int) -> list:
     """
-    Return a list of dates with the {next_days} days after ini_date.
+    Return a list of dates with the {next_weeks} weeks after ini_date.
     This function was designed to generate the dates of the forecast
     models.
     Parameters
     ----------
     ini_date : str
         Initial date.
-    next_days : int
-        Number of days to be included in the list after the date in
+    next_weeks : int
+        Number of weeks to be included in the list after the date in
         ini_date.
     Returns
     -------
@@ -36,7 +36,7 @@ def get_next_n_weeks(ini_date: str, next_days: int) -> list:
 
     return next_dates
 
-def org_preds(preds, date, boxcox) ->pd.DataFrame: 
+def get_prediction_dataframe(preds, date, boxcox) ->pd.DataFrame: 
     """
     Function to organize the predictions of the ARIMA model in a pandas DataFrame.
 
@@ -55,19 +55,34 @@ def org_preds(preds, date, boxcox) ->pd.DataFrame:
     df_preds['date'] = date
 
     try:
-        df_preds['preds'] = boxcox.inverse_transform(preds[0].values)[0]
+        df_preds['preds'] = preds[0].values
 
     except: 
-        df_preds['preds'] = boxcox.inverse_transform(preds[0])[0]
+        df_preds['preds'] = preds[0]
         
     df_preds.loc[:, ['lower', 'upper']] = preds[1]
 
+    if df_preds['preds'].values[0] == 0:
+        df_preds = df_preds.iloc[1:] 
+         
+    df_preds['preds'] =  boxcox.inverse_transform(df_preds['preds'])[0]
     df_preds['lower'] =  boxcox.inverse_transform(df_preds['lower'])[0]
     df_preds['upper'] =  boxcox.inverse_transform(df_preds['upper'])[0]
 
     return df_preds
 
-def plot_preds(df_preds, title = ''):
+def plot_predictions(df_preds:pd.DataFrame, title:str = '') -> None:
+    """
+    Function to plot the predictions of the model.
+
+    Parameters
+    ----------
+    df_preds: pd.DataFrame 
+        Dataframe with the columns: ['date', 'data', 'preds', 'lower', 'upper'].
+    title: str
+        Title of the plot.
+    """
+
     fig,ax = plt.subplots(1, figsize = (6,4))
         
     ax.plot(df_preds.date, df_preds.data, color = 'black', label = 'Data')
@@ -90,9 +105,21 @@ def plot_preds(df_preds, title = ''):
 
 
 
-def plot_for(df_for, df_train, last_days ):
+def plot_forecast(df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs:int) -> None:
+    """
+    Function to plot the forecast of the model.
 
-    df_train = df_train.tail(last_days)
+    Parameters
+    ----------
+    df_for: pd.DataFrame
+        Dataframe with the forecast results, with the columns: ['date', 'preds', 'lower', 'upper']
+    df_preds: pd.DataFrame 
+        Dataframe with the columns: ['data'] and a datetime index.
+    last_obs: int
+        Number of previous observations of the data included.
+    """
+
+    df_train = df_train.tail(last_obs)
     
     fig,ax = plt.subplots(1, figsize = (6,4))
         
@@ -165,10 +192,10 @@ class Arima:
         df = df.sort_index()
     
         df = df.asfreq('W')
-
-        df = df.fillna(0)
         
         df = df[['casos_est']].rename(columns = {'casos_est':'y'})
+
+        df = df.ffill()
 
         self.df = df 
         
@@ -188,11 +215,11 @@ class Arima:
 
         self.df_train = df_train
         
-        boxcox = ppc.BoxCoxEndogTransformer(lmbda2=1e-6).fit(df_train.y)
+        boxcox = ppc.BoxCoxEndogTransformer().fit(df_train.y)
 
         self.boxcox = boxcox
 
-        df_train.y = boxcox.transform(df_train.y)[0]
+        df_train.loc[:, 'y'] = boxcox.transform(df_train.y)[0]
         
         model = auto_arima(df_train.y, 
                     seasonal=False,
@@ -225,7 +252,7 @@ class Arima:
 
         df_train = self.df_train.copy()
 
-        df_in_sample = org_preds(preds_in_sample, df_train.index, self.boxcox)
+        df_in_sample = get_prediction_dataframe(preds_in_sample, df_train.index, self.boxcox)
 
         df_in_sample = df_in_sample.merge(df_train, left_on = 'date', right_index = True)
         
@@ -235,7 +262,7 @@ class Arima:
         
         if plot: 
             
-            plot_preds(df_in_sample, title = 'In sample predictions')
+            plot_predictions(df_in_sample, title = 'In sample predictions')
 
         return df_in_sample
 
@@ -259,7 +286,7 @@ class Arima:
         
         df = self.df.copy()
 
-        df.y = self.boxcox.transform(df.y)[0]
+        df.loc[:, 'y'] = self.boxcox.transform(df.y)[0]
         
         model = self.model 
         
@@ -267,7 +294,7 @@ class Arima:
 
         dates = get_next_n_weeks(self.df_train.index[-1].strftime( "%Y-%m-%d"), horizon)
 
-        df_preds = org_preds(preds, dates, self.boxcox)
+        df_preds = get_prediction_dataframe(preds, dates, self.boxcox)
 
         while ( pd.Timestamp(dates[-1]) < pd.to_datetime(end_date)):
 
@@ -275,7 +302,7 @@ class Arima:
 
             dates = get_next_n_weeks(dates[-1].strftime( "%Y-%m-%d"), horizon)
             
-            df_preds = pd.concat([df_preds, org_preds(preds, dates, self.boxcox)])
+            df_preds = pd.concat([df_preds, get_prediction_dataframe(preds, dates, self.boxcox)])
 
         df_preds.date = pd.to_datetime(df_preds.date)
         
@@ -289,7 +316,7 @@ class Arima:
 
         if plot: 
             
-            plot_preds(df_preds, title = 'Out of sample predictions')
+            plot_predictions(df_preds, title = 'Out of sample predictions')
         
         return df_preds
 
@@ -323,13 +350,13 @@ class Arima:
         
         preds = model.predict(horizon, return_conf_int = True)
 
-        df_preds = org_preds(preds, dates, self.boxcox)
+        df_preds = get_prediction_dataframe(preds, dates, self.boxcox)
 
         df_preds['adm_2'] = self.geocode
 
         if plot:
 
-            plot_for(df_preds, df_train, last_obs)
+            plot_forecast(df_preds, df_train, last_obs)
 
         return df_preds
     
