@@ -17,8 +17,8 @@ ImplementationLanguage = Annotated[
     str, AfterValidator(validate_implementation_language)
 ]
 Disease = Annotated[str, AfterValidator(validate_disease)]
-ADMLevel = Annotated[str, AfterValidator(validate_adm_level)]
-Temporal = Annotated[str, AfterValidator(validate_temporal)]
-Spatial = Annotated[str, AfterValidator(validate_spatial)]
-Categorical = Annotated[str, AfterValidator(validate_categorical)]
+ADMLevel = Annotated[int, AfterValidator(validate_adm_level)]
+Temporal = Annotated[bool, AfterValidator(validate_temporal)]
+Spatial = Annotated[bool, AfterValidator(validate_spatial)]
+Categorical = Annotated[bool, AfterValidator(validate_categorical)]
 TimeResolution = Annotated[str, AfterValidator(validate_time_resolution)]

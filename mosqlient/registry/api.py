@@ -147,7 +147,7 @@ class Model(BaseModel):
             "time_resolution": time_resolution
         }
 
-        self._validate_fields(**params)
+        ModelPOSTParams(**params)
         params = _params(**params)
 
         base_url = API_DEV_URL if env == "dev" else API_PROD_URL
@@ -156,10 +156,6 @@ class Model(BaseModel):
         resp = requests.put(url, json=params, headers=headers, timeout=timeout)
 
         return resp
-
-    @staticmethod
-    def _validate_fields(**kwargs) -> None:
-        ModelFieldValidator(**kwargs)
 
 
 class Prediction:
@@ -229,86 +225,24 @@ class ModelGETParams(BaseModel):
     repository: Optional[types.Repository] = None
     implementation_language: Optional[types.ImplementationLanguage] = None
     disease: Optional[types.Disease] = None
-    adm_level: Optional[types.ADMLevel] = None
+    ADM_level: Optional[types.ADMLevel] = None
     temporal: Optional[types.Temporal] = None
     spatial: Optional[types.Spatial] = None
     categorical: Optional[types.Categorical] = None
     time_resolution: Optional[types.TimeResolution] = None
 
 
-class ModelFieldValidator:
-    FIELDS = {
-        "id": (int, str),
-        "name": str,
-        "description": str,
-        "author_name": str,
-        "author_username": str,
-        "author_institution": str,
-        "repository": str,
-        "implementation_language": str,
-        "disease": str,
-        "ADM_level": (str, int),
-        "temporal": bool,
-        "spatial": bool,
-        "categorical": bool,
-        "time_resolution": str,
-        # --
-        "env": str
-    }
-    DISEASES = ["dengue", "zika", "chikungunya"]
-    ADM_LEVELS = [0, 1, 2, 3]
-    TIME_RESOLUTIONS = ["day", "week", "month", "year"]
-
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            if v is None:
-                continue
-
-            if k == "env":
-                if v not in ["dev", "prod"]:
-                    raise ValueError(f"`env` must be 'dev' or 'prod'")
-
-            if not isinstance(v, self.FIELDS[k]):
-                raise TypeError(
-                    f"Field '{k}' must have instance of "
-                    f"{' or '.join(self.FIELDS[k])}"
-                )
-
-            if k == "id":
-                if int(v) <= 0:
-                    raise ValueError("Incorrect value for field 'id'")
-
-            if k == "description":
-                if len(v) > 500:
-                    raise ValueError("Model description too long")
-
-            if k == "repository":
-                repo_url = urlparse(v)
-                if repo_url.netloc != "github.com":
-                    raise ValueError(
-                        "'repository' must be a valid GitHub repository")
-
-            if k == "disease":
-                if v == "chik":
-                    v = "chikungunya"
-
-                if v not in self.DISEASES:
-                    raise ValueError(
-                        f"Unkown 'disease'. Options: {self.DISEASES}")
-
-            if k == "ADM_level":
-                v = int(v)
-                if v not in self.ADM_LEVELS:
-                    raise ValueError(
-                        f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}"
-                    )
-
-            if k == "time_resolution":
-                if v not in self.TIME_RESOLUTIONS:
-                    raise ValueError(
-                        "Unkown 'time_resolution'. "
-                        f"Options: {self.TIME_RESOLUTIONS}"
-                    )
+class ModelPOSTParams(BaseModel):
+    name: types.Name
+    description: Optional[types.Description] = None
+    repository: types.Repository
+    implementation_language: types.ImplementationLanguage
+    disease: types.Disease
+    temporal: types.Temporal
+    spatial: types.Spatial
+    categorical: types.Categorical
+    ADM_level: types.ADMLevel
+    time_resolution: types.TimeResolution
 
 
 class PredictionFieldValidator:

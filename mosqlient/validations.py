@@ -82,9 +82,9 @@ def validate_disease(disease: str) -> str:
     return disease
 
 
-def validate_adm_level(adm_level: str) -> str:
+def validate_adm_level(adm_level: int) -> int:
     assert adm_level in ADM_LEVELS, (
-        f"Unknown disease {adm_level}. Options {ADM_LEVELS}"
+        f"Unknown adm_level {adm_level}. Options {ADM_LEVELS}"
     )
     return adm_level
 
