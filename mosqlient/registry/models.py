@@ -1,0 +1,200 @@
+import asyncio
+from typing import Any, Literal, Optional
+
+import requests
+import nest_asyncio
+from pydantic import BaseModel, ConfigDict
+
+from mosqlient import types
+from mosqlient.client import Client
+from mosqlient.config import API_DEV_URL, API_PROD_URL
+from mosqlient.errors import ClientError, ModelPostError
+from mosqlient.requests import get_all
+
+
+nest_asyncio.apply()
+
+
+def _params(**kwargs) -> dict[str, Any]:
+    params = {}
+    for k, v in kwargs.items():
+        if isinstance(v, (bool, int, float, str)):
+            params[k] = str(v)
+        elif v is None:
+            continue
+        else:
+            raise TypeError(f"Unknown type f{type(v)}")
+
+    return params
+
+
+class Model(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    client: Client | None
+
+    @classmethod
+    def get(cls, **kwargs):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
+        ModelGETParams(**kwargs)
+        params = _params(**kwargs)
+
+        async def fetch_models():
+            return await get_all("registry", "models", params, env=env)
+
+        if asyncio.get_event_loop().is_running():
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(fetch_models())
+            return loop.run_until_complete(future)
+        return asyncio.run(fetch_models())
+
+    def post(
+        self,
+        name: str,
+        description: str,
+        repository: str,
+        implementation_language: str,
+        disease: Literal["dengue", "chikungunya", "zika"],
+        temporal: bool,
+        spatial: bool,
+        categorical: bool,
+        adm_level: Literal[0, 1, 2, 3],
+        time_resolution: Literal["day", "week", "month", "year"],
+        **kwargs,
+    ):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
+        if self.client is None:
+            raise ClientError(
+                "A Client instance must be provided, please instantiate Model "
+                "passing your Mosqlimate's credentials. For more info about "
+                "retrieving or inserting data from Mosqlimate, please see the "
+                "API Documentation"
+            )
+
+        params = {
+            "name": name,
+            "description": description,
+            "repository": repository,
+            "implementation_language": implementation_language,
+            "disease": disease,
+            "temporal": temporal,
+            "spatial": spatial,
+            "categorical": categorical,
+            "ADM_level": adm_level,
+            "time_resolution": time_resolution,
+        }
+
+        ModelPOSTParams(**params)
+        params = _params(**params)
+        base_url = API_DEV_URL if env == "dev" else API_PROD_URL
+        url = base_url + "/".join(("registry", "models")) + "/"
+        headers = {"X-UID-Key": self.client.X_UID_KEY}
+        resp = requests.post(url, json=params, headers=headers, timeout=60)
+
+        if resp.status_code != 201:
+
+            raise ModelPostError(
+                "POST request returned status code "
+                f"{resp.status_code} \n {resp.reason}"
+            )
+
+        return resp
+
+    def update(
+        self,
+        id: int,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        repository: Optional[str] = None,
+        implementation_language: Optional[str] = None,
+        disease: Optional[Literal["dengue", "chikungunya", "zika"]] = None,
+        temporal: Optional[bool] = None,
+        spatial: Optional[bool] = None,
+        categorical: Optional[bool] = None,
+        adm_level: Optional[Literal[0, 1, 2, 3]] = None,
+        # fmt: off
+        time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
+        # fmt: on
+        **kwargs
+    ):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
+
+        if self.client is None:
+            raise ClientError(
+                "A Client instance must be provided, please instantiate Model "
+                "passing your Mosqlimate's credentials. For more infor about "
+                "retrieving or inserting data from Mosqlimate, please see the "
+                "API Documentation"
+            )
+
+        params = {
+            "name": name,
+            "description": description,
+            "repository": repository,
+            "implementation_language": implementation_language,
+            "disease": disease,
+            "temporal": temporal,
+            "spatial": spatial,
+            "categorical": categorical,
+            "ADM_level": adm_level,
+            "time_resolution": time_resolution
+        }
+
+        ModelPUTParams(id=id, **params)
+
+        base_url = API_DEV_URL if env == "dev" else API_PROD_URL
+        url = base_url + "/".join(("registry", "models")) + f"/{id}"
+        headers = {"X-UID-Key": self.client.X_UID_KEY}
+        resp = requests.put(url, json=params, headers=headers, timeout=timeout)
+
+        return resp
+
+
+class ModelGETParams(BaseModel):
+    id: Optional[types.ID] = None
+    name: Optional[types.Name] = None
+    description: Optional[types.Description] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    disease: Optional[types.Disease] = None
+    ADM_level: Optional[types.ADMLevel] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    time_resolution: Optional[types.TimeResolution] = None
+
+
+class ModelPOSTParams(BaseModel):
+    name: types.Name
+    description: Optional[types.Description] = None
+    repository: types.Repository
+    implementation_language: types.ImplementationLanguage
+    disease: types.Disease
+    temporal: types.Temporal
+    spatial: types.Spatial
+    categorical: types.Categorical
+    ADM_level: types.ADMLevel
+    time_resolution: types.TimeResolution
+
+
+class ModelPUTParams(BaseModel):
+    id: types.ID
+    name: Optional[types.Name] = None
+    description: Optional[types.Description] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    disease: Optional[types.Disease] = None
+    ADM_level: Optional[types.ADMLevel] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    time_resolution: Optional[types.TimeResolution] = None
