@@ -90,7 +90,7 @@ class Model(BaseModel):
             "time_resolution": time_resolution,
         }
 
-        self._validate_fields(**params)
+        ModelPOSTParams(**params)
         params = _params(**params)
         base_url = API_DEV_URL if env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
@@ -147,8 +147,7 @@ class Model(BaseModel):
             "time_resolution": time_resolution
         }
 
-        ModelPOSTParams(**params)
-        params = _params(**params)
+        ModelPUTParams(id=id, **params)
 
         base_url = API_DEV_URL if env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + f"/{id}"
@@ -243,6 +242,23 @@ class ModelPOSTParams(BaseModel):
     categorical: types.Categorical
     ADM_level: types.ADMLevel
     time_resolution: types.TimeResolution
+
+
+class ModelPUTParams(BaseModel):
+    id: types.ID
+    name: Optional[types.Name] = None
+    description: Optional[types.Description] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    disease: Optional[types.Disease] = None
+    ADM_level: Optional[types.ADMLevel] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    time_resolution: Optional[types.TimeResolution] = None
 
 
 class PredictionFieldValidator:
