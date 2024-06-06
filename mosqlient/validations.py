@@ -136,6 +136,6 @@ def validate_date(date: str) -> str:
 
 def validate_prediction_data(data: pd.DataFrame) -> pd.DataFrame:
     assert set(data.columns) == set(PREDICTION_DATA_COLUMNS), (
-        f"Incorrect data columns. Excepting: {PREDICTION_DATA_COLUMNS}"
+        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}"
     )
     return data

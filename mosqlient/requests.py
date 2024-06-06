@@ -84,7 +84,13 @@ async def get_all(
             task = asyncio.create_task(aget(session, url, params))
             tasks.append(task)
         results = await asyncio.gather(*tasks)
-    return list(chain(result["items"] for result in results))
+
+    res = list(chain(result["items"] for result in results))
+
+    if len(res) == 1:
+        return res[0]
+
+    return res
 
 
 def compose_url(base_url: str, parameters: dict, page: int = 1) -> str:

@@ -41,7 +41,8 @@ class Model(BaseModel):
         env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
-        ModelGETParams(**kwargs) params = _params(**kwargs)
+        ModelGETParams(**kwargs)
+        params = _params(**kwargs)
 
         async def fetch_models():
             return await get_all(
@@ -75,7 +76,6 @@ class Model(BaseModel):
         """
         https://api.mosqlimate.org/docs/registry/POST/models/
         """
-        env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 10
 
         if self.client is None:
@@ -100,10 +100,10 @@ class Model(BaseModel):
         }
 
         ModelPOSTParams(**params)
-        params = _params(**params)
-        base_url = API_DEV_URL if env == "dev" else API_PROD_URL
+        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
+
         resp = requests.post(
             url,
             json=params,
@@ -116,6 +116,7 @@ class Model(BaseModel):
                 "POST request returned status code "
                 f"{resp.status_code} \n {resp.reason}"
             )
+
         return resp
 
     def update(
@@ -138,7 +139,6 @@ class Model(BaseModel):
         """
         https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L258
         """
-        env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 10
 
         if self.client is None:
@@ -164,7 +164,7 @@ class Model(BaseModel):
 
         ModelPUTParams(id=id, **params)
 
-        base_url = API_DEV_URL if env == "dev" else API_PROD_URL
+        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + f"/{id}"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.put(url, json=params, headers=headers, timeout=timeout)
