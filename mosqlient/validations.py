@@ -138,4 +138,10 @@ def validate_prediction_data(data: pd.DataFrame) -> pd.DataFrame:
     assert set(data.columns) == set(PREDICTION_DATA_COLUMNS), (
         f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}"
     )
+    # TODO: Include more checks
     return data
+
+
+def validate_tags(tags: list[int]) -> list[int]:
+    # TODO:
+    return tags

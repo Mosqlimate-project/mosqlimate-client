@@ -8,6 +8,7 @@ from importlib import metadata as importlib_metadata
 from typing import List
 
 from mosqlient.client import Client
+from mosqlient.registry._model_impl import *
 
 
 def get_version() -> str:

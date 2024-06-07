@@ -177,7 +177,6 @@ class ModelGETParams(BaseModel):
 
     id: Optional[types.ID] = None
     name: Optional[types.Name] = None
-    description: Optional[types.Description] = None
     author_name: Optional[types.AuthorName] = None
     author_username: Optional[types.AuthorUserName] = None
     author_institution: Optional[types.AuthorInstitution] = None
@@ -189,6 +188,7 @@ class ModelGETParams(BaseModel):
     spatial: Optional[types.Spatial] = None
     categorical: Optional[types.Categorical] = None
     time_resolution: Optional[types.TimeResolution] = None
+    tags: Optional[types.Tags] = None
 
 
 class ModelPOSTParams(BaseModel):
