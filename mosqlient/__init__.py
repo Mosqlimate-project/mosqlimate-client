@@ -9,6 +9,7 @@ from typing import List
 
 from mosqlient.client import Client
 from mosqlient.registry._model_impl import *
+from mosqlient.registry._prediction_impl import *
 
 
 def get_version() -> str:

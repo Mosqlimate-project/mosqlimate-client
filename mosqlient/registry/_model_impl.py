@@ -58,7 +58,7 @@ def get_models(
     return res[0] if len(res) == 1 else res
 
 
-def get_model_by_id(id: int) -> Union[dict, list[dict]]:
+def get_model_by_id(id: int) -> Union[dict, list]:
     res = Model.get(id=id)
     return res[0] if len(res) == 1 else res
 
