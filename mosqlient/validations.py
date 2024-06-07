@@ -100,6 +100,7 @@ def validate_time_resolution(time_resolution: str) -> str:
         f"Unkown time_resolution {time_resolution}. ",
         f"Options: {TIME_RESOLUTIONS}"
     )
+    return time_resolution
 
 
 def validate_temporal(temporal: bool) -> bool:
@@ -124,12 +125,12 @@ def validate_commit(commit: str) -> str:
 def validate_date(date: str) -> str:
     error = "Incorrect date format. Format: YYYY-MM-DD \n%s"
     try:
-        date = dt.date.fromisoformat(date)
+        dt_date = dt.date.fromisoformat(date)
     except Exception as err:
         raise ValidationError(error % err)
 
-    assert date >= dt.date(2010, 1, 1), "date is too old"
-    assert date <= dt.datetime.now().date(), "date is in the future"
+    assert dt_date >= dt.date(2010, 1, 1), "date is too old"
+    assert dt_date <= dt.datetime.now().date(), "date is in the future"
 
     return str(date)
 

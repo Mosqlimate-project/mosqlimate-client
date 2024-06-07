@@ -99,7 +99,19 @@ class Model(BaseModel):
             "time_resolution": time_resolution,
         }
 
-        ModelPOSTParams(**params)
+        ModelPOSTParams(
+            name=name,
+            description=description,
+            repository=repository,
+            implementation_language=implementation_language,
+            disease=disease,
+            temporal=temporal,
+            spatial=spatial,
+            categorical=categorical,
+            ADM_level=adm_level,
+            time_resolution=time_resolution,
+        )
+
         base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
@@ -162,7 +174,19 @@ class Model(BaseModel):
             "time_resolution": time_resolution
         }
 
-        ModelPUTParams(id=id, **params)
+        ModelPUTParams(
+            id=id,
+            name=name,
+            description=description,
+            repository=repository,
+            implementation_language=implementation_language,
+            disease=disease,
+            temporal=temporal,
+            spatial=spatial,
+            categorical=categorical,
+            ADM_level=adm_level,
+            time_resolution=time_resolution,
+        )
 
         base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + f"/{id}"
