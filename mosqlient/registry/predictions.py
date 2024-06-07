@@ -88,7 +88,7 @@ class Prediction(BaseModel):
         description: str,
         commit: str,
         predict_date: str,
-        prediction: str | pd.DataFrame | dict,
+        prediction: pd.DataFrame,
         **kwargs,
     ):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
