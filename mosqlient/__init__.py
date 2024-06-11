@@ -7,7 +7,11 @@ client library for the Mosqlimate project data platform.
 from importlib import metadata as importlib_metadata
 from typing import List
 
-from mosqlient.client import PlatformClient as Client  # noqa
+from mosqlient.client import Client
+from mosqlient.registry._model_get_impl import *
+from mosqlient.registry._model_post_impl import *
+from mosqlient.registry._prediction_get_impl import *
+from mosqlient.registry._prediction_post_impl import *
 
 
 def get_version() -> str:

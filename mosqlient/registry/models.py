@@ -1,14 +1,16 @@
 import asyncio
 from typing import Any, Literal, Optional
-from urllib.parse import urlparse
 
-import nest_asyncio
 import requests
+import nest_asyncio
+from pydantic import BaseModel, ConfigDict
 
-from mosqlient import Client
+from mosqlient import types
+from mosqlient.client import Client
 from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
 from mosqlient.requests import get_all
+
 
 nest_asyncio.apply()
 
@@ -26,19 +28,30 @@ def _params(**kwargs) -> dict[str, Any]:
     return params
 
 
-class Model:
-    client: Client | None
+class Model(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def __init__(self, client: Optional[Client] = None):
-        self.client = client
+    client: Client | None
 
     @classmethod
     def get(cls, **kwargs):
-        cls._validate_fields(**kwargs)
+        """
+        https://api.mosqlimate.org/docs/registry/GET/models/
+        """
+        env = kwargs["env"] if "env" in kwargs else "prod"
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+
+        ModelGETParams(**kwargs)
         params = _params(**kwargs)
 
         async def fetch_models():
-            return await get_all("registry", "models", params)
+            return await get_all(
+                "registry",
+                "models",
+                params,
+                env=env,
+                timeout=timeout
+            )
 
         if asyncio.get_event_loop().is_running():
             loop = asyncio.get_event_loop()
@@ -58,15 +71,21 @@ class Model:
         categorical: bool,
         adm_level: Literal[0, 1, 2, 3],
         time_resolution: Literal["day", "week", "month", "year"],
-        _env: Literal["dev", "prod"] = "prod",
+        **kwargs,
     ):
+        """
+        https://api.mosqlimate.org/docs/registry/POST/models/
+        """
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
+
         if self.client is None:
             raise ClientError(
                 "A Client instance must be provided, please instantiate Model "
-                "passing your Mosqlimate's credentials. For more infor about "
+                "passing your Mosqlimate's credentials. For more info about "
                 "retrieving or inserting data from Mosqlimate, please see the "
                 "API Documentation"
             )
+
         params = {
             "name": name,
             "description": description,
@@ -80,80 +99,146 @@ class Model:
             "time_resolution": time_resolution,
         }
 
-        self._validate_fields(**params)
+        ModelPOSTParams(
+            name=name,
+            description=description,
+            repository=repository,
+            implementation_language=implementation_language,
+            disease=disease,
+            temporal=temporal,
+            spatial=spatial,
+            categorical=categorical,
+            ADM_level=adm_level,
+            time_resolution=time_resolution,
+        )
 
-        base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
         url = base_url + "/".join(("registry", "models")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
-        resp = requests.post(url, json=params, headers=headers, timeout=60)
+
+        resp = requests.post(
+            url,
+            json=params,
+            headers=headers,
+            timeout=timeout
+        )
 
         if resp.status_code != 201:
-            
-            raise ModelPostError(f"POST request returned status code {resp.status_code} \n {resp.reason}")
+            raise ModelPostError(
+                "POST request returned status code "
+                f"{resp.status_code} \n {resp.reason}"
+            )
 
         return resp
 
-    @staticmethod
-    def _validate_fields(**kwargs) -> None:
-        ModelFieldValidator(**kwargs)
+    def update(
+        self,
+        id: int,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        repository: Optional[str] = None,
+        implementation_language: Optional[str] = None,
+        disease: Optional[Literal["dengue", "chikungunya", "zika"]] = None,
+        temporal: Optional[bool] = None,
+        spatial: Optional[bool] = None,
+        categorical: Optional[bool] = None,
+        adm_level: Optional[Literal[0, 1, 2, 3]] = None,
+        # fmt: off
+        time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
+        # fmt: on
+        **kwargs
+    ):
+        """
+        https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L258
+        """
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
+
+        if self.client is None:
+            raise ClientError(
+                "A Client instance must be provided, please instantiate Model "
+                "passing your Mosqlimate's credentials. For more infor about "
+                "retrieving or inserting data from Mosqlimate, please see the "
+                "API Documentation"
+            )
+
+        params = {
+            "name": name,
+            "description": description,
+            "repository": repository,
+            "implementation_language": implementation_language,
+            "disease": disease,
+            "temporal": temporal,
+            "spatial": spatial,
+            "categorical": categorical,
+            "ADM_level": adm_level,
+            "time_resolution": time_resolution
+        }
+
+        ModelPUTParams(
+            id=id,
+            name=name,
+            description=description,
+            repository=repository,
+            implementation_language=implementation_language,
+            disease=disease,
+            temporal=temporal,
+            spatial=spatial,
+            categorical=categorical,
+            ADM_level=adm_level,
+            time_resolution=time_resolution,
+        )
+
+        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
+        url = base_url + "/".join(("registry", "models")) + f"/{id}"
+        headers = {"X-UID-Key": self.client.X_UID_KEY}
+        resp = requests.put(url, json=params, headers=headers, timeout=timeout)
+
+        return resp
 
 
-class ModelFieldValidator:
-    FIELDS = {
-        "id": (int, str),
-        "name": str,
-        "description": str,
-        "author_name": str,
-        "author_username": str,
-        "author_institution": str,
-        "repository": str,
-        "implementation_language": str,
-        "disease": str,
-        "ADM_level": (str, int),
-        "temporal": bool,
-        "spatial": bool,
-        "categorical": bool,
-        "time_resolution": str,
-    }
-    DISEASES = ["dengue", "zika", "chikungunya"]
-    ADM_LEVELS = [0, 1, 2, 3]
-    TIME_RESOLUTIONS = ["day", "week", "month", "year"]
+class ModelGETParams(BaseModel):
+    # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
 
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            if v is None:
-                continue
+    id: Optional[types.ID] = None
+    name: Optional[types.Name] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    disease: Optional[types.Disease] = None
+    ADM_level: Optional[types.ADMLevel] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    time_resolution: Optional[types.TimeResolution] = None
+    tags: Optional[types.Tags] = None
 
-            if not isinstance(v, self.FIELDS[k]):
-                raise TypeError(f"Field '{k}' must have instance of " f"{' or '.join(self.FIELDS[k])}")
 
-            if k == "id":
-                if v <= 0:
-                    raise ValueError("Incorrect value for field 'id'")
+class ModelPOSTParams(BaseModel):
+    # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L154
 
-            if k == "description":
-                if not v:
-                    raise ValueError("A Model description must be provided")
-                if len(v) > 500:
-                    raise ValueError("Model description too long")
+    name: types.Name
+    description: Optional[types.Description] = None
+    repository: types.Repository
+    implementation_language: types.ImplementationLanguage
+    disease: types.Disease
+    temporal: types.Temporal
+    spatial: types.Spatial
+    categorical: types.Categorical
+    ADM_level: types.ADMLevel
+    time_resolution: types.TimeResolution
 
-            if k == "repository":
-                repo_url = urlparse(v)
-                if repo_url.netloc != "github.com":
-                    raise ValueError("'repository' must be a valid GitHub repository")
 
-            if k == "disease":
-                if v == "chik":
-                    v = "chikungunya"
-
-                if v not in self.DISEASES:
-                    raise ValueError(f"Unkown 'disease'. Options: {self.DISEASES}")
-
-            if k == "ADM_level":
-                v = int(v)
-                if v not in self.ADM_LEVELS:
-                    raise ValueError(f"Unkown 'ADM_level'. Options: {self.ADM_LEVELS}")
-
-            if k == "time_resolution":
-                if v not in self.TIME_RESOLUTIONS:
-                    raise ValueError("Unkown 'time_resolution'. " f"Options: {self.TIME_RESOLUTIONS}")
+class ModelPUTParams(BaseModel):
+    id: types.ID
+    name: Optional[types.Name] = None
+    description: Optional[types.Description] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    disease: Optional[types.Disease] = None
+    ADM_level: Optional[types.ADMLevel] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    time_resolution: Optional[types.TimeResolution] = None

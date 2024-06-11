@@ -8,28 +8,26 @@ from urllib.parse import urljoin
 import aiohttp
 import requests
 
-from mosqlient.config import API_DEV_URL, API_PROD_URL, APPS, APPS_TYPE
+from mosqlient.config import API_DEV_URL, API_PROD_URL
+from mosqlient.types import APP
 from mosqlient.utils import validate
 
 
 def get(
-    app: APPS_TYPE,
+    app: APP,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     pagination: bool = True,
     timeout: int = 10,
-    _env: Literal["dev", "prod"] = "prod",
+    env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
-    if app not in APPS:
-        raise ValueError(f"unkown Mosqlimate app. Options: {APPS}")
-
     if pagination:
         validate.url_pagination(params)
 
     if not endpoint:
         raise ValueError("endpoint is required")
 
-    base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+    base_url = API_DEV_URL if env == "dev" else API_PROD_URL
 
     url = urljoin(base_url, "/".join((str(app), str(endpoint)))) + "/?"
 
@@ -46,7 +44,8 @@ async def aget(
             if res.status == 200:
                 return await res.json()
             if retries == 0:
-                raise aiohttp.ClientConnectionError(f"Response status: {res.status}. Reason: {res.reason}")
+                raise aiohttp.ClientConnectionError(
+                    f"Response status: {res.status}. Reason: {res.reason}")
             await asyncio.sleep(10 / (retries + 1))
             await aget(session, url, params, timeout, retries - 1)
     except aiohttp.ServerTimeoutError:
@@ -56,17 +55,17 @@ async def aget(
 
 
 async def get_all(
-    app: APPS_TYPE,
+    app: APP,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     timeout: int = 60,
     _max_per_page: int = 50,
-    _env: Literal["dev", "prod"] = "prod",
+    env: Literal["dev", "prod"] = "prod"
 ) -> list[dict]:
     params["page"] = 1
     params["per_page"] = _max_per_page
 
-    base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
+    base_url = API_DEV_URL if env == "dev" else API_PROD_URL
 
     url = urljoin(base_url, "/".join((str(app), str(endpoint)))) + "/?"
 
@@ -85,13 +84,20 @@ async def get_all(
             task = asyncio.create_task(aget(session, url, params))
             tasks.append(task)
         results = await asyncio.gather(*tasks)
-    return list(chain(result["items"] for result in results))
+
+    res = list(chain(result["items"] for result in results))
+
+    if len(res) == 1:
+        return res[0]
+
+    return res
 
 
 def compose_url(base_url: str, parameters: dict, page: int = 1) -> str:
     """Helper method to compose the API url with parameters"""
     url = base_url + "?" if not base_url.endswith("?") else base_url
-    params = "&".join([f"{p}={v}" for p, v in parameters.items()]) + f"&page={page}"
+    params = "&".join(
+        [f"{p}={v}" for p, v in parameters.items()]) + f"&page={page}"
     return url + params
 
 
@@ -111,7 +117,7 @@ def attempt_delay(session: requests.Session, url: str):
 
 
 def get_datastore(
-    app: APPS_TYPE, endpoint: AnyStr, params: dict[str, str | int | float], _env: Literal["dev", "prod"] = "prod"
+    app: APP, endpoint: AnyStr, params: dict[str, str | int | float], _env: Literal["dev", "prod"] = "prod"
 ) -> Generator[dict, None, None]:
 
     base_url = API_DEV_URL if _env == "dev" else API_PROD_URL
