@@ -1,6 +1,18 @@
 Release Notes
 ---
 
+# [1.2.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.1.0...1.2.0) (2024-06-11)
+
+
+### Bug Fixes
+
+* **registry:** create pydantic type validations; improve registry endpoint; improve struct; include registry.Prediction; include update_model to registry.Model ([#9](https://github.com/Mosqlimate-project/mosqlimate-client/issues/9)) ([7768ee5](https://github.com/Mosqlimate-project/mosqlimate-client/commit/7768ee5ae61d0683f612d6ecdd0e675595e1d91f))
+
+
+### Features
+
+* **baseline:** first baseline model ([973c2d0](https://github.com/Mosqlimate-project/mosqlimate-client/commit/973c2d0c3d5c56b97971b3f737279a9e4cd69864))
+
 # [1.1.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.0.1...1.1.0) (2024-05-28)
 
 
