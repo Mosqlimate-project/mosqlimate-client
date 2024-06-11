@@ -211,7 +211,7 @@ class Arima:
                 End date for model training 
         """
 
-        df_train = self.df.copy
+        df_train = self.df.copy()
 
         df_train = df_train.loc[(df_train.index >= pd.to_datetime(train_ini_date)) & (df_train.index <= pd.to_datetime(train_end_date))]
 
