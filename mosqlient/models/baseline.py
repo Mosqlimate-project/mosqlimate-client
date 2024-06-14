@@ -188,6 +188,7 @@ class Arima:
         if df.columns[0] != 'y':
             raise InvalidDataFrameError("The column must be named `y`.")
         
+        df['y']= df['y'].astype(float)
 
         self.df = df 
         
@@ -301,6 +302,8 @@ class Arima:
         df_preds.dates = pd.to_datetime(df_preds.dates)
         
         df_preds = df_preds.merge(df, left_on = 'dates', right_index = True)
+
+        df_preds = df_preds.loc[df_preds.dates <= end_date]
 
         df_preds = df_preds.dropna()
 
