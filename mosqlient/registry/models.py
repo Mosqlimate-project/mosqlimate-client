@@ -17,7 +17,10 @@ nest_asyncio.apply()
 
 
 class Model(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     client: Client | None
 
@@ -186,6 +189,10 @@ class Model(BaseModel):
 
 class ModelGETParams(BaseModel):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     id: Optional[types.ID] = None
     name: Optional[types.Name] = None
@@ -205,6 +212,10 @@ class ModelGETParams(BaseModel):
 
 class ModelPOSTParams(BaseModel):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L154
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     name: types.Name
     description: Optional[types.Description] = None
@@ -219,6 +230,11 @@ class ModelPOSTParams(BaseModel):
 
 
 class ModelPUTParams(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
     id: types.ID
     name: Optional[types.Name] = None
     description: Optional[types.Description] = None

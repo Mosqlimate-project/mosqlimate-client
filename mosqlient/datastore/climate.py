@@ -1,26 +1,31 @@
 import pandas as pd
+from datetime import date
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
-from mosqlient.requests import get_datastore
-from mosqlient.datastore.api import DataFieldValidator
+from mosqlient.requests import get_datastore, get_all
 from mosqlient._utils import parse_params
 
 
-class Climate:
+class Climate(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     @classmethod
-    def get(cls, **kwargs):
-        cls._validate_fields(**kwargs)
+    def get(cls, start: str | date, end: str | date, bench: str, **kwargs):
+        env = kwargs["env"] if "env" in kwargs else "prod"
+
+        kwargs["start"] = start
+        kwargs["end"] = end
         params = parse_params(**kwargs)
+        ClimateGETParams(**kwargs)
 
-        gen_data = get_datastore("datastore", "climate", params)
+        if bench == "threads":
+            gen_data = get_datastore("datastore", "climate", params, _env=env)
+        else:
+            gen_data = get_all("datastore", "climate", params, env=env)
 
-        return pd.DataFrame(list(gen_data))
-
-    @staticmethod
-    def _validate_fields(**kwargs) -> None:
-        DataFieldValidator(**kwargs)
+        return gen_data
 
 
 class ClimateGETParams(BaseModel):

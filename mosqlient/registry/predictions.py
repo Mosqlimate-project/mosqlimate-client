@@ -17,7 +17,10 @@ nest_asyncio.apply()
 
 
 class Prediction(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     client: Client | None
 
@@ -126,6 +129,11 @@ class Prediction(BaseModel):
 
 
 class PredictionGETParams(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
     id: Optional[types.ID] = None
     model_id: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
@@ -147,7 +155,10 @@ class PredictionGETParams(BaseModel):
 
 
 class PredictionPOSTParams(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     model_id: types.ID
     description: types.Description
@@ -157,7 +168,10 @@ class PredictionPOSTParams(BaseModel):
 
 
 class PredictionPUTParams(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     model_id: types.ID
     description: Optional[types.Description] = None

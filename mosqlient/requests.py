@@ -35,7 +35,11 @@ def get(
 
 
 async def aget(
-    session: aiohttp.ClientSession, url: str, params: dict[str, str | int | float], timeout: int = 10, retries: int = 3
+    session: aiohttp.ClientSession,
+    url: str,
+    params: dict[str, str | int | float],
+    timeout: int = 10,
+    retries: int = 3
 ) -> dict:
     try:
         if retries < 0:

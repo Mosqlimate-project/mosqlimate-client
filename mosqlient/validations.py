@@ -163,6 +163,6 @@ def validate_uf(
 
 def validate_geocode(geocode: int) -> int:
     err = "Invalid municipality geocode %s. Example: 3304557"
-    assert len(geocode) == 7, err % geocode
-    assert str(geocode)[:2] in UF_CODES.values(), err % geocode
+    assert len(str(geocode)) == 7, err % geocode
+    assert int(str(geocode)[:2]) in UF_CODES.values(), err % geocode
     return geocode

@@ -1,1 +1,2 @@
-from .api import Infodengue, Climate #  noqa
+from .api import Infodengue  # noqa
+from .climate import Climate  # noqa

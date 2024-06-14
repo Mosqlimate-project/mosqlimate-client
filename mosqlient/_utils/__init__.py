@@ -1,11 +1,13 @@
 from typing import Any
+from datetime import date
 
 
 def parse_params(**kwargs) -> dict[str, Any]:
     params = {}
     for k, v in kwargs.items():
-        if isinstance(v, (bool, int, float, str)):
+        if isinstance(v, (bool, int, float, str, date)):
             params[k] = str(v)
+            print(k)
         elif v is None:
             continue
         else:
