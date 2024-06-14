@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, List
 import datetime as dt
 from string import ascii_lowercase, digits
 
@@ -83,9 +83,9 @@ def validate_implementation_language(implementation_language: str) -> str:
     return implementation_language
 
 
-def validate_disease(disease: str) -> str:
+def validate_disease(disease: Literal["dengue", "zika", "chikungunya"]) -> str:
     assert disease.lower() in DISEASES, (
-        f"Unknown disease {disease}. Options: {DISEASES}"
+        f"Unknown disease '{disease}'. Options: {DISEASES}"
     )
     return disease
 
