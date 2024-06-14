@@ -8,9 +8,8 @@ from urllib.parse import urljoin
 import aiohttp
 import requests
 
-from mosqlient._config import API_DEV_URL, API_PROD_URL
-from mosqlient._utils import validate
 from mosqlient.types import APP
+from mosqlient._config import API_DEV_URL, API_PROD_URL
 
 
 def get(
@@ -21,8 +20,11 @@ def get(
     timeout: int = 10,
     env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
-    if pagination:
-        validate.url_pagination(params)
+    if pagination and ("page" not in params or "per_page" not in params):
+        raise ValueError(
+            "'page' and 'per_page' parameters are required to requests",
+            " with pagination"
+        )
 
     if not endpoint:
         raise ValueError("endpoint is required")
@@ -81,7 +83,9 @@ async def get_all(
     if total_pages == 1:
         return first_page["items"]
 
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    async with aiohttp.ClientSession(
+        timeout=aiohttp.ClientTimeout(total=timeout)
+    ) as session:
         tasks = []
         for page in range(2, total_pages + 1):
             params["page"] = page
@@ -96,6 +100,8 @@ async def get_all(
 
     return res
 
+
+# ---
 
 def compose_url(base_url: str, parameters: dict, page: int = 1) -> str:
     """Helper method to compose the API url with parameters"""

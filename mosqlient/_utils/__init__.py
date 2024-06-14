@@ -7,7 +7,6 @@ def parse_params(**kwargs) -> dict[str, Any]:
     for k, v in kwargs.items():
         if isinstance(v, (bool, int, float, str, date)):
             params[k] = str(v)
-            print(k)
         elif v is None:
             continue
         else:
