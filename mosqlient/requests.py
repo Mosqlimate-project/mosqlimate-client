@@ -101,7 +101,31 @@ async def get_all(
     return res
 
 
+def get_all_sync(
+    app: APP,
+    endpoint: AnyStr,
+    params: dict[str, str | int | float],
+    timeout: int = 60,
+    _max_per_page: int = 50,
+    env: Literal["dev", "prod"] = "prod"
+):
+    async def fetch_all():
+        return await get_all(
+            app=app,
+            endpoint=endpoint,
+            params=params,
+            env=env,
+            timeout=timeout
+        )
+
+    if asyncio.get_event_loop().is_running():
+        loop = asyncio.get_event_loop()
+        future = asyncio.ensure_future(fetch_all())
+        return loop.run_until_complete(future)
+    return asyncio.run(fetch_all())
+
 # ---
+
 
 def compose_url(base_url: str, parameters: dict, page: int = 1) -> str:
     """Helper method to compose the API url with parameters"""

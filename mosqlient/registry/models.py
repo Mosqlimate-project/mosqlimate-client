@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 from mosqlient import types
 from mosqlient.client import Client
 from mosqlient.errors import ClientError, ModelPostError
-from mosqlient.requests import get_all
+from mosqlient.requests import get_all_sync
 from mosqlient._utils import parse_params
 from mosqlient._config import API_DEV_URL, API_PROD_URL
 
@@ -35,20 +35,13 @@ class Model(BaseModel):
         ModelGETParams(**kwargs)
         params = parse_params(**kwargs)
 
-        async def fetch_models():
-            return await get_all(
-                "registry",
-                "models",
-                params,
-                env=env,
-                timeout=timeout
-            )
-
-        if asyncio.get_event_loop().is_running():
-            loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(fetch_models())
-            return loop.run_until_complete(future)
-        return asyncio.run(fetch_models())
+        return get_all_sync(
+            app="registry",
+            endpoint="models",
+            params=params,
+            env=env,
+            timeout=timeout
+        )
 
     def post(
         self,

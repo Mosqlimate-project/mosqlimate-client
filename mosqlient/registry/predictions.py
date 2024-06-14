@@ -8,7 +8,7 @@ import pandas as pd
 
 from mosqlient import types
 from mosqlient.client import Client
-from mosqlient.requests import get_all
+from mosqlient.requests import get_all_sync
 from mosqlient.errors import ClientError, PredictionPostError
 from mosqlient._config import API_DEV_URL, API_PROD_URL
 from mosqlient._utils import parse_params
@@ -58,20 +58,13 @@ class Prediction(BaseModel):
         PredictionGETParams(**kwargs)
         params = parse_params(**kwargs)
 
-        async def fetch_prediction():
-            return await get_all(
-                "registry",
-                "predictions",
-                params,
-                env=env,
-                timeout=timeout
-            )
-
-        if asyncio.get_event_loop().is_running():
-            loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(fetch_prediction())
-            return loop.run_until_complete(future)
-        return asyncio.run(fetch_prediction())
+        return get_all_sync(
+            app="registry",
+            endpoint="predictions",
+            params=params,
+            env=env,
+            timeout=timeout
+        )
 
     def post(
         self,
