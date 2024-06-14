@@ -8,9 +8,9 @@ from urllib.parse import urljoin
 import aiohttp
 import requests
 
-from mosqlient.config import API_DEV_URL, API_PROD_URL
+from mosqlient._config import API_DEV_URL, API_PROD_URL
+from mosqlient._utils import validate
 from mosqlient.types import APP
-from mosqlient.utils import validate
 
 
 def get(

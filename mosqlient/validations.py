@@ -1,10 +1,12 @@
+from typing import Literal
 import datetime as dt
 from string import ascii_lowercase, digits
 
 import pandas as pd
 from pydantic import ValidationError
 
-from mosqlient.config import *  # noqa
+from mosqlient._config import *  # noqa
+from mosqlient._utils.brasil import UF_CODES
 
 
 def validate_django_app(app: str) -> str:
@@ -146,3 +148,21 @@ def validate_prediction_data(data: pd.DataFrame) -> pd.DataFrame:
 def validate_tags(tags: list[int]) -> list[int]:
     # TODO:
     return tags
+
+# fmt: off
+def validate_uf(
+    uf: Literal[
+        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
+        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
+        "SE", "TO", "DF"
+]) -> str:
+    # fmt: on
+    assert uf.upper() in UF_CODES, f"Unknown UF {uf}. Example: 'SP'"
+    return uf.upper()
+
+
+def validate_geocode(geocode: int) -> int:
+    err = "Invalid municipality geocode %s. Example: 3304557"
+    assert len(geocode) == 7, err % geocode
+    assert str(geocode)[:2] in UF_CODES.values(), err % geocode
+    return geocode

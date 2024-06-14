@@ -31,3 +31,6 @@ Date = Annotated[str, AfterValidator(validate_date)]
 PredictionData = Annotated[
     pd.DataFrame, AfterValidator(validate_prediction_data)
 ]
+
+UF = Annotated[str, AfterValidator(validate_uf)]
+Geocode = Annotated[int, AfterValidator(validate_geocode)]

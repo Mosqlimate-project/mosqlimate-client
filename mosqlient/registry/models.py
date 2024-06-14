@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
 import requests
 import nest_asyncio
@@ -7,25 +7,13 @@ from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
 from mosqlient.client import Client
-from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
 from mosqlient.requests import get_all
+from mosqlient._utils import parse_params
+from mosqlient._config import API_DEV_URL, API_PROD_URL
 
 
 nest_asyncio.apply()
-
-
-def _params(**kwargs) -> dict[str, Any]:
-    params = {}
-    for k, v in kwargs.items():
-        if isinstance(v, (bool, int, float, str)):
-            params[k] = str(v)
-        elif v is None:
-            continue
-        else:
-            raise TypeError(f"Unknown type f{type(v)}")
-
-    return params
 
 
 class Model(BaseModel):
@@ -42,7 +30,7 @@ class Model(BaseModel):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         ModelGETParams(**kwargs)
-        params = _params(**kwargs)
+        params = parse_params(**kwargs)
 
         async def fetch_models():
             return await get_all(
