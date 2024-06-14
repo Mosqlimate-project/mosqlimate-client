@@ -18,10 +18,13 @@ def get_infodengue(
     geocode: Optional[int] = None
 ):
     params = {
-        "disease": disease,
-        "start": start_date,
-        "end": end_date,
         "uf": uf,
         "geocode": geocode
     }
-    return Infodengue.get(**params)
+
+    return Infodengue.get(
+        disease=disease,
+        start=start_date,
+        end=end_date,
+        **params
+    )

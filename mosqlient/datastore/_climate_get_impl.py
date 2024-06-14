@@ -18,9 +18,7 @@ def get_climate(
     geocode: Optional[int] = None
 ):
     params = {
-        "start": start_date,
-        "end": end_date,
         "uf": uf,
         "geocode": geocode
     }
-    return Climate.get(**params)
+    return Climate.get(start=start_date, end=end_date, **params)
