@@ -52,7 +52,7 @@ def get_prediction_dataframe(preds, date, boxcox) ->pd.DataFrame:
 
     df_preds = pd.DataFrame()
 
-    df_preds['date'] = date
+    df_preds['dates'] = date
 
     try:
         df_preds['preds'] = preds[0].values
@@ -78,18 +78,18 @@ def plot_predictions(df_preds:pd.DataFrame, title:str = '') -> None:
     Parameters
     ----------
     df_preds: pd.DataFrame 
-        Dataframe with the columns: ['date', 'data', 'preds', 'lower', 'upper'].
+        Dataframe with the columns: ['dates', 'data', 'preds', 'lower', 'upper'].
     title: str
         Title of the plot.
     """
 
     fig,ax = plt.subplots(1, figsize = (6,4))
         
-    ax.plot(df_preds.date, df_preds.data, color = 'black', label = 'Data')
+    ax.plot(df_preds.dates, df_preds.data, color = 'black', label = 'Data')
             
-    ax.plot(df_preds.date, df_preds.preds, color = 'tab:orange', label = 'ARIMA')
+    ax.plot(df_preds.dates, df_preds.preds, color = 'tab:orange', label = 'ARIMA')
             
-    ax.fill_between(df_preds.date, df_preds.lower, df_preds.upper, color = 'tab:orange', alpha = 0.3)
+    ax.fill_between(df_preds.dates, df_preds.lower, df_preds.upper, color = 'tab:orange', alpha = 0.3)
             
     ax.legend()
             
@@ -112,7 +112,7 @@ def plot_forecast(df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs:int) ->
     Parameters
     ----------
     df_for: pd.DataFrame
-        Dataframe with the forecast results, with the columns: ['date', 'preds', 'lower', 'upper']
+        Dataframe with the forecast results, with the columns: ['dates', 'preds', 'lower', 'upper']
     df_preds: pd.DataFrame 
         Dataframe with the columns: ['data'] and a datetime index.
     last_obs: int
@@ -125,11 +125,11 @@ def plot_forecast(df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs:int) ->
         
     ax.plot(df_train.index, df_train.data, color = 'black', label = 'Data')
             
-    ax.plot(df_for.date, df_for.preds, color = 'tab:red', label = 'Forecast')
+    ax.plot(df_for.dates, df_for.preds, color = 'tab:red', label = 'Forecast')
             
-    ax.fill_between(df_for.date, df_for.lower, df_for.upper, color = 'tab:red', alpha = 0.3)
+    ax.fill_between(df_for.dates, df_for.lower, df_for.upper, color = 'tab:red', alpha = 0.3)
 
-    ax.plot([df_train.index[-1], df_for.date[0]], [df_train[f'data'].values[-1], df_for.preds.values[0]], ls = '--', color = 'black')
+    ax.plot([df_train.index[-1], df_for.dates[0]], [df_train[f'data'].values[-1], df_for.preds.values[0]], ls = '--', color = 'black')
             
     ax.legend()
             
@@ -143,17 +143,20 @@ def plot_forecast(df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs:int) ->
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b-%d\n%Y'))
 
+
+class InvalidDataFrameError(Exception):
+    """Custom exception for invalid DataFrame."""
+    pass
+
 class Arima:
     """
     A class to implement a ARIMA model as baseline for forecast cases in some city.
 
     Attributes
     ----------
-    geocode : 
-        IBGE code of the city
-    disease: 
-        Disease name. Valid options are: ['dengue', 'zika', 'chikungunya']
-
+    df : pd.DataFrame 
+        A pandas dataframe with the columns y and a datetime index 
+ 
     Methods
     -------
     train():
@@ -166,36 +169,26 @@ class Arima:
         Forecast models
     """
 
-    def __init__(self, geocode:int, disease:str):
+    def __init__(self, df:pd.DataFrame):
         """
         Constructs all the necessary attributes for the Arima object.
 
         Parameters
         ----------
-            geocode: int
-                IBGE geocode of the city 
-            disease: str
+            df : pd.DataFrame 
+            A pandas dataframe with the column y and a datetime index 
+ 
         """
-        self.geocode = geocode
-        self.disease = disease
+        if not pd.api.types.is_datetime64_any_dtype(df.index):
+            raise InvalidDataFrameError("The DataFrame's index is not of datetime type.")
 
-        df = Infodengue.get(per_page =  100,
-                            disease =  self.disease,
-                            start = "2010-01-01",
-                            end = date.today().strftime('%Y-%m-%d'), 
-                            geocode = self.geocode)
-
-        df.set_index('data_iniSE', inplace = True )
-    
-        df.index = pd.to_datetime(df.index)
-    
-        df = df.sort_index()
-    
-        df = df.asfreq('W')
+        if df.shape[1] != 1:
+            raise InvalidDataFrameError("The DataFrame must have one single column.")
         
-        df = df[['casos_est']].rename(columns = {'casos_est':'y'})
-
-        df = df.ffill()
+        if df.columns[0] != 'y':
+            raise InvalidDataFrameError("The column must be named `y`.")
+        
+        df['y']= df['y'].astype(float)
 
         self.df = df 
         
@@ -256,7 +249,7 @@ class Arima:
 
         df_in_sample = get_prediction_dataframe(preds_in_sample, df_train.index, self.boxcox)
 
-        df_in_sample = df_in_sample.merge(df_train, left_on = 'date', right_index = True)
+        df_in_sample = df_in_sample.merge(df_train, left_on = 'dates', right_index = True)
         
         df_in_sample = df_in_sample.rename(columns = {'y': 'data'})
 
@@ -306,9 +299,11 @@ class Arima:
             
             df_preds = pd.concat([df_preds, get_prediction_dataframe(preds, dates, self.boxcox)])
 
-        df_preds.date = pd.to_datetime(df_preds.date)
+        df_preds.dates = pd.to_datetime(df_preds.dates)
         
-        df_preds = df_preds.merge(df, left_on = 'date', right_index = True)
+        df_preds = df_preds.merge(df, left_on = 'dates', right_index = True)
+
+        df_preds = df_preds.loc[df_preds.dates <= end_date]
 
         df_preds = df_preds.dropna()
 
@@ -353,8 +348,6 @@ class Arima:
         preds = model.predict(horizon, return_conf_int = True)
 
         df_preds = get_prediction_dataframe(preds, dates, self.boxcox)
-
-        df_preds['adm_2'] = self.geocode
 
         if plot:
 
