@@ -1,6 +1,14 @@
 Release Notes
 ---
 
+## [1.2.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.0...1.2.1) (2024-06-16)
+
+
+### Bug Fixes
+
+* **baseline:** remove data loader from arima class ([3868fd3](https://github.com/Mosqlimate-project/mosqlimate-client/commit/3868fd3c2becbbc8b77d690b0392a0032a9a4db3))
+* **datastore:** implement pydantic; improve code; improve imports; async vs threads benchmark; high level functions ([#17](https://github.com/Mosqlimate-project/mosqlimate-client/issues/17)) ([7ca74a9](https://github.com/Mosqlimate-project/mosqlimate-client/commit/7ca74a9e535d821120bc95336fbb701bf1eb7be5))
+
 # [1.2.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.1.0...1.2.0) (2024-06-11)
 
 
