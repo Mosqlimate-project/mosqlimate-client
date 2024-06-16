@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
 import requests
 import nest_asyncio
@@ -7,29 +7,20 @@ from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
 from mosqlient.client import Client
-from mosqlient.config import API_DEV_URL, API_PROD_URL
 from mosqlient.errors import ClientError, ModelPostError
-from mosqlient.requests import get_all
+from mosqlient.requests import get_all_sync
+from mosqlient._utils import parse_params
+from mosqlient._config import API_DEV_URL, API_PROD_URL
 
 
 nest_asyncio.apply()
 
 
-def _params(**kwargs) -> dict[str, Any]:
-    params = {}
-    for k, v in kwargs.items():
-        if isinstance(v, (bool, int, float, str)):
-            params[k] = str(v)
-        elif v is None:
-            continue
-        else:
-            raise TypeError(f"Unknown type f{type(v)}")
-
-    return params
-
-
 class Model(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     client: Client | None
 
@@ -42,22 +33,15 @@ class Model(BaseModel):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         ModelGETParams(**kwargs)
-        params = _params(**kwargs)
+        params = parse_params(**kwargs)
 
-        async def fetch_models():
-            return await get_all(
-                "registry",
-                "models",
-                params,
-                env=env,
-                timeout=timeout
-            )
-
-        if asyncio.get_event_loop().is_running():
-            loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(fetch_models())
-            return loop.run_until_complete(future)
-        return asyncio.run(fetch_models())
+        return get_all_sync(
+            app="registry",
+            endpoint="models",
+            params=params,
+            env=env,
+            timeout=timeout
+        )
 
     def post(
         self,
@@ -198,6 +182,10 @@ class Model(BaseModel):
 
 class ModelGETParams(BaseModel):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     id: Optional[types.ID] = None
     name: Optional[types.Name] = None
@@ -217,6 +205,10 @@ class ModelGETParams(BaseModel):
 
 class ModelPOSTParams(BaseModel):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L154
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     name: types.Name
     description: Optional[types.Description] = None
@@ -231,6 +223,11 @@ class ModelPOSTParams(BaseModel):
 
 
 class ModelPUTParams(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
     id: types.ID
     name: Optional[types.Name] = None
     description: Optional[types.Description] = None

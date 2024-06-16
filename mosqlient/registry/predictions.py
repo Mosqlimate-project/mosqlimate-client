@@ -8,28 +8,19 @@ import pandas as pd
 
 from mosqlient import types
 from mosqlient.client import Client
-from mosqlient.requests import get_all
+from mosqlient.requests import get_all_sync
 from mosqlient.errors import ClientError, PredictionPostError
-from mosqlient.config import API_DEV_URL, API_PROD_URL
+from mosqlient._config import API_DEV_URL, API_PROD_URL
+from mosqlient._utils import parse_params
 
 nest_asyncio.apply()
 
 
-def _params(**kwargs) -> dict[str, Any]:
-    params = {}
-    for k, v in kwargs.items():
-        if isinstance(v, (bool, int, float, str)):
-            params[k] = str(v)
-        elif v is None:
-            continue
-        else:
-            raise TypeError(f"Unknown type f{type(v)}")
-
-    return params
-
-
 class Prediction(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     client: Client | None
 
@@ -65,22 +56,15 @@ class Prediction(BaseModel):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         PredictionGETParams(**kwargs)
-        params = _params(**kwargs)
+        params = parse_params(**kwargs)
 
-        async def fetch_prediction():
-            return await get_all(
-                "registry",
-                "predictions",
-                params,
-                env=env,
-                timeout=timeout
-            )
-
-        if asyncio.get_event_loop().is_running():
-            loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(fetch_prediction())
-            return loop.run_until_complete(future)
-        return asyncio.run(fetch_prediction())
+        return get_all_sync(
+            app="registry",
+            endpoint="predictions",
+            params=params,
+            env=env,
+            timeout=timeout
+        )
 
     def post(
         self,
@@ -138,6 +122,11 @@ class Prediction(BaseModel):
 
 
 class PredictionGETParams(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
     id: Optional[types.ID] = None
     model_id: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
@@ -159,7 +148,10 @@ class PredictionGETParams(BaseModel):
 
 
 class PredictionPOSTParams(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     model_id: types.ID
     description: types.Description
@@ -169,7 +161,10 @@ class PredictionPOSTParams(BaseModel):
 
 
 class PredictionPUTParams(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
 
     model_id: types.ID
     description: Optional[types.Description] = None
