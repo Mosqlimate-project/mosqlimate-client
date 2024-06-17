@@ -4,6 +4,8 @@ __all__ = ["get_climate"]
 from typing import Optional, Literal
 from datetime import date
 
+import pandas as pd
+
 from .climate import Climate
 
 
@@ -16,9 +18,9 @@ def get_climate(
         "SE", "TO", "DF"
     ]] = None,
     geocode: Optional[int] = None
-):
+) -> pd.DataFrame:
     params = {
         "uf": uf,
         "geocode": geocode
     }
-    return Climate.get(start=start_date, end=end_date, **params)
+    return pd.DataFrame(Climate.get(start=start_date, end=end_date, **params))
