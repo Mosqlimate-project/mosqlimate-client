@@ -91,6 +91,9 @@ async def get_all(
             tasks.append(task)
         results = await asyncio.gather(*tasks)
 
+    if results:
+        results.insert(0, first_page)
+
     res = list(chain(result["items"] for result in results))
 
     if len(res) == 1:
