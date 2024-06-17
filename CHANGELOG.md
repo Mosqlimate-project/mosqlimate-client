@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.2.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.1...1.2.2) (2024-06-17)
+
+
+### Bug Fixes
+
+* **requests:** include first page on results ([#19](https://github.com/Mosqlimate-project/mosqlimate-client/issues/19)) ([4d6062b](https://github.com/Mosqlimate-project/mosqlimate-client/commit/4d6062bcca12d1d13cfbeefa8cc752d4c88f7dbb))
+
 ## [1.2.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.0...1.2.1) (2024-06-16)
 
 
