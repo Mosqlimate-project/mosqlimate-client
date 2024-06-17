@@ -1,6 +1,33 @@
 Release Notes
 ---
 
+## [1.2.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.1...1.2.2) (2024-06-17)
+
+
+### Bug Fixes
+
+* **requests:** include first page on results ([#19](https://github.com/Mosqlimate-project/mosqlimate-client/issues/19)) ([4d6062b](https://github.com/Mosqlimate-project/mosqlimate-client/commit/4d6062bcca12d1d13cfbeefa8cc752d4c88f7dbb))
+
+## [1.2.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.0...1.2.1) (2024-06-16)
+
+
+### Bug Fixes
+
+* **baseline:** remove data loader from arima class ([3868fd3](https://github.com/Mosqlimate-project/mosqlimate-client/commit/3868fd3c2becbbc8b77d690b0392a0032a9a4db3))
+* **datastore:** implement pydantic; improve code; improve imports; async vs threads benchmark; high level functions ([#17](https://github.com/Mosqlimate-project/mosqlimate-client/issues/17)) ([7ca74a9](https://github.com/Mosqlimate-project/mosqlimate-client/commit/7ca74a9e535d821120bc95336fbb701bf1eb7be5))
+
+# [1.2.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.1.0...1.2.0) (2024-06-11)
+
+
+### Bug Fixes
+
+* **registry:** create pydantic type validations; improve registry endpoint; improve struct; include registry.Prediction; include update_model to registry.Model ([#9](https://github.com/Mosqlimate-project/mosqlimate-client/issues/9)) ([7768ee5](https://github.com/Mosqlimate-project/mosqlimate-client/commit/7768ee5ae61d0683f612d6ecdd0e675595e1d91f))
+
+
+### Features
+
+* **baseline:** first baseline model ([973c2d0](https://github.com/Mosqlimate-project/mosqlimate-client/commit/973c2d0c3d5c56b97971b3f737279a9e4cd69864))
+
 # [1.1.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.0.1...1.1.0) (2024-05-28)
 
 
