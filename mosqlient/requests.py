@@ -51,10 +51,10 @@ async def aget(
                 raise aiohttp.ClientConnectionError(
                     f"Response status: {res.status}. Reason: {res.reason}")
             await asyncio.sleep(10 / (retries + 1))
-            await aget(session, url, params, timeout, retries - 1)
+            return await aget(session, url, params, timeout, retries - 1)
     except aiohttp.ServerTimeoutError:
         await asyncio.sleep(8 / (retries + 1))
-        await aget(session, url, params, timeout, retries - 1)
+        return await aget(session, url, params, timeout, retries - 1)
     raise aiohttp.ClientConnectionError("Invalid request")
 
 
@@ -86,12 +86,18 @@ async def get_all(
     ) as session:
         tasks = []
         for page in range(2, total_pages + 1):
-            params["page"] = page
-            task = asyncio.create_task(aget(session, url, params))
+            params_c = params.copy()
+            params_c["page"] = page
+            task = asyncio.create_task(aget(session, url, params_c))
             tasks.append(task)
         results = await asyncio.gather(*tasks)
 
-    res = list(chain(result["items"] for result in results))
+    if results:
+        results.insert(0, first_page)
+
+    res = list(chain.from_iterable(
+        result["items"] for result in results if result is not None
+    ))
 
     if len(res) == 1:
         return res[0]

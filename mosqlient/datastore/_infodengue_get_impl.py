@@ -3,6 +3,8 @@ __all__ = ["get_infodengue"]
 from typing import Optional, Literal
 from datetime import date
 
+import pandas as pd
+
 from .infodengue import Infodengue
 
 
@@ -16,15 +18,15 @@ def get_infodengue(
         "SE", "TO", "DF"
     ]] = None,
     geocode: Optional[int] = None
-):
+) -> pd.DataFrame:
     params = {
         "uf": uf,
         "geocode": geocode
     }
 
-    return Infodengue.get(
+    return pd.DataFrame(Infodengue.get(
         disease=disease,
         start=start_date,
         end=end_date,
         **params
-    )
+    ))
