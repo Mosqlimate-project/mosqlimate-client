@@ -1,6 +1,6 @@
+from typing import Union
 from typing_extensions import Annotated
 
-import pandas as pd
 from pydantic.functional_validators import AfterValidator
 
 from mosqlient.validations import *  # noqa
@@ -29,7 +29,7 @@ Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 Commit = Annotated[str, AfterValidator(validate_commit)]
 Date = Annotated[str, AfterValidator(validate_date)]
 PredictionData = Annotated[
-    pd.DataFrame, AfterValidator(validate_prediction_data)
+    Union[str, list], AfterValidator(validate_prediction_data)
 ]
 
 UF = Annotated[str, AfterValidator(validate_uf)]
