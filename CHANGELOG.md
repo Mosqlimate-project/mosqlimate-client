@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.2.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.2...1.2.3) (2024-06-19)
+
+
+### Bug Fixes
+
+* **Prediction:** update post_prediction types to accept only JSON serializable objects ([#21](https://github.com/Mosqlimate-project/mosqlimate-client/issues/21)) ([d286b40](https://github.com/Mosqlimate-project/mosqlimate-client/commit/d286b40cb9b5c38d1fd42a9466a4a09809376923))
+
 ## [1.2.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.1...1.2.2) (2024-06-17)
 
 
