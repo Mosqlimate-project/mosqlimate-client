@@ -2,8 +2,6 @@ __all__ = ["upload_prediction"]
 
 import requests
 
-import pandas as pd
-
 from mosqlient import Client
 from .predictions import Prediction
 
@@ -13,7 +11,7 @@ def upload_prediction(
     description: str,
     commit: str,
     predict_date: str,
-    prediction: pd.DataFrame,
+    prediction: str | dict,
     api_key: str
 ) -> requests.Response:
     client = Client(x_uid_key=api_key)
@@ -22,5 +20,5 @@ def upload_prediction(
         description=description,
         commit=commit,
         predict_date=predict_date,
-        prediction=prediction
+        prediction=prediction,
     )

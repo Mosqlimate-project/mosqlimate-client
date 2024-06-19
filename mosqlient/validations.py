@@ -1,8 +1,10 @@
-from typing import Literal, List
+import json
+from typing import Literal
 import datetime as dt
 from string import ascii_lowercase, digits
 
 import pandas as pd
+
 from pydantic import ValidationError
 
 from mosqlient._config import *  # noqa
@@ -137,12 +139,23 @@ def validate_date(date: str) -> str:
     return str(date)
 
 
-def validate_prediction_data(data: pd.DataFrame) -> pd.DataFrame:
-    assert set(data.columns) == set(PREDICTION_DATA_COLUMNS), (
+def validate_prediction_data(data: str | list[dict]) -> str:
+    if not isinstance(data, (str, list)):
+        raise TypeError("`data` must be a str or a list of dicts")
+
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("`data` object must be JSON serializable")
+
+    data_df = pd.DataFrame(data)
+
+    assert set(data_df.columns) == set(PREDICTION_DATA_COLUMNS), (
         f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}"
     )
     # TODO: Include more checks
-    return data
+    return json.dumps(data)
 
 
 def validate_tags(tags: list[int]) -> list[int]:

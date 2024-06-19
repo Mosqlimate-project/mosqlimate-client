@@ -1,10 +1,9 @@
-import asyncio
-from typing import Any, Optional
+import json
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 import requests
 import nest_asyncio
-import pandas as pd
 
 from mosqlient import types
 from mosqlient.client import Client
@@ -72,7 +71,7 @@ class Prediction(BaseModel):
         description: str,
         commit: str,
         predict_date: str,
-        prediction: pd.DataFrame,
+        prediction: dict | str,
         **kwargs,
     ):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
@@ -90,7 +89,7 @@ class Prediction(BaseModel):
             "description": description,
             "commit": commit,
             "predict_date": predict_date,
-            "prediction": prediction,
+            "prediction": json.dumps(prediction),
         }
 
         PredictionPOSTParams(
