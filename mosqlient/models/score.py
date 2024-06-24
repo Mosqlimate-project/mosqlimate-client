@@ -7,6 +7,7 @@ from mosqlient import get_predictions
 from scoringrules import crps_normal, logs_normal
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+
 def transform_json_to_dataframe(res:dict) -> pd.DataFrame:
     """
     A function that transforms the prediction output from the API and transforms it in a DataFrame.
@@ -50,6 +51,34 @@ def evaluate_point_metrics(y_true, y_pred, metric):
     score = m(y_true, y_pred)
         
     return score
+
+def plot_bar_score(data:pd.DataFrame, score:str) -> alt.Chart:
+    '''
+    Function to plot a bar chart based on scorer.summary dataframe
+
+    Parameters:
+    --------------
+    data: pd.DataFrame
+    score: str
+        Valid options are: ['mae', 'mse', 'crps', 'log_score']
+    '''
+    data = data.reset_index()
+
+    data['id'] = data['id'].astype(str)   
+
+    bar_chart = alt.Chart(data).mark_bar().encode(
+
+    x=alt.X('id:N', axis=alt.Axis(labelAngle=360)).title('Model'),
+    y=alt.Y(f'{score}:Q').title(score),
+    color=alt.Color('id', legend=alt.Legend(title='Model'))
+
+    ).properties(
+        title=f'{score} score', 
+        width = 400, 
+        height = 300,
+    )
+
+    return bar_chart
 
 
 def plot_score(data:pd.DataFrame, df_melted:pd.DataFrame, score:str = 'CRPS') -> alt.Chart:
@@ -218,6 +247,10 @@ class Scorer:
     plot_log_score():
         alt.Chart: Method that returns an Altair panel with the time series of cases and the time series 
                     of the log score for each model.
+    plot_mae():
+        alt.Chart : Bar chart of the MAE score for each prediction.
+    plot_mse():
+        alt.Chart : Bar chart of the MSE score for each prediction.
     """
     
     def __init__(self, df_true: pd.DataFrame, ids: Optional[list[int]] = None, preds: Optional[pd.DataFrame] = None):
@@ -456,6 +489,21 @@ class Scorer:
         df_score.index.name = 'id'
 
         return df_score 
+    
+    def plot_mae(self,) -> alt.Chart:
+        '''
+        Bar chart of the MAE score for each prediction.
+        '''
+
+        return plot_bar_score(self.summary, 'mae')
+    
+
+    def plot_mse(self,) -> alt.Chart:
+        '''
+        Bar chart of the MSE score for each prediction.
+        '''
+
+        return plot_bar_score(self.summary, 'mse')
 
 
     def plot_crps(self,) -> alt.Chart:
