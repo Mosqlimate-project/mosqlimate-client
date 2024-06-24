@@ -152,7 +152,7 @@ class PredictionPOSTParams(BaseModel):
         protected_namespaces=()
     )
 
-    model_id: types.ID
+    model: types.ID
     description: types.Description
     commit: types.Commit
     predict_date: types.Date
@@ -165,7 +165,7 @@ class PredictionPUTParams(BaseModel):
         protected_namespaces=()
     )
 
-    model_id: types.ID
+    model: types.ID
     description: Optional[types.Description] = None
     commit: Optional[types.Commit] = None
     predict_date: Optional[types.Date] = None
