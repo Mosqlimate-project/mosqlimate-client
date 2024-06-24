@@ -296,10 +296,12 @@ class Scorer:
 
         
         if ids is not None: 
+
+            ids = list(map(str, ids))
             
             for id_ in ids: 
                 try: 
-                    df_ = transform_json_to_dataframe(get_predictions(id = id_))
+                    df_ = transform_json_to_dataframe(get_predictions(id = int(id_)))
                     df_ = df_.sort_values(by = 'dates')
                     dict_df_ids[id_] = df_
                     min_dates.append(min(df_.dates))

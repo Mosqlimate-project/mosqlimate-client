@@ -46,7 +46,7 @@ def get_predictions(
     predict_date: Optional[date] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
-) -> list[dict]:
+) -> list[dict] | dict:
 
     params = {
         "id": id,
