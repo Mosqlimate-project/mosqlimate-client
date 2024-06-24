@@ -85,7 +85,7 @@ class Prediction(BaseModel):
             )
 
         params = {
-            "model_id": model_id,
+            "model": model_id,
             "description": description,
             "commit": commit,
             "predict_date": predict_date,
@@ -127,7 +127,7 @@ class PredictionGETParams(BaseModel):
     )
 
     id: Optional[types.ID] = None
-    model_id: Optional[types.ID] = None
+    model: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
     model_ADM_level: Optional[types.ADMLevel] = None
     model_time_resolution: Optional[types.TimeResolution] = None
