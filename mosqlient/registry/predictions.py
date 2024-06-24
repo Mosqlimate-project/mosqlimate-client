@@ -71,7 +71,7 @@ class Prediction(BaseModel):
         description: str,
         commit: str,
         predict_date: str,
-        prediction: dict | str,
+        prediction: list[dict],
         **kwargs,
     ):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60

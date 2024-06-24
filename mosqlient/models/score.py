@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 from typing import Optional 
-from mosqlient import get_predictions
+from mosqlient import get_prediction_by_id 
 from scoringrules import crps_normal, logs_normal
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
@@ -253,7 +253,7 @@ class Scorer:
         alt.Chart : Bar chart of the MSE score for each prediction.
     """
     
-    def __init__(self, df_true: pd.DataFrame, ids: Optional[list[int]] = None, preds: Optional[pd.DataFrame] = None):
+    def __init__(self, df_true: pd.DataFrame, ids: Optional[list[int]|list[str]] = None, preds: Optional[pd.DataFrame] = None):
         """
         Parameters
         ----------
@@ -296,12 +296,10 @@ class Scorer:
 
         
         if ids is not None: 
-
-            ids = list(map(str, ids))
-            
+            ids = [str(id_) for id_ in ids]
             for id_ in ids: 
                 try: 
-                    df_ = transform_json_to_dataframe(get_predictions(id = int(id_)))
+                    df_ = transform_json_to_dataframe(get_prediction_by_id(id = int(id_)))
                     df_ = df_.sort_values(by = 'dates')
                     dict_df_ids[id_] = df_
                     min_dates.append(min(df_.dates))
