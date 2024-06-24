@@ -93,7 +93,7 @@ class Prediction(BaseModel):
         }
 
         PredictionPOSTParams(
-            model_id=model_id,
+            model=model_id,
             description=description,
             commit=commit,
             predict_date=predict_date,
@@ -101,7 +101,7 @@ class Prediction(BaseModel):
         )
 
         base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
-        url = base_url + "/".join(("registry", "models")) + "/"
+        url = base_url + "/".join(("registry", "predictions")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
 
         resp = requests.post(
