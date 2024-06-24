@@ -1,6 +1,20 @@
 Release Notes
 ---
 
+# [1.3.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.3...1.3.0) (2024-06-24)
+
+
+### Bug Fixes
+
+* **dependencies:** ignore jinja2 problem ([#23](https://github.com/Mosqlimate-project/mosqlimate-client/issues/23)) ([836ade6](https://github.com/Mosqlimate-project/mosqlimate-client/commit/836ade6bf9507fe8f9856fd3b4ad22a935315cdb))
+* **post:** fix minor errors in post method ([f3a8616](https://github.com/Mosqlimate-project/mosqlimate-client/commit/f3a861649ef249db649c9d6d4c4b8e9a6ed7bf53))
+* **release:** mirror python dependency on conda env & poetry ([#24](https://github.com/Mosqlimate-project/mosqlimate-client/issues/24)) ([9269b3d](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9269b3de933d8e4d066724e4f2c892acc333b1e7))
+
+
+### Features
+
+* **score:** Add first score module ([0a9c8ed](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0a9c8edd4bd2be791617c95415b65839971c3d42))
+
 ## [1.2.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.2...1.2.3) (2024-06-19)
 
 
