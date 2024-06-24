@@ -11,7 +11,7 @@ def upload_prediction(
     description: str,
     commit: str,
     predict_date: str,
-    prediction: str | dict,
+    prediction: list[dict],
     api_key: str
 ) -> requests.Response:
     client = Client(x_uid_key=api_key)

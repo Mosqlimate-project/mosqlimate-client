@@ -46,7 +46,7 @@ def get_predictions(
     predict_date: Optional[date] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
-) -> list[dict]:
+) -> list[dict] | dict:
 
     params = {
         "id": id,
@@ -73,7 +73,7 @@ def get_predictions(
     return res[0] if len(res) == 1 else res
 
 
-def get_prediction_by_id(id: int) -> Union[dict, list]:
+def get_prediction_by_id(id: int) -> dict:
     res = Prediction.get(id=id)
     return res[0] if len(res) == 1 else res
 

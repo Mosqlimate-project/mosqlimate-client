@@ -71,7 +71,7 @@ class Prediction(BaseModel):
         description: str,
         commit: str,
         predict_date: str,
-        prediction: dict | str,
+        prediction: list[dict],
         **kwargs,
     ):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
@@ -85,7 +85,7 @@ class Prediction(BaseModel):
             )
 
         params = {
-            "model_id": model_id,
+            "model": model_id,
             "description": description,
             "commit": commit,
             "predict_date": predict_date,
@@ -93,7 +93,7 @@ class Prediction(BaseModel):
         }
 
         PredictionPOSTParams(
-            model_id=model_id,
+            model=model_id,
             description=description,
             commit=commit,
             predict_date=predict_date,
@@ -101,7 +101,7 @@ class Prediction(BaseModel):
         )
 
         base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
-        url = base_url + "/".join(("registry", "models")) + "/"
+        url = base_url + "/".join(("registry", "predictions")) + "/"
         headers = {"X-UID-Key": self.client.X_UID_KEY}
 
         resp = requests.post(
@@ -127,7 +127,7 @@ class PredictionGETParams(BaseModel):
     )
 
     id: Optional[types.ID] = None
-    model_id: Optional[types.ID] = None
+    model: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
     model_ADM_level: Optional[types.ADMLevel] = None
     model_time_resolution: Optional[types.TimeResolution] = None
@@ -152,7 +152,7 @@ class PredictionPOSTParams(BaseModel):
         protected_namespaces=()
     )
 
-    model_id: types.ID
+    model: types.ID
     description: types.Description
     commit: types.Commit
     predict_date: types.Date
@@ -165,7 +165,7 @@ class PredictionPUTParams(BaseModel):
         protected_namespaces=()
     )
 
-    model_id: types.ID
+    model: types.ID
     description: Optional[types.Description] = None
     commit: Optional[types.Commit] = None
     predict_date: Optional[types.Date] = None
