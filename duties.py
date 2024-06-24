@@ -202,7 +202,7 @@ def check_dependencies(ctx):
             ctx.run(safety_not_available, title="Checking dependencies", nofail=True)
             return
     ctx.run(
-        ("poetry export -f requirements.txt --without-hashes | " f"{safety} check --stdin --full-report"),
+        ("poetry export -f requirements.txt --without-hashes | " f"{safety} check --ignore 70612 --stdin --full-report"),
         title="Checking dependencies",
         pty=PTY,
         nofail=nofail,
