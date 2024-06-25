@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.3.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.0...1.3.1) (2024-06-25)
+
+
+### Bug Fixes
+
+* **post:** restrain prediction data to be a pure json only ([#25](https://github.com/Mosqlimate-project/mosqlimate-client/issues/25)) ([513dec0](https://github.com/Mosqlimate-project/mosqlimate-client/commit/513dec040457d71d9772d12f375e5aff11c771f6))
+
 # [1.3.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.2.3...1.3.0) (2024-06-24)
 
 
