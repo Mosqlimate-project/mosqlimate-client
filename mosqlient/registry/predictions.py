@@ -71,7 +71,7 @@ class Prediction(BaseModel):
         description: str,
         commit: str,
         predict_date: str,
-        prediction: list[dict],
+        prediction: str,
         **kwargs,
     ):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
@@ -89,7 +89,7 @@ class Prediction(BaseModel):
             "description": description,
             "commit": commit,
             "predict_date": predict_date,
-            "prediction": json.dumps(prediction),
+            "prediction": json.dumps(json.loads(prediction)),
         }
 
         PredictionPOSTParams(
