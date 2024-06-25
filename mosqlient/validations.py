@@ -139,8 +139,8 @@ def validate_date(date: str) -> str:
     return str(date)
 
 
-def validate_prediction_data(data: str | list[dict]) -> str:
-    if not isinstance(data, (str, list)):
+def validate_prediction_data(data: str) -> str:
+    if not isinstance(data, (str)):
         raise TypeError("`data` must be a str or a list of dicts")
 
     if isinstance(data, str):
