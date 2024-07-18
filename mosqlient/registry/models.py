@@ -1,4 +1,4 @@
-import asyncio
+from urllib.parse import urljoin
 from typing import Literal, Optional
 
 import requests
@@ -10,7 +10,7 @@ from mosqlient.client import Client
 from mosqlient.errors import ClientError, ModelPostError
 from mosqlient.requests import get_all_sync
 from mosqlient._utils import parse_params
-from mosqlient._config import API_DEV_URL, API_PROD_URL
+from mosqlient._config import get_api_url
 
 
 nest_asyncio.apply()
@@ -29,7 +29,6 @@ class Model(BaseModel):
         """
         https://api.mosqlimate.org/docs/registry/GET/models/
         """
-        env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         ModelGETParams(**kwargs)
@@ -39,7 +38,6 @@ class Model(BaseModel):
             app="registry",
             endpoint="models",
             params=params,
-            env=env,
             timeout=timeout
         )
 
@@ -96,8 +94,7 @@ class Model(BaseModel):
             time_resolution=time_resolution,
         )
 
-        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
-        url = base_url + "/".join(("registry", "models")) + "/"
+        url = urljoin(get_api_url(), "/".join(("registry", "models")) + "/")
         headers = {"X-UID-Key": self.client.X_UID_KEY}
 
         resp = requests.post(
@@ -172,8 +169,8 @@ class Model(BaseModel):
             time_resolution=time_resolution,
         )
 
-        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
-        url = base_url + "/".join(("registry", "models")) + f"/{id}"
+        url = urljoin(
+            get_api_url(), "/".join(("registry", "models")) + f"/{id}")
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.put(url, json=params, headers=headers, timeout=timeout)
 

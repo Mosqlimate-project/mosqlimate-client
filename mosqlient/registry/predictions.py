@@ -1,15 +1,16 @@
 import json
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from urllib.parse import urljoin
 
 import requests
 import nest_asyncio
+from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
 from mosqlient.client import Client
 from mosqlient.requests import get_all_sync
 from mosqlient.errors import ClientError, PredictionPostError
-from mosqlient._config import API_DEV_URL, API_PROD_URL
+from mosqlient._config import get_api_url
 from mosqlient._utils import parse_params
 
 nest_asyncio.apply()
@@ -51,7 +52,6 @@ class Prediction(BaseModel):
         start [str]: Search by prediction start date. Format: YYYY-MM-DD
         end [str]: Search by prediction end date. Format: YYYY-MM-DD
         """
-        env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         PredictionGETParams(**kwargs)
@@ -61,7 +61,6 @@ class Prediction(BaseModel):
             app="registry",
             endpoint="predictions",
             params=params,
-            env=env,
             timeout=timeout
         )
 
@@ -100,8 +99,10 @@ class Prediction(BaseModel):
             prediction=prediction
         )
 
-        base_url = API_DEV_URL if self.client.env == "dev" else API_PROD_URL
-        url = base_url + "/".join(("registry", "predictions")) + "/"
+        url = urljoin(
+            get_api_url(),
+            "/".join(("registry", "predictions")) + "/"
+        )
         headers = {"X-UID-Key": self.client.X_UID_KEY}
 
         resp = requests.post(

@@ -1,5 +1,4 @@
 import uuid
-from typing import Literal, Optional
 from typing_extensions import Annotated
 
 from pydantic.functional_validators import AfterValidator
@@ -11,10 +10,8 @@ class PlatformClient:
     def __init__(
         self,
         x_uid_key: str,
-        env: Optional[Literal["dev", "prod"]] = "prod"
     ):
         self.username, self.uid_key = x_uid_key.split(":")
-        self.env = env
         self._check_username()
         self._check_uuid4()
 
@@ -31,7 +28,6 @@ class PlatformClient:
             "authors",
             {"username": self.username},
             pagination=False,
-            env=self.env
         )
 
         if author.status_code != 200:

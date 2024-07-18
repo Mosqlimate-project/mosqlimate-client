@@ -1,4 +1,3 @@
-from typing import Union
 from typing_extensions import Annotated
 
 from pydantic.functional_validators import AfterValidator
@@ -28,7 +27,9 @@ Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 
 Commit = Annotated[str, AfterValidator(validate_commit)]
 Date = Annotated[str, AfterValidator(validate_date)]
-PredictionData = Annotated[str, AfterValidator(validate_prediction_data)
+PredictionData = Annotated[
+    str,
+    AfterValidator(validate_prediction_data)
 ]
 
 UF = Annotated[str, AfterValidator(validate_uf)]
