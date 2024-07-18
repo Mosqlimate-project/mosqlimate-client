@@ -1,13 +1,13 @@
 import asyncio
 from itertools import chain
-from typing import AnyStr, Literal
+from typing import AnyStr
 from urllib.parse import urljoin
 
 import aiohttp
 import requests
 
 from mosqlient.types import APP
-from mosqlient._config import API_DEV_URL, API_PROD_URL
+from mosqlient._config import get_api_url
 
 
 def get(
@@ -16,7 +16,6 @@ def get(
     params: dict[str, str | int | float],
     pagination: bool = True,
     timeout: int = 10,
-    env: Literal["dev", "prod"] = "prod"
 ) -> requests.models.Response:
     if pagination and ("page" not in params or "per_page" not in params):
         raise ValueError(
@@ -27,9 +26,7 @@ def get(
     if not endpoint:
         raise ValueError("endpoint is required")
 
-    base_url = API_DEV_URL if env == "dev" else API_PROD_URL
-
-    url = urljoin(base_url, "/".join((str(app), str(endpoint)))) + "/?"
+    url = urljoin(get_api_url(), "/".join((str(app), str(endpoint)))) + "/?"
 
     return requests.get(url, params, timeout=timeout)
 
@@ -64,14 +61,11 @@ async def get_all(
     params: dict[str, str | int | float],
     timeout: int = 60,
     _max_per_page: int = 50,
-    env: Literal["dev", "prod"] = "prod"
 ) -> list[dict]:
     params["page"] = 1
     params["per_page"] = _max_per_page
 
-    base_url = API_DEV_URL if env == "dev" else API_PROD_URL
-
-    url = urljoin(base_url, "/".join((str(app), str(endpoint)))) + "/?"
+    url = urljoin(get_api_url(), "/".join((str(app), str(endpoint)))) + "/?"
 
     async with aiohttp.ClientSession() as session:
         first_page = await aget(session, url, params)
@@ -111,14 +105,12 @@ def get_all_sync(
     params: dict[str, str | int | float],
     timeout: int = 60,
     _max_per_page: int = 50,
-    env: Literal["dev", "prod"] = "prod"
 ):
     async def fetch_all():
         return await get_all(
             app=app,
             endpoint=endpoint,
             params=params,
-            env=env,
             timeout=timeout
         )
 

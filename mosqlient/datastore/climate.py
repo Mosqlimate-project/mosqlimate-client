@@ -12,7 +12,6 @@ class Climate(BaseModel):
 
     @classmethod
     def get(cls, start: str | date, end: str | date, **kwargs):
-        env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         kwargs["start"] = start
@@ -24,7 +23,6 @@ class Climate(BaseModel):
             app="datastore",
             endpoint="climate",
             params=params,
-            env=env,
             timeout=timeout
         )
 
