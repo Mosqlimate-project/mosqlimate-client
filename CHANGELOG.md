@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.4.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.2...1.4.0) (2024-07-18)
+
+
+### Features
+
+* **config:** replace env variable by a global setting ([#28](https://github.com/Mosqlimate-project/mosqlimate-client/issues/28)) ([370690e](https://github.com/Mosqlimate-project/mosqlimate-client/commit/370690e0088ec8151337abaa7abf97fb24dae472))
+
 ## [1.3.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.1...1.3.2) (2024-06-25)
 
 
