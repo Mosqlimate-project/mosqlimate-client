@@ -44,6 +44,9 @@ async def aget(
         async with session.get(url, params=params, timeout=timeout) as res:
             if res.status == 200:
                 return await res.json()
+            if str(res.status).startswith("4"):
+                raise aiohttp.ClientConnectionError(
+                    f"Response status: {res.status}. Reason: {res.reason}")
             if retries == 0:
                 raise aiohttp.ClientConnectionError(
                     f"Response status: {res.status}. Reason: {res.reason}")
@@ -92,9 +95,6 @@ async def get_all(
     res = list(chain.from_iterable(
         result["items"] for result in results if result is not None
     ))
-
-    if len(res) == 1:
-        return res[0]
 
     return res
 

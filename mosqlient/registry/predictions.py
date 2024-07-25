@@ -1,9 +1,11 @@
 import json
-from typing import Optional
+from datetime import date
+from typing import Optional, List, ForwardRef
 from urllib.parse import urljoin
 
 import requests
 import nest_asyncio
+import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
@@ -12,6 +14,7 @@ from mosqlient.requests import get_all_sync
 from mosqlient.errors import ClientError, PredictionPostError
 from mosqlient._config import get_api_url
 from mosqlient._utils import parse_params
+from mosqlient.registry.schema import PredictionSchema, PredictionDataRowSchema, ModelSchema
 
 nest_asyncio.apply()
 
@@ -22,7 +25,60 @@ class Prediction(BaseModel):
         protected_namespaces=()
     )
 
-    client: Client | None
+    client: Optional[Client] = None
+    _schema: PredictionSchema
+
+    def __init__(
+        self,
+        id: types.ID,
+        # model: ModelSchema,
+        model: dict,
+        description: types.Description,
+        commit: types.Commit,
+        predict_date: types.Date,
+        # data: List[PredictionDataRowSchema],
+        data: list,
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self._schema = PredictionSchema(
+            id=id,
+            model=model,
+            description=description,
+            commit=commit,
+            predict_date=predict_date,
+            data=data
+        )
+
+    def __repr__(self):
+        return f"Prediction <{self.id}>"
+
+    @property
+    def id(self) -> types.ID:
+        return self._schema.id
+
+    @property
+    def model(self) -> ForwardRef('Model'):
+        return self._schema.model
+
+    @property
+    def description(self) -> types.Description:
+        return self._schema.description
+
+    @property
+    def commit(self) -> types.Commit:
+        return self._schema.commit
+
+    @property
+    def predict_date(self) -> types.Date:
+        return self._schema.predict_date
+
+    @property
+    def data(self):  # TODO: -> types.Data?:
+        return self._schema.data
+
+    def to_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(self.data)
 
     @classmethod
     def get(cls, **kwargs):
@@ -57,12 +113,14 @@ class Prediction(BaseModel):
         PredictionGETParams(**kwargs)
         params = parse_params(**kwargs)
 
-        return get_all_sync(
-            app="registry",
-            endpoint="predictions",
-            params=params,
-            timeout=timeout
-        )
+        return [
+            Prediction(**p) for p in get_all_sync(
+                app="registry",
+                endpoint="predictions",
+                params=params,
+                timeout=timeout
+            )
+        ]
 
     def post(
         self,
