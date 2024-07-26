@@ -139,23 +139,23 @@ def validate_date(date: str) -> str:
     return str(date)
 
 
-def validate_prediction_data(data: str) -> str:
-    if not isinstance(data, (str)):
-        raise TypeError("`data` must be a str or a list of dicts")
+def validate_prediction_data(data: str | list | pd.DataFrame) -> pd.DataFrame:
+    if isinstance(data, list):
+        data = pd.DataFrame(data)
 
     if isinstance(data, str):
         try:
-            data = json.loads(data)
+            data = pd.DataFrame(json.loads(data))
         except json.decoder.JSONDecodeError:
-            raise ValueError("`data` object must be JSON serializable")
+            raise ValueError(
+                "`data` object must be JSON serializable or a DataFrame"
+            )
 
-    data_df = pd.DataFrame(data)
-
-    assert set(data_df.columns) == set(PREDICTION_DATA_COLUMNS), (
+    assert set(data.columns) == set(PREDICTION_DATA_COLUMNS), (
         f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}"
     )
     # TODO: Include more checks
-    return json.dumps(data)
+    return data
 
 
 def validate_tags(tags: list[int]) -> list[int]:

@@ -1,7 +1,9 @@
 from datetime import date
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, ForwardRef
 
 from pydantic import BaseModel
+
+from mosqlient import types
 
 
 class UserSchema(BaseModel):
@@ -25,18 +27,20 @@ class TagSchema(BaseModel):
 
 
 class ModelSchema(BaseModel):
-    id: Optional[int]
-    name: str
-    description: str | None = None
-    author: AuthorSchema
-    repository: str
-    implementation_language: ImplementationLanguageSchema
-    disease: Literal["dengue", "chikungunya", "zika"] | None = None
-    categorical: bool | None = None
-    spatial: bool | None = None
-    temporal: bool | None = None
-    ADM_level: Literal[0, 1, 2, 3] | None = None
-    time_resolution: Literal["day", "week", "month", "year"] | None = None
+    id: types.ID
+    name: types.Name
+    description: types.Description
+    # author: AuthorSchema
+    author: dict
+    repository: types.Repository
+    # implementation_language: ImplementationLanguageSchema
+    implementation_language: dict
+    disease: types.Disease
+    categorical: types.Categorical
+    spatial: types.Spatial
+    temporal: types.Temporal
+    ADM_level: types.ADMLevel
+    time_resolution: types.TimeResolution
 
 
 class PredictionDataRowSchema(BaseModel):
@@ -51,11 +55,10 @@ class PredictionDataRowSchema(BaseModel):
 
 
 class PredictionSchema(BaseModel):
-    id: Optional[int] = None
-    # model: ModelSchema
-    model: dict
-    description: str
-    commit: str
-    predict_date: date  # YYYY-mm-dd
+    id: Optional[types.ID] = None
+    model: ModelSchema
+    description: types.Description
+    commit: types.Commit
+    predict_date: types.Date
     # data: List[PredictionDataRowSchema]
     data: list

@@ -43,3 +43,10 @@ $(BASIC_DUTIES):
 .PHONY: $(QUALITY_DUTIES)
 $(QUALITY_DUTIES):
 	@bash scripts/multirun.sh duty $@ $(call args,$@)
+
+.PHONY: checks
+checks:
+	poetry run duty check-code-quality \
+	&& poetry run duty check-types \
+	&& poetry run duty check-dependencies
+	#&& poetry run duty check-docs
