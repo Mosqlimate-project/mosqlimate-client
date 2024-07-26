@@ -15,7 +15,7 @@ def get(
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     pagination: bool = True,
-    timeout: int = 10,
+    timeout: int = 300,
 ) -> requests.models.Response:
     if pagination and ("page" not in params or "per_page" not in params):
         raise ValueError(
@@ -35,7 +35,7 @@ async def aget(
     session: aiohttp.ClientSession,
     url: str,
     params: dict[str, str | int | float],
-    timeout: int = 10,
+    timeout: int = 300,
     retries: int = 3
 ) -> dict:
     try:
@@ -62,7 +62,7 @@ async def get_all(
     app: APP,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
-    timeout: int = 60,
+    timeout: int = 300,
     _max_per_page: int = 50,
 ) -> list[dict]:
     params["page"] = 1
@@ -103,7 +103,7 @@ def get_all_sync(
     app: APP,
     endpoint: AnyStr,
     params: dict[str, str | int | float],
-    timeout: int = 60,
+    timeout: int = 300,
     _max_per_page: int = 50,
 ):
     async def fetch_all():

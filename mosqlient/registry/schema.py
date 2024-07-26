@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional, Literal, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
 
@@ -34,9 +34,9 @@ class ModelSchema(BaseModel):
     repository: types.Repository
     implementation_language: ImplementationLanguageSchema
     disease: types.Disease
-    categorical: types.Categorical
-    spatial: types.Spatial
-    temporal: types.Temporal
+    categorical: Optional[types.Categorical]
+    spatial: Optional[types.Spatial]
+    temporal: Optional[types.Temporal]
     ADM_level: types.ADMLevel
     time_resolution: types.TimeResolution
 
@@ -53,10 +53,14 @@ class PredictionDataRowSchema(BaseModel):
 
 
 class PredictionSchema(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
     id: Optional[types.ID] = None
     model: ModelSchema
     description: types.Description
     commit: types.Commit
     predict_date: types.Date
-    # data: List[PredictionDataRowSchema]
-    data: list
+    data: types.PredictionData

@@ -82,6 +82,31 @@ class Author(Base):
     def institution(self) -> types.AuthorInstitution:
         return self._schema.institution
 
+    @classmethod
+    def get(
+        cls,
+        name: Optional[types.AuthorName] = None,
+        institution: Optional[types.AuthorInstitution] = None,
+        username: Optional[types.AuthorUserName] = None,
+        **kwargs
+    ):
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+
+        params = {
+            "name": name or "",
+            "institution": institution or "",
+            "username": username or ""
+        }
+
+        return [
+            Author(**m) for m in get_all_sync(
+                app="registry",
+                endpoint="authors",
+                params=params,
+                timeout=timeout
+            )
+        ]
+
 
 class ImplementationLanguage(Base):
     _schema: schema.ImplementationLanguageSchema
@@ -113,9 +138,9 @@ class Model(Base):
         repository: types.Repository,
         implementation_language: ImplementationLanguage | dict,
         disease: types.Disease,
-        categorical: types.Categorical,
-        spatial: types.Spatial,
-        temporal: types.Temporal,
+        categorical: Optional[types.Categorical],
+        spatial: Optional[types.Spatial],
+        temporal: Optional[types.Temporal],
         ADM_level: types.ADMLevel,
         time_resolution: types.TimeResolution,
         **kwargs
@@ -433,7 +458,7 @@ class Prediction(Base):
         return f"Prediction <{self.id}>"
 
     @property
-    def id(self) -> types.ID:
+    def id(self) -> types.ID | None:
         return self._schema.id
 
     @property

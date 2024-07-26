@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Literal, Optional
 import datetime as dt
 from string import ascii_lowercase, digits
@@ -128,10 +129,10 @@ def validate_commit(commit: str) -> str:
     return commit
 
 
-def validate_date(date: str) -> str:
+def validate_date(date: str | dt.date) -> str:
     error = "Incorrect date format. Format: YYYY-MM-DD \n%s"
     try:
-        dt_date = dt.date.fromisoformat(date)
+        dt_date = dt.date.fromisoformat(str(date))
     except Exception as err:
         raise ValidationError(error % err)
 
@@ -143,18 +144,26 @@ def validate_date(date: str) -> str:
 
 def validate_prediction_data(data: str | list | pd.DataFrame) -> pd.DataFrame:
     if isinstance(data, list):
-        data = pd.DataFrame(data)
-
-    if isinstance(data, str):
+        df = pd.DataFrame(data)
+    elif isinstance(data, str):
         try:
-            data = pd.DataFrame(json.loads(data))
+            df = pd.DataFrame(json.loads(data))
         except json.decoder.JSONDecodeError:
             raise ValueError(
                 "`data` object must be JSON serializable or a DataFrame"
             )
+    elif isinstance(data, pd.DataFrame):
+        df = data
+    else:
+        raise ValueError(f"Invalid `data` type {type(data)}")
 
-    assert set(data.columns) == set(PREDICTION_DATA_COLUMNS), (
-        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}"
+    if df.empty:
+        logging.warning("Empty data")
+        return data
+
+    assert set(df.columns) == set(PREDICTION_DATA_COLUMNS), (
+        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}; "
+        f"Missing {set(PREDICTION_DATA_COLUMNS).difference(set(data.columns))}"
     )
     # TODO: Include more checks
     return data

@@ -1,7 +1,8 @@
 __all__ = ["upload_model"]
 
-import requests
 from typing import Literal
+
+import requests
 
 from mosqlient import Client
 from .models import Model
@@ -21,7 +22,9 @@ def upload_model(
     api_key: str
 ) -> requests.Response:
     client = Client(x_uid_key=api_key)
-    return Model(client=client).post(
+    return Model(
+        id=1,
+        client=client,
         name=name,
         description=description,
         repository=repository,
@@ -30,6 +33,6 @@ def upload_model(
         temporal=temporal,
         spatial=spatial,
         categorical=categorical,
-        adm_level=adm_level,
+        ADM_level=adm_level,
         time_resolution=time_resolution,
-    )
+    ).post()

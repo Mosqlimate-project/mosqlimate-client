@@ -1,3 +1,4 @@
+from datetime import date
 from typing_extensions import Annotated
 from typing import Union, List, Dict, Optional
 
@@ -30,7 +31,7 @@ TimeResolution = Annotated[str, AfterValidator(validate_time_resolution)]
 Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 
 Commit = Annotated[str, AfterValidator(validate_commit)]
-Date = Annotated[str, AfterValidator(validate_date)]
+Date = Annotated[Union[str, date], AfterValidator(validate_date)]
 PredictionData = Annotated[
     Union[pd.DataFrame, List[Dict], str],
     AfterValidator(validate_prediction_data)
