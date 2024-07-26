@@ -18,12 +18,17 @@ from mosqlient.registry import schema
 nest_asyncio.apply()
 
 
-class User(BaseModel):
+class Base(BaseModel):
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         protected_namespaces=()
     )
 
+    def json(self):
+        return self._schema.json()
+
+
+class User(Base):
     _schema: schema.UserSchema
 
     def __init__(
@@ -38,9 +43,6 @@ class User(BaseModel):
             username=username
         )
 
-    def __repr__(self) -> str:
-        return self._schema.username
-
     @property
     def name(self) -> types.AuthorName:
         return self._schema.name
@@ -50,12 +52,7 @@ class User(BaseModel):
         return self._schema.username
 
 
-class Author(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
+class Author(Base):
     user: User
     _schema: schema.AuthorSchema
 
@@ -86,13 +83,7 @@ class Author(BaseModel):
         return self._schema.institution
 
 
-class ImplementationLanguage(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
-    client: Optional[Client] = None
+class ImplementationLanguage(Base):
     _schema: schema.ImplementationLanguageSchema
 
     def __init__(self, language: types.ImplementationLanguage, **kwargs):
@@ -107,12 +98,7 @@ class ImplementationLanguage(BaseModel):
         return self._schema.language
 
 
-class Model(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
+class Model(Base):
     client: Optional[Client] = None
     author: Author
     implementation_language: ImplementationLanguage
@@ -367,13 +353,8 @@ class Model(BaseModel):
         return resp
 
 
-class ModelGETParams(BaseModel):
+class ModelGETParams(Base):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
     id: Optional[types.ID] = None
     name: Optional[types.Name] = None
     author_name: Optional[types.AuthorName] = None
@@ -390,13 +371,8 @@ class ModelGETParams(BaseModel):
     tags: Optional[types.Tags] = None
 
 
-class ModelPOSTParams(BaseModel):
+class ModelPOSTParams(Base):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L154
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
     name: types.Name
     description: Optional[types.Description] = None
     repository: types.Repository
@@ -409,12 +385,7 @@ class ModelPOSTParams(BaseModel):
     time_resolution: types.TimeResolution
 
 
-class ModelPUTParams(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
+class ModelPUTParams(Base):
     id: types.ID
     name: Optional[types.Name] = None
     description: Optional[types.Description] = None
@@ -428,12 +399,7 @@ class ModelPUTParams(BaseModel):
     time_resolution: Optional[types.TimeResolution] = None
 
 
-class Prediction(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
+class Prediction(Base):
     client: Optional[Client] = None
     model: Model
     _schema: schema.PredictionSchema
@@ -580,12 +546,7 @@ class Prediction(BaseModel):
         return resp
 
 
-class PredictionGETParams(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
+class PredictionGETParams(Base):
     id: Optional[types.ID] = None
     model: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
@@ -606,12 +567,7 @@ class PredictionGETParams(BaseModel):
     end: Optional[types.Date] = None
 
 
-class PredictionPUTParams(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
-
+class PredictionPUTParams(Base):
     model: types.ID
     description: Optional[types.Description] = None
     commit: Optional[types.Commit] = None
