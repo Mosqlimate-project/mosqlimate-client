@@ -1,5 +1,5 @@
 from typing_extensions import Annotated
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 
 import pandas as pd
 from pydantic.functional_validators import AfterValidator
@@ -14,7 +14,9 @@ Name = Annotated[str, AfterValidator(validate_name)]
 Description = Annotated[str, AfterValidator(validate_description)]
 AuthorName = Annotated[str, AfterValidator(validate_author_name)]
 AuthorUserName = Annotated[str, AfterValidator(validate_author_username)]
-AuthorInstitution = Annotated[str, AfterValidator(validate_author_institution)]
+AuthorInstitution = Annotated[
+    Optional[str], AfterValidator(validate_author_institution)
+]
 Repository = Annotated[str, AfterValidator(validate_repository)]
 ImplementationLanguage = Annotated[
     str, AfterValidator(validate_implementation_language)

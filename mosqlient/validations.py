@@ -1,5 +1,5 @@
 import json
-from typing import Literal
+from typing import Literal, Optional
 import datetime as dt
 from string import ascii_lowercase, digits
 
@@ -47,7 +47,9 @@ def validate_author_username(author_username: str) -> str:
     return author_username
 
 
-def validate_author_institution(author_institution: str) -> str:
+def validate_author_institution(author_institution: Optional[str]) -> str | None:
+    if not author_institution:
+        return None
     assert len(author_institution) <= 100, "author_institution too long"
     assert len(author_institution) > 0, "empty author_institution"
     return author_institution

@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional, Literal, List, ForwardRef
+from typing import Optional, Literal, List
 
 from pydantic import BaseModel
 
@@ -30,11 +30,9 @@ class ModelSchema(BaseModel):
     id: types.ID
     name: types.Name
     description: types.Description
-    # author: AuthorSchema
-    author: dict
+    author: AuthorSchema
     repository: types.Repository
-    # implementation_language: ImplementationLanguageSchema
-    implementation_language: dict
+    implementation_language: ImplementationLanguageSchema
     disease: types.Disease
     categorical: types.Categorical
     spatial: types.Spatial

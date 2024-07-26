@@ -1,4 +1,3 @@
-import json
 from urllib.parse import urljoin
 from typing import Literal, Optional
 
@@ -13,10 +12,99 @@ from mosqlient.errors import ClientError, ModelPostError, PredictionPostError
 from mosqlient.requests import get_all_sync
 from mosqlient._utils import parse_params
 from mosqlient._config import get_api_url
-from mosqlient.registry.schema import ModelSchema, PredictionSchema
+from mosqlient.registry import schema
 
 
 nest_asyncio.apply()
+
+
+class User(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
+    _schema: schema.UserSchema
+
+    def __init__(
+        self,
+        name: types.AuthorName,
+        username: types.AuthorUserName,
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self._schema = schema.UserSchema(
+            name=name,
+            username=username
+        )
+
+    def __repr__(self) -> str:
+        return self._schema.username
+
+    @property
+    def name(self) -> types.AuthorName:
+        return self._schema.name
+
+    @property
+    def username(self) -> types.AuthorUserName:
+        return self._schema.username
+
+
+class Author(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
+    user: User
+    _schema: schema.AuthorSchema
+
+    def __init__(
+        self,
+        user: User | dict,
+        institution: types.AuthorInstitution,
+        **kwargs
+    ):
+
+        if isinstance(user, dict):
+            user = User(**user)
+            kwargs['user'] = user
+
+        super().__init__(**kwargs)
+        self.user = user
+
+        self._schema = schema.AuthorSchema(
+            user=user._schema,
+            institution=institution
+        )
+
+    def __repr__(self) -> str:
+        return self._schema.user.name
+
+    @property
+    def institution(self) -> types.AuthorInstitution:
+        return self._schema.institution
+
+
+class ImplementationLanguage(BaseModel):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        protected_namespaces=()
+    )
+
+    client: Optional[Client] = None
+    _schema: schema.ImplementationLanguageSchema
+
+    def __init__(self, language: types.ImplementationLanguage, **kwargs):
+        super().__init__(**kwargs)
+        self._schema = schema.ImplementationLanguageSchema(language=language)
+
+    def __repr__(self) -> str:
+        return self._schema.language
+
+    @property
+    def language(self):
+        return self._schema.language
 
 
 class Model(BaseModel):
@@ -26,18 +114,18 @@ class Model(BaseModel):
     )
 
     client: Optional[Client] = None
-    _schema: ModelSchema
+    author: Author
+    implementation_language: ImplementationLanguage
+    _schema: schema.ModelSchema
 
     def __init__(
         self,
         id: types.ID,
         name: types.Name,
         description: types.Description,
-        # author: AuthorSchema,
-        author: dict,
+        author: Author | dict,
         repository: types.Repository,
-        # implementation_language: ImplementationLanguageSchema,
-        implementation_language: dict,
+        implementation_language: ImplementationLanguage | dict,
         disease: types.Disease,
         categorical: types.Categorical,
         spatial: types.Spatial,
@@ -46,14 +134,32 @@ class Model(BaseModel):
         time_resolution: types.TimeResolution,
         **kwargs
     ):
+
+        if isinstance(author, dict):
+            author = Author(
+                user=author['user'],
+                institution=author['institution']
+            )
+            kwargs['author'] = author
+
+        if isinstance(implementation_language, dict):
+            implementation_language = ImplementationLanguage(
+                language=implementation_language['language']
+            )
+            kwargs['implementation_language'] = implementation_language
+
         super().__init__(**kwargs)
-        self._schema = ModelSchema(
+
+        self.author = author
+        self.implementation_language = implementation_language
+
+        self._schema = schema.ModelSchema(
             id=id,
             name=name,
             description=description,
-            author=author,
+            author=author._schema,
             repository=repository,
-            implementation_language=implementation_language,
+            implementation_language=implementation_language._schema,
             disease=disease,
             categorical=categorical,
             spatial=spatial,
@@ -78,16 +184,8 @@ class Model(BaseModel):
         return self._schema.description
 
     @property
-    def author(self):  # TODO:
-        return self._schema.author
-
-    @property
     def repository(self) -> types.Repository:
         return self._schema.repository
-
-    @property
-    def implementation_language(self) -> types.ImplementationLanguage:
-        return self._schema.implementation_language
 
     @property
     def disease(self) -> types.Disease:
@@ -261,7 +359,8 @@ class Model(BaseModel):
         )
 
         url = urljoin(
-            get_api_url(), "/".join(("registry", "models")) + f"/{id}")
+            get_api_url(), "/".join(("registry", "models")) + f"/{id}"
+        )
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.put(url, json=params, headers=headers, timeout=timeout)
 
@@ -337,7 +436,7 @@ class Prediction(BaseModel):
 
     client: Optional[Client] = None
     model: Model
-    _schema: PredictionSchema
+    _schema: schema.PredictionSchema
 
     def __init__(
         self,
@@ -355,7 +454,7 @@ class Prediction(BaseModel):
             model = Model(**model)
 
         self.model = model
-        self._schema = PredictionSchema(
+        self._schema = schema.PredictionSchema(
             id=id,
             model=model._schema,
             description=description,
