@@ -90,19 +90,21 @@ class Author(Base):
         username: Optional[types.AuthorUserName] = None,
         **kwargs
     ):
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
         params = {
-            "name": name or "",
-            "institution": institution or "",
-            "username": username or ""
+            "name": name,
+            "institution": institution,
+            "username": username
         }
+        params = parse_params(**params)
 
         return [
             Author(**m) for m in get_all_sync(
                 app="registry",
                 endpoint="authors",
                 params=params,
+                pagination=False,
                 timeout=timeout
             )
         ]
@@ -227,7 +229,7 @@ class Model(Base):
         """
         https://api.mosqlimate.org/docs/registry/GET/models/
         """
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
         ModelGETParams(**kwargs)
         params = parse_params(**kwargs)
@@ -237,6 +239,7 @@ class Model(Base):
                 app="registry",
                 endpoint="models",
                 params=params,
+                pagination=True,
                 timeout=timeout
             )
         ]
@@ -512,7 +515,7 @@ class Prediction(Base):
         start [str]: Search by prediction start date. Format: YYYY-MM-DD
         end [str]: Search by prediction end date. Format: YYYY-MM-DD
         """
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
         PredictionGETParams(**kwargs)
         params = parse_params(**kwargs)
@@ -522,12 +525,13 @@ class Prediction(Base):
                 app="registry",
                 endpoint="predictions",
                 params=params,
-                timeout=timeout
+                pagination=True,
+                timeout=timeout,
             )
         ]
 
     def post(self, **kwargs):
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 30
 
         if self.id is not None:
             raise PredictionPostError("The Prediction already has an ID")

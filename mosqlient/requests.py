@@ -63,15 +63,23 @@ async def get_all(
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     timeout: int = 300,
+    pagination: bool = False,
     _max_per_page: int = 50,
 ) -> list[dict]:
-    params["page"] = 1
-    params["per_page"] = _max_per_page
+    if pagination:
+        params["page"] = 1
+        params["per_page"] = _max_per_page
 
     url = urljoin(get_api_url(), "/".join((str(app), str(endpoint)))) + "/?"
 
     async with aiohttp.ClientSession() as session:
         first_page = await aget(session, url, params)
+
+    if not pagination:
+        return first_page
+
+    if not first_page:
+        return first_page
 
     total_pages = first_page["pagination"]["total_pages"]
 
@@ -104,6 +112,7 @@ def get_all_sync(
     endpoint: AnyStr,
     params: dict[str, str | int | float],
     timeout: int = 300,
+    pagination: bool = False,
     _max_per_page: int = 50,
 ):
     async def fetch_all():
@@ -111,7 +120,8 @@ def get_all_sync(
             app=app,
             endpoint=endpoint,
             params=params,
-            timeout=timeout
+            timeout=timeout,
+            pagination=pagination
         )
 
     if asyncio.get_event_loop().is_running():

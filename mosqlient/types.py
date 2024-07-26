@@ -33,7 +33,7 @@ Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 Commit = Annotated[str, AfterValidator(validate_commit)]
 Date = Annotated[Union[str, date], AfterValidator(validate_date)]
 PredictionData = Annotated[
-    Union[pd.DataFrame, List[Dict], str],
+    Union[pd.DataFrame, List[Dict], str, List],
     AfterValidator(validate_prediction_data)
 ]
 
