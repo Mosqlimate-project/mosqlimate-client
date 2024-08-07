@@ -12,7 +12,7 @@ class Climate(BaseModel):
 
     @classmethod
     def get(cls, start: str | date, end: str | date, **kwargs):
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
         kwargs["start"] = start
         kwargs["end"] = end
@@ -23,6 +23,7 @@ class Climate(BaseModel):
             app="datastore",
             endpoint="climate",
             params=params,
+            pagination=True,
             timeout=timeout
         )
 

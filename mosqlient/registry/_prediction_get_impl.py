@@ -20,7 +20,7 @@ from datetime import date
 
 from typing import Optional, Union
 
-from .predictions import Prediction
+from .models import Prediction
 
 
 def get_all_predictions() -> list[dict]:

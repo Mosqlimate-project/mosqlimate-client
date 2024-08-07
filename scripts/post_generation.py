@@ -46,4 +46,3 @@ if __name__ == "__main__":
 
     print("Project sucessfully generated!")
     print("Run `make` to show the available actions.")
-

@@ -27,6 +27,7 @@ altair = "^5.3.0"
 scoringrules = "^0.5.2"
 matplotlib = "^3.9.0"
 pmdarima = "^2.0.4"
+cffi = "^1.17.0"
 
 [tool.poetry.dev-dependencies]
 # formatting, quality, tests
