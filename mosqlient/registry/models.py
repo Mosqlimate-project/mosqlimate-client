@@ -69,7 +69,8 @@ class Author(Base):
 
         if isinstance(user, dict):
             user = User(**user)
-            kwargs['user'] = user
+
+        kwargs['user'] = user
 
         super().__init__(**kwargs)
         self.user = user
@@ -419,10 +420,12 @@ class Prediction(Base):
         id: Optional[types.ID] = None,
         **kwargs
     ):
-        super().__init__(**kwargs)
-
         if isinstance(model, dict):
             model = Model(**model)
+
+        kwargs['model'] = model
+
+        super().__init__(**kwargs)
 
         self.model = model
         self._schema = schema.PredictionSchema(
@@ -492,16 +495,14 @@ class Prediction(Base):
 
         PredictionGETParams(**kwargs)
         params = parse_params(**kwargs)
-
-        return [
-            Prediction(**p) for p in get_all_sync(
-                app="registry",
-                endpoint="predictions",
-                params=params,
-                pagination=True,
-                timeout=timeout,
-            )
-        ]
+        data = get_all_sync(
+            app="registry",
+            endpoint="predictions",
+            params=params,
+            pagination=True,
+            timeout=timeout,
+        )
+        return [Prediction(**p) for p in data]
 
     def post(self, **kwargs):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 30

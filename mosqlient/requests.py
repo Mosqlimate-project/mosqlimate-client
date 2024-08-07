@@ -66,7 +66,7 @@ async def get_all(
     params: dict[str, str | int | float],
     timeout: int = 300,
     pagination: bool = False,
-    _max_per_page: int = 50,
+    _max_per_page: int = 300,
 ) -> List[dict]:
     if pagination:
         params["page"] = 1
@@ -115,7 +115,7 @@ def get_all_sync(
     params: dict[str, Any],
     timeout: int = 300,
     pagination: bool = False,
-    _max_per_page: int = 50,
+    _max_per_page: int = 300,
 ):
     async def fetch_all():
         return await get_all(
