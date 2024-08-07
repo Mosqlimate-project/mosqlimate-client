@@ -15,7 +15,7 @@ keywords = ["data science", "epidemiology", "forecasting"]
 packages = [ { include = "mosqlient" } ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,<3.13"
 aiohttp = "^3.9.5"
 nest-asyncio = "^1.6.0"
 requests = "^2.32.2"
