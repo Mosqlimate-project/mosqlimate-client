@@ -17,7 +17,6 @@ class Infodengue(BaseModel):
         end: str | date,
         **kwargs
     ):
-        env = kwargs["env"] if "env" in kwargs else "prod"
         timeout = kwargs["timeout"] if "timeout" in kwargs else 60
 
         kwargs["disease"] = disease
@@ -30,7 +29,6 @@ class Infodengue(BaseModel):
             app="datastore",
             endpoint="infodengue",
             params=params,
-            env=env,
             timeout=timeout
         )
 

@@ -1,6 +1,20 @@
 Release Notes
 ---
 
+# [1.4.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.2...1.4.0) (2024-07-18)
+
+
+### Features
+
+* **config:** replace env variable by a global setting ([#28](https://github.com/Mosqlimate-project/mosqlimate-client/issues/28)) ([370690e](https://github.com/Mosqlimate-project/mosqlimate-client/commit/370690e0088ec8151337abaa7abf97fb24dae472))
+
+## [1.3.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.1...1.3.2) (2024-06-25)
+
+
+### Bug Fixes
+
+* **update_py_version:** update python version to <3.13 ([5bcaa23](https://github.com/Mosqlimate-project/mosqlimate-client/commit/5bcaa23e059cc34524db1fc555b5d02cf8d0f2b4))
+
 ## [1.3.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.0...1.3.1) (2024-06-25)
 
 
