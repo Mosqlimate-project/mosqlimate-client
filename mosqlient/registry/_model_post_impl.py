@@ -32,7 +32,7 @@ def upload_model(
 
     model = Model(
         client=client,
-        author=author,
+        author=author[0],
         name=name,
         description=description,
         categorical=categorical,

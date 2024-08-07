@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 from typing import Literal, Optional
 
+import json
 import requests
 import nest_asyncio
 import pandas as pd
@@ -23,6 +24,9 @@ class Base(BaseModel):
         arbitrary_types_allowed=True,
         protected_namespaces=()
     )
+
+    def __str__(self):
+        return self.json()
 
     def json(self):
         return self._schema.json()
@@ -131,6 +135,9 @@ class ImplementationLanguage(Base):
     def __repr__(self) -> str:
         return self._schema.language
 
+    def __str__(self) -> str:
+        return self._schema.language
+
     @property
     def language(self):
         return self._schema.language
@@ -164,7 +171,7 @@ class Model(Base):
                 user=author['user'],
                 institution=author['institution']
             )
-            kwargs['author'] = author
+        kwargs['author'] = author
 
         language = ImplementationLanguage(
             language=implementation_language
@@ -272,7 +279,7 @@ class Model(Base):
             "name": self.name,
             "description": self.description,
             "repository": self.repository,
-            "implementation_language": self.implementation_language,
+            "implementation_language": str(self.implementation_language),
             "disease": self.disease,
             "temporal": self.temporal,
             "spatial": self.spatial,
@@ -294,7 +301,7 @@ class Model(Base):
         if resp.status_code != 201:
             raise ModelPostError(
                 "POST request returned status code "
-                f"{resp.status_code} \n {resp.reason}"
+                f"{resp.status_code} \n {resp.reason} \n {resp.json()}"
             )
 
         return resp
