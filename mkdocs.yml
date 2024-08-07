@@ -11,11 +11,11 @@ nav:
         - Credits: 'credits.md'
         - License: 'license.md'
     - Tutorials:
-        - Simple forecast model: 'tutorial/baseline_model.ipynb'
-        - Datastore: 'tutorial/Datastore.ipynb'
-        - models: '../examples/models.ipynb'
-        - Model Scoring: 'tutorial/scoring.ipynb'
-        - Using from R: 'tutorial/Using Mosqlient from R.ipynb'
+        - Simple forecast model: 'tutorials/baseline_model.ipynb'
+        - Datastore: 'tutorials/datastore.ipynb'
+        - models: 'tutorials/models.ipynb'
+        - Model Scoring: 'tutorials/scoring.ipynb'
+        - Using from R: 'tutorials/Using Mosqlient from R.ipynb'
     - Code Reference:
         - cli.py: 'reference/cli.md'
     - Development:
@@ -48,9 +48,12 @@ markdown_extensions:
     permalink: true
 
 plugins:
-- search
-- coverage:
-    html_report_dir: build/coverage
-- mkdocstrings:
-- macros:
-    module_name: docs/macros
+    - search
+    - mkdocs-jupyter:
+        include: ["tutorials/*.ipynb"]
+        include_requirejs: true
+    - coverage:
+        html_report_dir: build/coverage
+    - mkdocstrings:
+    - macros:
+        module_name: docs/macros
