@@ -27,16 +27,16 @@ class TagSchema(BaseModel):
 
 
 class ModelSchema(BaseModel):
-    id: types.ID
+    id: Optional[types.ID]
     name: types.Name
     description: types.Description
     author: AuthorSchema
     repository: types.Repository
     implementation_language: ImplementationLanguageSchema
     disease: types.Disease
-    categorical: Optional[types.Categorical]
-    spatial: Optional[types.Spatial]
-    temporal: Optional[types.Temporal]
+    categorical: types.Categorical
+    spatial: types.Spatial
+    temporal: types.Temporal
     ADM_level: types.ADMLevel
     time_resolution: types.TimeResolution
 

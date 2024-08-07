@@ -15,7 +15,8 @@ def upload_prediction(
     commit: str,
     predict_date: str | date,
     prediction: str | list[dict] | pd.DataFrame,
-    api_key: str
+    api_key: str,
+    **kwargs
 ) -> requests.Response:
     client = Client(x_uid_key=api_key)
     model = Model.get(id=model_id)[0]
@@ -26,4 +27,4 @@ def upload_prediction(
         commit=commit,
         predict_date=predict_date,
         data=prediction,
-    ).post()
+    ).post(**kwargs)

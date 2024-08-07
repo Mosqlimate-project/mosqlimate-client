@@ -163,7 +163,7 @@ def validate_prediction_data(data: str | list | pd.DataFrame) -> pd.DataFrame:
 
     assert set(df.columns) == set(PREDICTION_DATA_COLUMNS), (
         f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}; "
-        f"Missing {set(PREDICTION_DATA_COLUMNS).difference(set(data.columns))}"
+        f"Missing {set(PREDICTION_DATA_COLUMNS).difference(set(df.columns))}"
     )
     # TODO: Include more checks
     return data

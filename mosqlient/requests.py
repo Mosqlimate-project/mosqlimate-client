@@ -1,6 +1,6 @@
 import asyncio
 from itertools import chain
-from typing import AnyStr
+from typing import AnyStr, List, Any
 from urllib.parse import urljoin
 
 import aiohttp
@@ -37,7 +37,7 @@ async def aget(
     params: dict[str, str | int | float],
     timeout: int = 300,
     retries: int = 3
-) -> dict:
+) -> Any:
     try:
         if retries < 0:
             raise aiohttp.ClientConnectionError("Too many attempts")
@@ -46,10 +46,12 @@ async def aget(
                 return await res.json()
             if str(res.status).startswith("4"):
                 raise aiohttp.ClientConnectionError(
-                    f"Response status: {res.status}. Reason: {res.reason}")
+                    f"Response status: {res.status}. Reason: {res.reason}"
+                )
             if retries == 0:
                 raise aiohttp.ClientConnectionError(
-                    f"Response status: {res.status}. Reason: {res.reason}")
+                    f"Response status: {res.status}. Reason: {res.reason}"
+                )
             await asyncio.sleep(10 / (retries + 1))
             return await aget(session, url, params, timeout, retries - 1)
     except aiohttp.ServerTimeoutError:
@@ -65,7 +67,7 @@ async def get_all(
     timeout: int = 300,
     pagination: bool = False,
     _max_per_page: int = 50,
-) -> list[dict]:
+) -> List[dict]:
     if pagination:
         params["page"] = 1
         params["per_page"] = _max_per_page
@@ -110,7 +112,7 @@ async def get_all(
 def get_all_sync(
     app: APP,
     endpoint: AnyStr,
-    params: dict[str, str | int | float],
+    params: dict[str, Any],
     timeout: int = 300,
     pagination: bool = False,
     _max_per_page: int = 50,

@@ -115,7 +115,18 @@ class ImplementationLanguage(Base):
 
     def __init__(self, language: types.ImplementationLanguage, **kwargs):
         super().__init__(**kwargs)
-        self._schema = schema.ImplementationLanguageSchema(language=language)
+        if isinstance(language, dict):
+            self._schema = schema.ImplementationLanguageSchema(
+                language=language['language']
+            )
+        elif isinstance(language, str):
+            self._schema = schema.ImplementationLanguageSchema(
+                language=language
+            )
+        else:
+            raise ValueError(
+                "`language` must be a str or a dict with {'language': `language`}"
+            )
 
     def __repr__(self) -> str:
         return self._schema.language
@@ -133,18 +144,18 @@ class Model(Base):
 
     def __init__(
         self,
-        id: types.ID,
         name: types.Name,
         description: types.Description,
         author: Author | dict,
         repository: types.Repository,
-        implementation_language: ImplementationLanguage | dict,
+        implementation_language: types.ImplementationLanguage,
         disease: types.Disease,
-        categorical: Optional[types.Categorical],
-        spatial: Optional[types.Spatial],
-        temporal: Optional[types.Temporal],
+        categorical: types.Categorical,
+        spatial: types.Spatial,
+        temporal: types.Temporal,
         ADM_level: types.ADMLevel,
         time_resolution: types.TimeResolution,
+        id: Optional[types.ID] = None,
         **kwargs
     ):
 
@@ -155,16 +166,15 @@ class Model(Base):
             )
             kwargs['author'] = author
 
-        if isinstance(implementation_language, dict):
-            implementation_language = ImplementationLanguage(
-                language=implementation_language['language']
-            )
-            kwargs['implementation_language'] = implementation_language
+        language = ImplementationLanguage(
+            language=implementation_language
+        )
+        kwargs['implementation_language'] = language
 
         super().__init__(**kwargs)
 
         self.author = author
-        self.implementation_language = implementation_language
+        self.implementation_language = language
 
         self._schema = schema.ModelSchema(
             id=id,
@@ -172,7 +182,7 @@ class Model(Base):
             description=description,
             author=author._schema,
             repository=repository,
-            implementation_language=implementation_language._schema,
+            implementation_language=language._schema,
             disease=disease,
             categorical=categorical,
             spatial=spatial,
@@ -185,7 +195,7 @@ class Model(Base):
         return self.name
 
     @property
-    def id(self) -> types.ID:
+    def id(self) -> types.ID | None:
         return self._schema.id
 
     @property
@@ -244,20 +254,7 @@ class Model(Base):
             )
         ]
 
-    def post(
-        self,
-        name: str,
-        description: str,
-        repository: str,
-        implementation_language: str,
-        disease: Literal["dengue", "chikungunya", "zika"],
-        temporal: bool,
-        spatial: bool,
-        categorical: bool,
-        adm_level: Literal[0, 1, 2, 3],
-        time_resolution: Literal["day", "week", "month", "year"],
-        **kwargs,
-    ):
+    def post(self, **kwargs):
         """
         https://api.mosqlimate.org/docs/registry/POST/models/
         """
@@ -272,30 +269,17 @@ class Model(Base):
             )
 
         params = {
-            "name": name,
-            "description": description,
-            "repository": repository,
-            "implementation_language": implementation_language,
-            "disease": disease,
-            "temporal": temporal,
-            "spatial": spatial,
-            "categorical": categorical,
-            "ADM_level": adm_level,
-            "time_resolution": time_resolution,
+            "name": self.name,
+            "description": self.description,
+            "repository": self.repository,
+            "implementation_language": self.implementation_language,
+            "disease": self.disease,
+            "temporal": self.temporal,
+            "spatial": self.spatial,
+            "categorical": self.categorical,
+            "ADM_level": self.ADM_level,
+            "time_resolution": self.time_resolution,
         }
-
-        ModelPOSTParams(
-            name=name,
-            description=description,
-            repository=repository,
-            implementation_language=implementation_language,
-            disease=disease,
-            temporal=temporal,
-            spatial=spatial,
-            categorical=categorical,
-            ADM_level=adm_level,
-            time_resolution=time_resolution,
-        )
 
         url = urljoin(get_api_url(), "/".join(("registry", "models")) + "/")
         headers = {"X-UID-Key": self.client.X_UID_KEY}
@@ -399,20 +383,6 @@ class ModelGETParams(Base):
     tags: Optional[types.Tags] = None
 
 
-class ModelPOSTParams(Base):
-    # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L154
-    name: types.Name
-    description: Optional[types.Description] = None
-    repository: types.Repository
-    implementation_language: types.ImplementationLanguage
-    disease: types.Disease
-    temporal: types.Temporal
-    spatial: types.Spatial
-    categorical: types.Categorical
-    ADM_level: types.ADMLevel
-    time_resolution: types.TimeResolution
-
-
 class ModelPUTParams(Base):
     id: types.ID
     name: Optional[types.Name] = None
@@ -463,10 +433,6 @@ class Prediction(Base):
     @property
     def id(self) -> types.ID | None:
         return self._schema.id
-
-    @property
-    def model(self) -> Model:
-        return self._schema.model
 
     @property
     def description(self) -> types.Description:

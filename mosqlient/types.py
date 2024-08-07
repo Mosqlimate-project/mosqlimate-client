@@ -1,6 +1,6 @@
 from datetime import date
 from typing_extensions import Annotated
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict, Optional, Literal
 
 import pandas as pd
 from pydantic.functional_validators import AfterValidator
@@ -20,7 +20,8 @@ AuthorInstitution = Annotated[
 ]
 Repository = Annotated[str, AfterValidator(validate_repository)]
 ImplementationLanguage = Annotated[
-    str, AfterValidator(validate_implementation_language)
+    str | dict[Literal['language'], str],
+    AfterValidator(validate_implementation_language)
 ]
 Disease = Annotated[str, AfterValidator(validate_disease)]
 ADMLevel = Annotated[int, AfterValidator(validate_adm_level)]
