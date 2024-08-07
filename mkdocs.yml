@@ -1,21 +1,27 @@
 site_name: "Mosqlimate client"
-site_description: "client library for the Mosqlimate project data platform."
+site_description: "Client library for the Mosqlimate project data platform."
 site_url: "https://Mosqlimate-project.github.io/mosqlimate-client"
 repo_url: "https://github.com/Mosqlimate-project/mosqlimate-client"
 repo_name: "Mosqlimate-project/mosqlimate-client"
 
 nav:
-- Home:
-  - Overview: index.md
-  - Changelog: changelog.md
-  - Credits: credits.md
-  - License: license.md
-- Code Reference:
-  - cli.py: reference/cli.md
-- Development:
-  - Contributing: contributing.md
-  - Code of Conduct: code_of_conduct.md
-  - Coverage report: coverage.md
+    - Home:
+        - Overview: 'index.md'
+        - Changelog: 'changelog.md'
+        - Credits: 'credits.md'
+        - License: 'license.md'
+    - Tutorials:
+        - Simple forecast model: 'tutorial/baseline_model.ipynb'
+        - Datastore: 'tutorial/Datastore.ipynb'
+        - models: '../examples/models.ipynb'
+        - Model Scoring: 'tutorial/scoring.ipynb'
+        - Using from R: 'tutorial/Using Mosqlient from R.ipynb'
+    - Code Reference:
+        - cli.py: 'reference/cli.md'
+    - Development:
+        - Contributing: 'contributing.md'
+        - Code of Conduct: 'code_of_conduct.md'
+        - Coverage report: 'coverage.md'
 
 theme:
   name: material
