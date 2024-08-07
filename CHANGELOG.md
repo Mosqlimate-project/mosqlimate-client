@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.5.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.4.0...1.5.0) (2024-08-07)
+
+
+### Features
+
+* **package:** parse JSON objects to pydantic schemas ([#29](https://github.com/Mosqlimate-project/mosqlimate-client/issues/29)) ([f167280](https://github.com/Mosqlimate-project/mosqlimate-client/commit/f16728056289b5be45d3d663d82c5e6c9b52e2a0))
+
 # [1.4.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.3.2...1.4.0) (2024-07-18)
 
 
