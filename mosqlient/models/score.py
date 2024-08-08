@@ -300,6 +300,7 @@ class Scorer:
                 f"{set(cols_df_true).difference(set(list(df_true.columns)))}"
             )
 
+        df_true.dates = pd.to_datetime(df_true.dates)
         # Ensure all the dates has the same lenght
         min_dates = [min(df_true.dates)]
         max_dates = [max(df_true.dates)]
@@ -314,6 +315,7 @@ class Scorer:
                     f"{set(cols_preds).difference(set(list(preds.columns)))}")
 
             dict_df_ids['preds'] = preds
+            preds.dates = preds.dates.to_datetime()
             min_dates.append(min(preds.dates))
             max_dates.append(max(preds.dates))
 
@@ -332,11 +334,13 @@ class Scorer:
 
                 df_ = prediction.to_dataframe()
                 df_ = df_.sort_values(by='dates')
-                df_.dates = df_.dates.to_datetime()
+                df_.dates = pd.to_datetime(df_.dates)
                 dict_df_ids[id_] = df_
                 min_dates.append(min(df_.dates))
                 max_dates.append(max(df_.dates))
 
+        min_dates = pd.to_datetime(min_dates)
+        max_dates = pd.to_datetime(max_dates)
         min_date = max(min_dates)
         max_date = min(max_dates)
 
