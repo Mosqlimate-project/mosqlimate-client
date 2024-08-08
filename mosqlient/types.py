@@ -1,5 +1,8 @@
+from datetime import date
 from typing_extensions import Annotated
+from typing import Union, List, Dict, Optional, Literal
 
+import pandas as pd
 from pydantic.functional_validators import AfterValidator
 
 from mosqlient.validations import *  # noqa
@@ -12,10 +15,13 @@ Name = Annotated[str, AfterValidator(validate_name)]
 Description = Annotated[str, AfterValidator(validate_description)]
 AuthorName = Annotated[str, AfterValidator(validate_author_name)]
 AuthorUserName = Annotated[str, AfterValidator(validate_author_username)]
-AuthorInstitution = Annotated[str, AfterValidator(validate_author_institution)]
+AuthorInstitution = Annotated[
+    Optional[str], AfterValidator(validate_author_institution)
+]
 Repository = Annotated[str, AfterValidator(validate_repository)]
 ImplementationLanguage = Annotated[
-    str, AfterValidator(validate_implementation_language)
+    str | dict[Literal['language'], str],
+    AfterValidator(validate_implementation_language)
 ]
 Disease = Annotated[str, AfterValidator(validate_disease)]
 ADMLevel = Annotated[int, AfterValidator(validate_adm_level)]
@@ -26,9 +32,9 @@ TimeResolution = Annotated[str, AfterValidator(validate_time_resolution)]
 Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 
 Commit = Annotated[str, AfterValidator(validate_commit)]
-Date = Annotated[str, AfterValidator(validate_date)]
+Date = Annotated[Union[str, date], AfterValidator(validate_date)]
 PredictionData = Annotated[
-    str,
+    Union[pd.DataFrame, List[Dict], str, List],
     AfterValidator(validate_prediction_data)
 ]
 

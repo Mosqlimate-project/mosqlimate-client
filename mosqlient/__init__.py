@@ -15,6 +15,9 @@ from mosqlient.registry._prediction_post_impl import *
 from mosqlient.datastore._climate_get_impl import *
 from mosqlient.datastore._infodengue_get_impl import *
 
+from ._config import set_api_url
+set_api_url("http://0.0.0.0:8042/api/")
+
 
 def get_version() -> str:
     try:

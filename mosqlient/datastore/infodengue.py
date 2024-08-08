@@ -17,7 +17,7 @@ class Infodengue(BaseModel):
         end: str | date,
         **kwargs
     ):
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 60
+        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
         kwargs["disease"] = disease
         kwargs["start"] = start
@@ -29,7 +29,8 @@ class Infodengue(BaseModel):
             app="datastore",
             endpoint="infodengue",
             params=params,
-            timeout=timeout
+            pagination=True,
+            timeout=timeout,
         )
 
 

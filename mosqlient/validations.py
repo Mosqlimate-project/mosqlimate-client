@@ -1,5 +1,6 @@
 import json
-from typing import Literal
+import logging
+from typing import Literal, Optional
 import datetime as dt
 from string import ascii_lowercase, digits
 
@@ -47,7 +48,9 @@ def validate_author_username(author_username: str) -> str:
     return author_username
 
 
-def validate_author_institution(author_institution: str) -> str:
+def validate_author_institution(author_institution: Optional[str]) -> str | None:
+    if not author_institution:
+        return None
     assert len(author_institution) <= 100, "author_institution too long"
     assert len(author_institution) > 0, "empty author_institution"
     return author_institution
@@ -126,10 +129,10 @@ def validate_commit(commit: str) -> str:
     return commit
 
 
-def validate_date(date: str) -> str:
+def validate_date(date: str | dt.date) -> str:
     error = "Incorrect date format. Format: YYYY-MM-DD \n%s"
     try:
-        dt_date = dt.date.fromisoformat(date)
+        dt_date = dt.date.fromisoformat(str(date))
     except Exception as err:
         raise ValidationError(error % err)
 
@@ -139,23 +142,31 @@ def validate_date(date: str) -> str:
     return str(date)
 
 
-def validate_prediction_data(data: str) -> str:
-    if not isinstance(data, (str)):
-        raise TypeError("`data` must be a str or a list of dicts")
-
-    if isinstance(data, str):
+def validate_prediction_data(data: str | list | pd.DataFrame) -> pd.DataFrame:
+    if isinstance(data, list):
+        df = pd.DataFrame(data)
+    elif isinstance(data, str):
         try:
-            data = json.loads(data)
+            df = pd.DataFrame(json.loads(data))
         except json.decoder.JSONDecodeError:
-            raise ValueError("`data` object must be JSON serializable")
+            raise ValueError(
+                "`data` object must be JSON serializable or a DataFrame"
+            )
+    elif isinstance(data, pd.DataFrame):
+        df = data
+    else:
+        raise ValueError(f"Invalid `data` type {type(data)}")
 
-    data_df = pd.DataFrame(data)
+    if df.empty:
+        logging.warning("Empty data")
+        return data
 
-    assert set(data_df.columns) == set(PREDICTION_DATA_COLUMNS), (
-        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}"
+    assert set(df.columns) == set(PREDICTION_DATA_COLUMNS), (
+        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}; "
+        f"Missing {set(PREDICTION_DATA_COLUMNS).difference(set(df.columns))}"
     )
     # TODO: Include more checks
-    return json.dumps(data)
+    return data
 
 
 def validate_tags(tags: list[int]) -> list[int]:

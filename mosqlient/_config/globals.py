@@ -10,9 +10,10 @@ PREDICTION_DATA_COLUMNS = [
     "preds",
     "lower",
     "upper",
-    "adm_2",
-    "adm_1",
     "adm_0",
+    "adm_1",
+    "adm_2",
+    "adm_3",
 ]
 
 API_URL = os.getenv("MOSQLIENT_API_URL", "https://api.mosqlimate.org/api/")
