@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, ConfigDict
 
@@ -51,6 +51,16 @@ class PredictionDataRowSchema(BaseModel):
     adm_2: Optional[int] = None
     adm_3: Optional[int] = None
 
+    class Config:
+        json_encoders = {
+            date: lambda v: v.strftime('%Y-%m-%d')
+        }
+
+    def dict(self, **kwargs):
+        _d = super().dict(**kwargs)
+        _d['dates'] = _d['dates'].strftime('%Y-%m-%d')
+        return _d
+
 
 class PredictionSchema(BaseModel):
     model_config = ConfigDict(
@@ -63,4 +73,4 @@ class PredictionSchema(BaseModel):
     description: types.Description
     commit: types.Commit
     predict_date: types.Date
-    data: types.PredictionData
+    data: List[PredictionDataRowSchema]
