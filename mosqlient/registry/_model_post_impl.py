@@ -10,7 +10,6 @@ from .models import Model, Author
 
 
 def upload_model(
-    author_username: str,
     name: str,
     description: str,
     repository: str,
@@ -25,7 +24,7 @@ def upload_model(
     **kwargs
 ) -> requests.Response:
     client = Client(x_uid_key=api_key)
-    author = Author.get(username=author_username)
+    author = Author.get(username=client.username)
 
     if not author:
         raise ModelPostError("Author not found")
