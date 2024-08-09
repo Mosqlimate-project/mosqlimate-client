@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.5.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.2...1.5.3) (2024-08-09)
+
+
+### Bug Fixes
+
+* **Model:** remove author_username parameter from upload_model method ([#36](https://github.com/Mosqlimate-project/mosqlimate-client/issues/36)) ([b089631](https://github.com/Mosqlimate-project/mosqlimate-client/commit/b089631f4b9c82368794c26e540d23e2efc98bf6))
+
 ## [1.5.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.1...1.5.2) (2024-08-09)
 
 
