@@ -354,4 +354,3 @@ class Arima:
             plot_forecast(df_preds, df_train, last_obs)
 
         return df_preds
-
