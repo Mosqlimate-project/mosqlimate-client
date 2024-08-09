@@ -80,6 +80,7 @@ mosqbench = "mosqlimate.cli:main"
 [tool.poetry.group.dev.dependencies]
 pip = "^23.3.2"
 mypy = "^1.10.0"
+mkdocs-jupyter = "^0.24.8"
 
 
 [tool.poetry.group.models.dependencies]
