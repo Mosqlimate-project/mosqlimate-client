@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.5.4](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.3...1.5.4) (2024-08-09)
+
+
+### Bug Fixes
+
+* **version:** bump version to 1.5.4 to apply latest commits on PyPI ([#38](https://github.com/Mosqlimate-project/mosqlimate-client/issues/38)) ([f11e1c1](https://github.com/Mosqlimate-project/mosqlimate-client/commit/f11e1c1707f070784655ff51f7bd3dc7ef7ede38))
+
 ## [1.5.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.2...1.5.3) (2024-08-09)
 
 
