@@ -315,7 +315,7 @@ class Scorer:
                     f"{set(cols_preds).difference(set(list(preds.columns)))}")
 
             dict_df_ids['preds'] = preds
-            preds.dates = preds.dates.to_datetime()
+            preds.dates = pd.to_datetime(preds.dates)
             min_dates.append(min(preds.dates))
             max_dates.append(max(preds.dates))
 
