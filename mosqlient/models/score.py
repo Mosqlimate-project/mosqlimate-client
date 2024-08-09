@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 def transform_json_to_dataframe(res: dict) -> pd.DataFrame:
     """
-    A function that transforms the prediction output from the API and 
+    A function that transforms the prediction output from the API and
     transforms it in a DataFrame.
 
     Parameters:
@@ -92,7 +92,7 @@ def plot_score(
     Parameters
     ----------
     data: pd.DataFrame
-        The DataFrame with the time series of cases must contain the columns 
+        The DataFrame with the time series of cases must contain the columns
         `dates` and `casos`.
     df_melted : pd.DataFrame
         The DataFrame must contains the columns:
@@ -197,15 +197,15 @@ class Scorer:
 
 
     dict_df_ids: dict[pd.DataFrame]
-        A dict of DataFrames of the predictions. If the key is int it refers 
-        to the ids passed in the init. If it is `preds` it refers to the 
+        A dict of DataFrames of the predictions. If the key is int it refers
+        to the ids passed in the init. If it is `preds` it refers to the
         dataframe of the predictions provided by the user.
 
     filtered_dict_df_ids: dict[pd.DataFrame]
         A dict of DataFrames of the predictions. If the key is int it refers to
         the ids passed in the init. If it is `preds` it refers to the dataframe
         of the predictions provided by the user. The DataFrames are filtered
-        according to the interval of the predictions or with the 
+        according to the interval of the predictions or with the
         `set_date_range` method.
 
     min_date: str
@@ -249,7 +249,7 @@ class Scorer:
 
     summary: pd.DataFrame
         DataFrame where the keys are the id of the models or `preds` when a
-        dataframe of predictions is provided by the user, and the columns are 
+        dataframe of predictions is provided by the user, and the columns are
         the scores: mae, mse, and the mean of crps and log_score.
 
 
@@ -258,7 +258,7 @@ class Scorer:
     start_date_range():
         Train the model.
     plot_predictions():
-        Function that returns an Altair panel (alt.Chart) with the time series 
+        Function that returns an Altair panel (alt.Chart) with the time series
         of cases and the predictions for each model.
     plot_crps():
         alt.Chart: Method that returns an Altair panel with the time series of
@@ -367,11 +367,11 @@ class Scorer:
 
     def set_date_range(self, start_date: str, end_date: str) -> None:
         '''
-         This method will redefine the interval of dates used to compute the 
+         This method will redefine the interval of dates used to compute the
          scores.
-         The new dates provided must be in the interval defined by the 
+         The new dates provided must be in the interval defined by the
          `__init__` method that ensures the df_true and predictions are in the
-         same interval. You can access these values by score.min_date and 
+         same interval. You can access these values by score.min_date and
          score.max_date.
 
         Parameters
@@ -410,7 +410,7 @@ class Scorer:
     @property
     def mae(self,):
         '''
-        dict: Dict, where the keys are the id of the models or `preds` when a 
+        dict: Dict, where the keys are the id of the models or `preds` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the mean absolute error.
         '''
@@ -431,7 +431,7 @@ class Scorer:
     @property
     def mse(self,):
         '''
-        dict: Dict, where the keys are the id of the models or `preds` when a 
+        dict: Dict, where the keys are the id of the models or `preds` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the mean squared error.
         '''
@@ -456,7 +456,7 @@ class Scorer:
         when a dataframe of predictions is provided by the user,
         and the values of the dict are the scores computed.
 
-        The first dict contains the CRPS score computed for every predicted 
+        The first dict contains the CRPS score computed for every predicted
         point, and the second one contains the mean values of the CRPS score
         for all the points.
 
@@ -494,7 +494,7 @@ class Scorer:
         of the dict are the scores computed.
 
         The first dict contains the log score computed for every predicted
-        point, and the second one contains the mean values of the log score 
+        point, and the second one contains the mean values of the log score
         for all the points.
 
         The log score computed assumes a normal distribution.
@@ -522,9 +522,9 @@ class Scorer:
     @property
     def summary(self,):
         '''
-        pd.DataFrame: DataFrame where the keys are the id of the models or 
-        `preds` when a dataframe of predictions is provided by the user, and 
-        the columns are the scores: mae, mse, and the mean of crps and 
+        pd.DataFrame: DataFrame where the keys are the id of the models or
+        `preds` when a dataframe of predictions is provided by the user, and
+        the columns are the scores: mae, mse, and the mean of crps and
         log_score.
         '''
         sum_scores = {}
