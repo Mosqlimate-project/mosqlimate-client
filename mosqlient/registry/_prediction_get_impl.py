@@ -18,7 +18,7 @@ __all__ = [
 
 from datetime import date
 
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from .models import Prediction
 
@@ -73,79 +73,64 @@ def get_predictions(
     return res[0] if len(res) == 1 else res
 
 
-def get_prediction_by_id(id: int) -> dict:
+def get_prediction_by_id(id: int) -> Prediction:
     res = Prediction.get(id=id)
     return res[0] if len(res) == 1 else res
 
 
-def get_predictions_by_model_id(model_id: int) -> Union[dict, list[dict]]:
-    res = Prediction.get(model_id=model_id)
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_model_id(model_id: int) -> List[Prediction]:
+    return Prediction.get(model_id=model_id)
 
 
-def get_predictions_by_model_name(model_name: str) -> Union[dict, list[dict]]:
-    res = Prediction.get(model_name=model_name)
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_model_name(model_name: str) -> List[Prediction]:
+    return Prediction.get(model_name=model_name)
 
 
-def get_predictions_by_adm_level(adm_level: int) -> Union[dict, list[dict]]:
-    res = Prediction.get(adm_level=adm_level)
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_adm_level(adm_level: int) -> List[Prediction]:
+    return Prediction.get(adm_level=adm_level)
 
 
 def get_predictions_by_time_resolution(
     time_resolution: str
-) -> Union[dict, list[dict]]:
-    res = Prediction.get(time_resolution=time_resolution)
-    return res[0] if len(res) == 1 else res
+) -> List[Prediction]:
+    return Prediction.get(time_resolution=time_resolution)
 
 
-def get_predictions_by_disease(disease: str) -> Union[dict, list[dict]]:
-    res = Prediction.get(disease=disease)
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_disease(disease: str) -> List[Prediction]:
+    return Prediction.get(disease=disease)
 
 
-def get_predictions_by_author_name(author_name: str) -> Union[dict, list[dict]]:
-    res = Prediction.get(author_name=author_name)
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_author_name(author_name: str) -> List[Prediction]:
+    return Prediction.get(author_name=author_name)
 
 
 def get_predictions_by_author_username(
     author_username: str
-) -> Union[dict, list[dict]]:
-    res = Prediction.get(author_username=author_username)
-    return res[0] if len(res) == 1 else res
+) -> List[Prediction]:
+    return Prediction.get(author_username=author_username)
 
 
 def get_predictions_by_author_institution(
     author_institution: str
-) -> Union[dict, list[dict]]:
-    res = Prediction.get(author_institution=author_institution)
-    return res[0] if len(res) == 1 else res
+) -> List[Prediction]:
+    return Prediction.get(author_institution=author_institution)
 
 
-def get_predictions_by_repository(repository: str) -> Union[dict, list[dict]]:
-    res = Prediction.get(repository=repository)
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_repository(
+    repository: str
+) -> List[Prediction]:
+    return Prediction.get(repository=repository)
 
 
 def get_predictions_by_implementation_language(
     implementation_language: str
-) -> Union[dict, list[dict]]:
-    res = Prediction.get(implementation_language=implementation_language)
-    return res[0] if len(res) == 1 else res
+) -> List[Prediction]:
+    return Prediction.get(implementation_language=implementation_language)
 
 
-def get_predictions_by_predict_date(
-    predict_date: date
-) -> Union[dict, list[dict]]:
-    res = Prediction.get(predict_date=str(predict_date))
-    return res[0] if len(res) == 1 else res
+def get_predictions_by_predict_date(predict_date: date) -> List[Prediction]:
+    return Prediction.get(predict_date=str(predict_date))
 
 
-def get_predictions_between(
-    start: date,
-    end: date
-) -> Union[dict, list[dict]]:
-    res = Prediction.get(start=str(start), end=str(end))
-    return res[0] if len(res) == 1 else res
+def get_predictions_between(start: date, end: date) -> List[Prediction]:
+    return Prediction.get(start=str(start), end=str(end))

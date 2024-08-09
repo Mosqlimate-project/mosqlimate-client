@@ -1,5 +1,5 @@
 from urllib.parse import urljoin
-from typing import Literal, Optional
+from typing import Literal, Optional, Any, Dict, AnyStr, List
 
 import json
 import requests
@@ -427,6 +427,31 @@ class Prediction(Base):
 
         super().__init__(**kwargs)
 
+        if isinstance(data, str):
+            try:
+                _data = json.loads(data)
+            except json.decoder.JSONDecodeError:
+                raise ValueError("str `data` must be JSON serializable")
+            _data = [
+                schema.PredictionDataRowSchema(**d)
+                for d in _data
+            ]
+        elif isinstance(data, pd.DataFrame):
+            _data = [
+                schema.PredictionDataRowSchema(**d)
+                for d in data.to_dict(orient="records")
+            ]
+        elif isinstance(data, list):
+            _data = [
+                schema.PredictionDataRowSchema(**d)
+                for d in data
+            ]
+        else:
+            raise ValueError(
+                "`data` must be rather a DataFrame, a JSON str or a list of" +
+                " dictionaries"
+            )
+
         self.model = model
         self._schema = schema.PredictionSchema(
             id=id,
@@ -434,7 +459,7 @@ class Prediction(Base):
             description=description,
             commit=commit,
             predict_date=predict_date,
-            data=data
+            data=_data
         )
 
     def __repr__(self) -> str:
@@ -457,8 +482,8 @@ class Prediction(Base):
         return self._schema.predict_date
 
     @property
-    def data(self):  # TODO: -> types.Data?:
-        return self._schema.data
+    def data(self) -> List[Dict[AnyStr, Any]]:
+        return [row.dict() for row in self._schema.data]
 
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.data)
@@ -523,7 +548,7 @@ class Prediction(Base):
             "description": self.description,
             "commit": self.commit,
             "predict_date": self.predict_date,
-            "prediction": self.data,
+            "prediction": json.dumps(self.data),
         }
 
         url = urljoin(
@@ -539,10 +564,17 @@ class Prediction(Base):
             timeout=timeout
         )
 
+        if str(resp.status_code).startswith("5"):
+            raise ClientError(
+                f"{resp.status_code}: {resp.reason}. " +
+                "This error is from the API Server, please try again and " +
+                "contact the moderation if this error persists"
+            )
+
         if resp.status_code != 201:
             raise PredictionPostError(
-                "POST request returned status code "
-                f"{resp.status_code} \n {resp.reason}"
+                "POST request returned status code " +
+                f"{resp.status_code}: {resp.reason} \n {resp.json()}"
             )
 
         # TODO: Return a Prediction object retrieving it from the API
