@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "mosqlient"
-version = "1.5.1"  # changed by semantic-release
+version = "1.5.2"  # changed by semantic-release
 description = "client library for the mosqlimate client library"
 authors = ["Flávio Codeço Coelho <fccoelho@gmail.com>"]
 license = "GPLv3"

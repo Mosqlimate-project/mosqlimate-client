@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.5.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.1...1.5.2) (2024-08-09)
+
+
+### Bug Fixes
+
+* minor error in score.py ([#35](https://github.com/Mosqlimate-project/mosqlimate-client/issues/35)) ([abfce21](https://github.com/Mosqlimate-project/mosqlimate-client/commit/abfce21cf258a9cfb95d210c6e49852bbc0be056))
+
 ## [1.5.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.0...1.5.1) (2024-08-09)
 
 
