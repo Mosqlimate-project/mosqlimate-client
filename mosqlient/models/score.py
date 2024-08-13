@@ -84,7 +84,7 @@ def plot_score(
     data: pd.DataFrame,
     df_melted: pd.DataFrame,
     score: str = 'CRPS'
-) -> alt.Chart:
+) -> alt.VConcatChart:
     '''
     Function that returns an Altair panel with the time series of cases and the
     time series of the score for each model.
@@ -557,7 +557,7 @@ class Scorer:
 
         return plot_bar_score(self.summary, 'mse')
 
-    def plot_crps(self,) -> alt.Chart:
+    def plot_crps(self,) -> alt.VConcatChart:
         '''
         alt.Chart: Function that returns an Altair panel with the time series
         of cases and the time series of the CRPS score for each model
@@ -579,7 +579,7 @@ class Scorer:
 
         return plot_score(self.df_true, df_melted, score='CRPS')
 
-    def plot_log_score(self,) -> alt.Chart:
+    def plot_log_score(self,) -> alt.VConcatChart:
         '''
         alt.Chart: Function that returns an Altair panel with the time series
         of cases and the time series of the Log score for each model
