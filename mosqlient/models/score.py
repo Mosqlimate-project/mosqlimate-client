@@ -277,7 +277,7 @@ class Scorer:
         df_true: pd.DataFrame,
         ids: Optional[list[int] | list[str]] = None,
         preds: Optional[pd.DataFrame] = None,
-        confidence_level: Optional[float]=0.90
+        confidence_level: float=0.90
     ):
         """
         Parameters
