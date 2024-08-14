@@ -2,11 +2,11 @@ import json
 import numpy as np
 import pandas as pd
 import altair as alt
+import scipy.stats as stats
 from typing import Optional
 from mosqlient import get_prediction_by_id
 from scoringrules import crps_normal, logs_normal
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-
 
 def transform_json_to_dataframe(res: dict) -> pd.DataFrame:
     """
@@ -276,7 +276,8 @@ class Scorer:
         self,
         df_true: pd.DataFrame,
         ids: Optional[list[int] | list[str]] = None,
-        preds: Optional[pd.DataFrame] = None
+        preds: Optional[pd.DataFrame] = None,
+        confidence_level: Optional[float]=0.90
     ):
         """
         Parameters
@@ -288,7 +289,8 @@ class Scorer:
         preds: pd.DataFrame
             Pandas Dataframe already in the format accepted by the platform
             that will be computed the score.
-
+        confidence_level: float. 
+            The confidence level of the predictions of the columns upper and lower.
         """
 
         # input validation data
@@ -357,6 +359,8 @@ class Scorer:
             df_id = df_id.sort_values(by='dates')
             dict_df_ids[id_] = df_id
 
+        z_value = stats.norm.ppf((1 + confidence_level) / 2)
+
         self.df_true = df_true
         self.filtered_df_true = df_true
         self.ids = ids
@@ -364,6 +368,7 @@ class Scorer:
         self.filtered_dict_df_ids = dict_df_ids
         self.min_date = min_date
         self.max_date = max_date
+        self.z_value = z_value
 
     def set_date_range(self, start_date: str, end_date: str) -> None:
         '''
@@ -476,7 +481,7 @@ class Scorer:
             df_id_ = dict_df_ids[id_]
 
             score = crps_normal(df_true.casos, df_id_.preds,
-                                (df_id_.upper-df_id_.lower)/4)
+                                (df_id_.upper-df_id_.lower)/(2*self.z_value))
 
             scores_curve[id_] = pd.Series(score, index=df_true.dates)
 
@@ -511,7 +516,7 @@ class Scorer:
 
             df_id_ = dict_df_ids[id_]
             score = logs_normal(df_true.casos, df_id_.preds,
-                                (df_id_.upper-df_id_.lower)/4, negative=False)
+                                (df_id_.upper-df_id_.lower)/(2*self.z_value), negative=False)
             scores_curve[id_] = pd.Series(score, index=df_true.dates)
             scores_mean[id_] = np.mean(score)
 
