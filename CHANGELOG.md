@@ -1,6 +1,18 @@
 Release Notes
 ---
 
+# [1.6.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.4...1.6.0) (2024-08-15)
+
+
+### Bug Fixes
+
+* **Scorer:** allow to compute crps and log score to other confidence levels ([79e3fae](https://github.com/Mosqlimate-project/mosqlimate-client/commit/79e3fae7a99ea527effeed676bcb573978d72f95))
+
+
+### Features
+
+* **score:** add interval score ([434a2e1](https://github.com/Mosqlimate-project/mosqlimate-client/commit/434a2e19f1e7eb367ea63f6a31ef33bb87699c72))
+
 ## [1.5.4](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.3...1.5.4) (2024-08-09)
 
 
