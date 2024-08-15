@@ -54,6 +54,39 @@ def evaluate_point_metrics(y_true, y_pred, metric):
     return score
 
 
+def compute_interval_score(lower_bound, upper_bound, observed_value, alpha=0.05):
+    """
+    Calculate the interval score for a given prediction interval and observed value.
+
+    Parameters:
+    ------------------
+    lower_bound: float | np.array 
+        The lower bound of the prediction interval.
+    upper_bound: float | np.array
+        The upper bound of the prediction interval.
+    observed_value: float | np.array
+        The observed value.
+    alpha: float
+        The significance level of the interval. Default is 0.05 (for 95% prediction intervals).
+
+    Returns:
+    -----------
+    float or np.array: The interval score.
+    """
+
+
+    interval_width = upper_bound - lower_bound
+    
+    # Compute penalties
+    penalty_lower = 2 / alpha * np.maximum(0, lower_bound - observed_value)
+    penalty_upper = 2 / alpha * np.maximum(0, observed_value - upper_bound)
+    
+    penalty = penalty_lower + penalty_upper
+    
+    return interval_width + penalty
+
+
+
 def plot_bar_score(data: pd.DataFrame, score: str) -> alt.Chart:
     '''
     Function to plot a bar chart based on scorer.summary dataframe
@@ -103,6 +136,10 @@ def plot_score(
 
     if score == 'CRPS':
         title = 'CRPS score'
+        subtitle = 'Lower is better'
+
+    if score == 'interval':
+        title = 'Interval score'
         subtitle = 'Lower is better'
 
     if score == 'log':
@@ -247,10 +284,19 @@ class Scorer:
         The log score computed assumes a normal distribution.
 
 
+    interval_score: tuple of dicts
+        Dict where the keys are the id of the models or `preds` when a
+        dataframe of predictions is provided by the user, and the values of the
+        dict are the scores computed.
+
+        The first dict contains the interval score computed for every predicted
+        point, and the second one contains the mean values of the interval score
+        for all the points.
+
     summary: pd.DataFrame
         DataFrame where the keys are the id of the models or `preds` when a
         dataframe of predictions is provided by the user, and the columns are
-        the scores: mae, mse, and the mean of crps and log_score.
+        the scores: mae, mse, and the mean of crps, log_score, and interval score.
 
 
     Methods
@@ -266,6 +312,9 @@ class Scorer:
     plot_log_score():
         alt.Chart: Method that returns an Altair panel with the time series of
         cases and the time series of the log score for each model.
+    plot_interval_score():
+        alt.Chart: Method that returns an Altair panel with the time series of
+        cases and the time series of the interval score for each model.
     plot_mae():
         alt.Chart : Bar chart of the MAE score for each prediction.
     plot_mse():
@@ -368,6 +417,7 @@ class Scorer:
         self.filtered_dict_df_ids = dict_df_ids
         self.min_date = min_date
         self.max_date = max_date
+        self.confidence_level = confidence_level
         self.z_value = z_value
 
     def set_date_range(self, start_date: str, end_date: str) -> None:
@@ -525,12 +575,47 @@ class Scorer:
         return scores_curve, scores_mean
 
     @property
+    def interval_score(self,):
+        '''
+        tuple of dict: Dict where the keys are the id of the models or `preds`
+        when a dataframe of predictions is provided by the user,
+        and the values of the dict are the scores computed.
+
+        The first dict contains the interval score computed for every predicted
+        point, and the second one contains the mean values of the interval score
+        for all the points.
+        '''
+
+        ids = self.ids
+        dict_df_ids = self.filtered_dict_df_ids
+        df_true = self.filtered_df_true
+
+        scores_curve = {}
+
+        scores_mean = {} 
+
+        for id_ in dict_df_ids.keys():
+
+            df_id_ = dict_df_ids[id_]
+        
+            score = compute_interval_score( df_id_.lower.values,  df_id_.upper.values,df_true.casos.values,
+                                alpha = 1-self.confidence_level)
+            
+            scores_curve[id_] = pd.Series(score, index=df_true.dates)
+
+            scores_mean[id_] = np.mean(score)
+
+        self.interval_score_curve = scores_curve
+
+        return scores_curve, scores_mean
+    
+    @property
     def summary(self,):
         '''
         pd.DataFrame: DataFrame where the keys are the id of the models or
         `preds` when a dataframe of predictions is provided by the user, and
-        the columns are the scores: mae, mse, and the mean of crps and
-        log_score.
+        the columns are the scores: mae, mse, and the mean of crps, log_score,
+        and interval_score.
         '''
         sum_scores = {}
 
@@ -541,6 +626,8 @@ class Scorer:
         sum_scores['crps'] = self.crps[1]
 
         sum_scores['log_score'] = self.log_score[1]
+
+        sum_scores['interval_score'] = self.interval_score[1]
 
         df_score = pd.DataFrame.from_dict(sum_scores, orient='columns')
 
@@ -605,6 +692,28 @@ class Scorer:
         df_melted = df_melted.rename(columns={'value': 'log_score'})
 
         return plot_score(self.df_true, df_melted, score='log')
+
+    def plot_interval_score(self,) -> alt.VConcatChart:
+        '''
+        alt.Chart: Function that returns an Altair panel with the time series
+        of cases and the time series of the CRPS score for each model
+        '''
+
+        interval_ = self.interval_score_curve
+
+        df_interval = pd.DataFrame()
+
+        for v in interval_.keys():
+
+            df_interval[str(v)] = interval_[v]
+
+        df_interval.reset_index(inplace=True)
+
+        df_melted = pd.melt(df_interval, id_vars='dates',
+                            value_vars=list(map(str, interval_.keys())))
+        df_melted = df_melted.rename(columns={'value': 'interval_score'})
+
+        return plot_score(self.df_true, df_melted, score='interval')
 
     def plot_predictions(
         self,
