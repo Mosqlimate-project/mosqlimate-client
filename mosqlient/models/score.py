@@ -567,6 +567,9 @@ class Scorer:
             df_id_ = dict_df_ids[id_]
             score = logs_normal(df_true.casos, df_id_.preds,
                                 (df_id_.upper-df_id_.lower)/(2*self.z_value), negative=False)
+            #truncated the output 
+            score = np.maximum(score, np.repeat(-100, len(score)))
+
             scores_curve[id_] = pd.Series(score, index=df_true.dates)
             scores_mean[id_] = np.mean(score)
 
