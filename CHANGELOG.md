@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.6.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.0...1.6.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* **Score:** add a minimum value for the log score ([eea4d9d](https://github.com/Mosqlimate-project/mosqlimate-client/commit/eea4d9d61c0f6632ca4c866211c1c4b9288fef55))
+
 # [1.6.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.5.4...1.6.0) (2024-08-15)
 
 
