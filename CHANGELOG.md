@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.6.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.1...1.6.2) (2024-08-23)
+
+
+### Bug Fixes
+
+* **PredictionDataRowSchema:** rename columns ([#43](https://github.com/Mosqlimate-project/mosqlimate-client/issues/43)) ([44701bc](https://github.com/Mosqlimate-project/mosqlimate-client/commit/44701bcde2f30260108ec7bf8da651b3d9b672a3))
+
 ## [1.6.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.0...1.6.1) (2024-08-20)
 
 
