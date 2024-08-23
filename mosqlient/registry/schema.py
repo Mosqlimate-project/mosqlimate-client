@@ -42,8 +42,8 @@ class ModelSchema(BaseModel):
 
 
 class PredictionDataRowSchema(BaseModel):
-    dates: date
-    preds: float
+    date: date
+    pred: float
     lower: float
     upper: float
     adm_0: str = "BRA"
@@ -58,7 +58,7 @@ class PredictionDataRowSchema(BaseModel):
 
     def dict(self, **kwargs):
         _d = super().dict(**kwargs)
-        _d['dates'] = _d['dates'].strftime('%Y-%m-%d')
+        _d['date'] = _d['date'].strftime('%Y-%m-%d')
         return _d
 
 
