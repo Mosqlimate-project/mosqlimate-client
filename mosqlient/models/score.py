@@ -60,7 +60,7 @@ def compute_interval_score(lower_bound, upper_bound, observed_value, alpha=0.05)
 
     Parameters:
     ------------------
-    lower_bound: float | np.array 
+    lower_bound: float | np.array
         The lower bound of the prediction interval.
     upper_bound: float | np.array
         The upper bound of the prediction interval.
@@ -76,13 +76,13 @@ def compute_interval_score(lower_bound, upper_bound, observed_value, alpha=0.05)
 
 
     interval_width = upper_bound - lower_bound
-    
+
     # Compute penalties
     penalty_lower = 2 / alpha * np.maximum(0, lower_bound - observed_value)
     penalty_upper = 2 / alpha * np.maximum(0, observed_value - upper_bound)
-    
+
     penalty = penalty_lower + penalty_upper
-    
+
     return interval_width + penalty
 
 
@@ -338,7 +338,7 @@ class Scorer:
         pred: pd.DataFrame
             Pandas Dataframe already in the format accepted by the platform
             that will be computed the score.
-        confidence_level: float. 
+        confidence_level: float.
             The confidence level of the predictions of the columns upper and lower.
         """
 
@@ -567,7 +567,7 @@ class Scorer:
             df_id_ = dict_df_ids[id_]
             score = logs_normal(df_true.casos, df_id_.pred,
                                 (df_id_.upper-df_id_.lower)/(2*self.z_value), negative=False)
-            #truncated the output 
+            #truncated the output
             score = np.maximum(score, np.repeat(-100, len(score)))
 
             scores_curve[id_] = pd.Series(score, index=df_true.date)
@@ -595,15 +595,15 @@ class Scorer:
 
         scores_curve = {}
 
-        scores_mean = {} 
+        scores_mean = {}
 
         for id_ in dict_df_ids.keys():
 
             df_id_ = dict_df_ids[id_]
-        
+
             score = compute_interval_score( df_id_.lower.values,  df_id_.upper.values,df_true.casos.values,
                                 alpha = 1-self.confidence_level)
-            
+
             scores_curve[id_] = pd.Series(score, index=df_true.date)
 
             scores_mean[id_] = np.mean(score)
@@ -611,7 +611,7 @@ class Scorer:
         self.interval_score_curve = scores_curve
 
         return scores_curve, scores_mean
-    
+
     @property
     def summary(self,):
         '''
