@@ -22,7 +22,7 @@ def transform_json_to_dataframe(res: dict) -> pd.DataFrame:
 
     json_struct = json.loads(res['prediction'])
     df = pd.json_normalize(json_struct)
-    df.dates = pd.to_datetime(df.dates)
+    df.date = pd.to_datetime(df.date)
 
     return df
 
@@ -126,10 +126,10 @@ def plot_score(
     ----------
     data: pd.DataFrame
         The DataFrame with the time series of cases must contain the columns
-        `dates` and `casos`.
+        `date` and `casos`.
     df_melted : pd.DataFrame
         The DataFrame must contains the columns:
-        * dates: with the dates';
+        * date: with the date';
             * variable: with the models name;
         * '{score}_score': with the score value
     '''
@@ -147,7 +147,7 @@ def plot_score(
         subtitle = 'Bigger is better'
 
     timedata = alt.Chart(data).mark_line().encode(
-        x='dates',
+        x='date',
         y='casos',
         color=alt.value('black')).properties(
         width=400,  # Set the width
@@ -158,12 +158,12 @@ def plot_score(
     nearest = alt.selection_point(
         nearest=True,
         on="pointerover",
-        fields=["dates"],
+        fields=["date"],
         empty=False
     )
 
     graph_score = alt.Chart(df_melted).mark_point(filled=False).encode(
-        x='dates',
+        x='date',
         y=f'{score}_score',
         color=alt.Color('variable', legend=alt.Legend(legendX=100)),
     ).properties(
@@ -174,7 +174,7 @@ def plot_score(
     # Transparent selectors across the chart. This is what tells us
     # the x-value of the cursor
     selectors = alt.Chart(df_melted).mark_point().encode(  # TODO: Not used
-        x="dates",
+        x="date",
         opacity=alt.value(0),
     ).add_params(
         nearest
@@ -189,13 +189,13 @@ def plot_score(
     columns = list(df_melted.variable.unique())
     tooltip = [alt.Tooltip(c, type="quantitative", format=".2f")
                for c in columns]
-    tooltip.insert(0, alt.Tooltip('dates:T', title='Date'))
+    tooltip.insert(0, alt.Tooltip('date:T', title='Date'))
     rules = alt.Chart(df_melted).transform_pivot(
         "variable",
         value=f"{score}_score",
-        groupby=["dates"]
+        groupby=["date"]
     ).mark_rule(color="gray").encode(
-        x="dates",
+        x="date",
         opacity=alt.condition(nearest, alt.value(0.3), alt.value(0)),
         tooltip=tooltip,
     ).add_params(nearest)
@@ -235,12 +235,12 @@ class Scorer:
 
     dict_df_ids: dict[pd.DataFrame]
         A dict of DataFrames of the predictions. If the key is int it refers
-        to the ids passed in the init. If it is `preds` it refers to the
+        to the ids passed in the init. If it is `pred` it refers to the
         dataframe of the predictions provided by the user.
 
     filtered_dict_df_ids: dict[pd.DataFrame]
         A dict of DataFrames of the predictions. If the key is int it refers to
-        the ids passed in the init. If it is `preds` it refers to the dataframe
+        the ids passed in the init. If it is `pred` it refers to the dataframe
         of the predictions provided by the user. The DataFrames are filtered
         according to the interval of the predictions or with the
         `set_date_range` method.
@@ -248,21 +248,21 @@ class Scorer:
     min_date: str
         Min date that will include the information of the df_true and predictions.
 
-    min_date: str
+    max_date: str
         Max date that will include the information of the df_true and predictions.
 
     mae : dict
-        Dict where the keys are the id of the models or `preds` when a
+        Dict where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of
         the dict are the mean absolute error.
 
     mse: dict
-        Dict where the keys are the id of the models or `preds` when a
+        Dict where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the mean squared error.
 
     crps: tuple of dicts
-        Dict where the keys are the id of the models or `preds` when a
+        Dict where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the scores computed.
 
@@ -273,7 +273,7 @@ class Scorer:
         The CRPS computed assumes a normal distribution.
 
     log_score: tuple of dicts
-        Dict where the keys are the id of the models or `preds` when a
+        Dict where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the scores computed.
 
@@ -285,7 +285,7 @@ class Scorer:
 
 
     interval_score: tuple of dicts
-        Dict where the keys are the id of the models or `preds` when a
+        Dict where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the scores computed.
 
@@ -294,7 +294,7 @@ class Scorer:
         for all the points.
 
     summary: pd.DataFrame
-        DataFrame where the keys are the id of the models or `preds` when a
+        DataFrame where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the columns are
         the scores: mae, mse, and the mean of crps, log_score, and interval score.
 
@@ -325,17 +325,17 @@ class Scorer:
         self,
         df_true: pd.DataFrame,
         ids: Optional[list[int] | list[str]] = None,
-        preds: Optional[pd.DataFrame] = None,
+        pred: Optional[pd.DataFrame] = None,
         confidence_level: float=0.90
     ):
         """
         Parameters
         ----------
         df_true: pd.DataFrame
-            DataFrame with the columns `dates` and `casos`.
+            DataFrame with the columns `date` and `casos`.
         ids : list[int]
             List of the predictions ids that it will be compared.
-        preds: pd.DataFrame
+        pred: pd.DataFrame
             Pandas Dataframe already in the format accepted by the platform
             that will be computed the score.
         confidence_level: float. 
@@ -343,7 +343,7 @@ class Scorer:
         """
 
         # input validation data
-        cols_df_true = ["dates", "casos"]
+        cols_df_true = ["date", "casos"]
 
         if not set(cols_df_true).issubset(set(list(df_true.columns))):
             raise ValueError(
@@ -351,26 +351,26 @@ class Scorer:
                 f"{set(cols_df_true).difference(set(list(df_true.columns)))}"
             )
 
-        df_true.dates = pd.to_datetime(df_true.dates)
+        df_true.date = pd.to_datetime(df_true.date)
         # Ensure all the dates has the same lenght
-        min_dates = [min(df_true.dates)]
-        max_dates = [max(df_true.dates)]
+        min_dates = [min(df_true.date)]
+        max_dates = [max(df_true.date)]
 
         dict_df_ids = {}
 
-        if preds is not None:
-            cols_preds = ['dates', 'lower', 'preds', 'upper']
-            if not set(cols_preds).issubset(set(list(preds.columns))):
+        if pred is not None:
+            cols_preds = ['date', 'lower', 'pred', 'upper']
+            if not set(cols_preds).issubset(set(list(pred.columns))):
                 raise ValueError(
-                    "Missing required keys in the preds:"
-                    f"{set(cols_preds).difference(set(list(preds.columns)))}")
+                    "Missing required keys in the pred:"
+                    f"{set(cols_preds).difference(set(list(pred.columns)))}")
 
-            dict_df_ids['preds'] = preds
-            preds.dates = pd.to_datetime(preds.dates)
-            min_dates.append(min(preds.dates))
-            max_dates.append(max(preds.dates))
+            dict_df_ids['pred'] = pred
+            pred.date = pd.to_datetime(pred.date)
+            min_dates.append(min(pred.date))
+            max_dates.append(max(pred.date))
 
-        if (ids is None or len(ids) == 0) and (preds is None):
+        if (ids is None or len(ids) == 0) and (pred is None):
             raise ValueError(
                 "It must be provide and id or DataFrame to be compared"
             )
@@ -384,11 +384,11 @@ class Scorer:
                     raise ValueError(f"No Prediction found for id: {id_}")
 
                 df_ = prediction.to_dataframe()
-                df_ = df_.sort_values(by='dates')
-                df_.dates = pd.to_datetime(df_.dates)
+                df_ = df_.sort_values(by='date')
+                df_.date = pd.to_datetime(df_.date)
                 dict_df_ids[id_] = df_
-                min_dates.append(min(df_.dates))
-                max_dates.append(max(df_.dates))
+                min_dates.append(min(df_.date))
+                max_dates.append(max(df_.date))
 
         min_dates = pd.to_datetime(min_dates)
         max_dates = pd.to_datetime(max_dates)
@@ -396,16 +396,16 @@ class Scorer:
         max_date = min(max_dates)
 
         # updating the dates interval
-        df_true = df_true.loc[(df_true.dates >= min_date)
-                              & (df_true.dates <= max_date)]
-        df_true = df_true.sort_values(by='dates')
+        df_true = df_true.loc[(df_true.date >= min_date)
+                              & (df_true.date <= max_date)]
+        df_true = df_true.sort_values(by='date')
         df_true.reset_index(drop=True, inplace=True)
 
         for id_ in dict_df_ids.keys():
             df_id = dict_df_ids[id_]
-            df_id = df_id.loc[(df_id.dates >= min_date) &
-                              (df_id.dates <= max_date)]
-            df_id = df_id.sort_values(by='dates')
+            df_id = df_id.loc[(df_id.date >= min_date) &
+                              (df_id.date <= max_date)]
+            df_id = df_id.sort_values(by='date')
             dict_df_ids[id_] = df_id
 
         z_value = stats.norm.ppf((1 + confidence_level) / 2)
@@ -449,13 +449,13 @@ class Scorer:
         df_true = self.df_true
         dict_df_ids = self.dict_df_ids
 
-        self.filtered_df_true = df_true.loc[(df_true.dates >= pd.to_datetime(
-            start_date)) & (df_true.dates <= pd.to_datetime(end_date))]
+        self.filtered_df_true = df_true.loc[(df_true.date >= pd.to_datetime(
+            start_date)) & (df_true.date <= pd.to_datetime(end_date))]
 
         for id_ in dict_df_ids.keys():
             df_id = dict_df_ids[id_]
-            df_id = df_id.loc[(df_id.dates >= pd.to_datetime(start_date)) & (
-                df_id.dates <= pd.to_datetime(end_date))]
+            df_id = df_id.loc[(df_id.date >= pd.to_datetime(start_date)) & (
+                df_id.date <= pd.to_datetime(end_date))]
             dict_df_ids[id_] = df_id
 
         self.filtered_dict_df_ids = dict_df_ids
@@ -465,7 +465,7 @@ class Scorer:
     @property
     def mae(self,):
         '''
-        dict: Dict, where the keys are the id of the models or `preds` when a
+        dict: Dict, where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the mean absolute error.
         '''
@@ -478,7 +478,7 @@ class Scorer:
         for id_ in dict_df_ids.keys():
 
             scores[id_] = evaluate_point_metrics(
-                df_true.casos, y_pred=dict_df_ids[id_].preds, metric='MAE'
+                df_true.casos, y_pred=dict_df_ids[id_].pred, metric='MAE'
             )
 
         return scores
@@ -486,7 +486,7 @@ class Scorer:
     @property
     def mse(self,):
         '''
-        dict: Dict, where the keys are the id of the models or `preds` when a
+        dict: Dict, where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the mean squared error.
         '''
@@ -500,14 +500,14 @@ class Scorer:
         for id_ in dict_df_ids.keys():
 
             scores[id_] = evaluate_point_metrics(
-                df_true.casos, y_pred=dict_df_ids[id_].preds, metric='MSE'
+                df_true.casos, y_pred=dict_df_ids[id_].pred, metric='MSE'
             )
         return scores
 
     @property
     def crps(self,):
         '''
-        tuple of dict: Dict where the keys are the id of the models or `preds`
+        tuple of dict: Dict where the keys are the id of the models or `pred`
         when a dataframe of predictions is provided by the user,
         and the values of the dict are the scores computed.
 
@@ -530,10 +530,10 @@ class Scorer:
 
             df_id_ = dict_df_ids[id_]
 
-            score = crps_normal(df_true.casos, df_id_.preds,
+            score = crps_normal(df_true.casos, df_id_.pred,
                                 (df_id_.upper-df_id_.lower)/(2*self.z_value))
 
-            scores_curve[id_] = pd.Series(score, index=df_true.dates)
+            scores_curve[id_] = pd.Series(score, index=df_true.date)
 
             scores_mean[id_] = np.mean(score)
 
@@ -544,7 +544,7 @@ class Scorer:
     @property
     def log_score(self,):
         '''
-        tuple of dict: Dict where the keys are the id of the models or `preds`
+        tuple of dict: Dict where the keys are the id of the models or `pred`
         when a dataframe of predictions is provided by the user, and the values
         of the dict are the scores computed.
 
@@ -565,12 +565,12 @@ class Scorer:
         for id_ in dict_df_ids.keys():
 
             df_id_ = dict_df_ids[id_]
-            score = logs_normal(df_true.casos, df_id_.preds,
+            score = logs_normal(df_true.casos, df_id_.pred,
                                 (df_id_.upper-df_id_.lower)/(2*self.z_value), negative=False)
             #truncated the output 
             score = np.maximum(score, np.repeat(-100, len(score)))
 
-            scores_curve[id_] = pd.Series(score, index=df_true.dates)
+            scores_curve[id_] = pd.Series(score, index=df_true.date)
             scores_mean[id_] = np.mean(score)
 
         self.log_curve = scores_curve
@@ -580,7 +580,7 @@ class Scorer:
     @property
     def interval_score(self,):
         '''
-        tuple of dict: Dict where the keys are the id of the models or `preds`
+        tuple of dict: Dict where the keys are the id of the models or `pred`
         when a dataframe of predictions is provided by the user,
         and the values of the dict are the scores computed.
 
@@ -604,7 +604,7 @@ class Scorer:
             score = compute_interval_score( df_id_.lower.values,  df_id_.upper.values,df_true.casos.values,
                                 alpha = 1-self.confidence_level)
             
-            scores_curve[id_] = pd.Series(score, index=df_true.dates)
+            scores_curve[id_] = pd.Series(score, index=df_true.date)
 
             scores_mean[id_] = np.mean(score)
 
@@ -616,7 +616,7 @@ class Scorer:
     def summary(self,):
         '''
         pd.DataFrame: DataFrame where the keys are the id of the models or
-        `preds` when a dataframe of predictions is provided by the user, and
+        `pred` when a dataframe of predictions is provided by the user, and
         the columns are the scores: mae, mse, and the mean of crps, log_score,
         and interval_score.
         '''
@@ -668,7 +668,7 @@ class Scorer:
 
         df_crps.reset_index(inplace=True)
 
-        df_melted = pd.melt(df_crps, id_vars='dates',
+        df_melted = pd.melt(df_crps, id_vars='date',
                             value_vars=list(map(str, crps_.keys())))
         df_melted = df_melted.rename(columns={'value': 'CRPS_score'})
 
@@ -690,7 +690,7 @@ class Scorer:
 
         df_crps.reset_index(inplace=True)
 
-        df_melted = pd.melt(df_crps, id_vars='dates',
+        df_melted = pd.melt(df_crps, id_vars='date',
                             value_vars=list(map(str, crps_.keys())))
         df_melted = df_melted.rename(columns={'value': 'log_score'})
 
@@ -712,7 +712,7 @@ class Scorer:
 
         df_interval.reset_index(inplace=True)
 
-        df_melted = pd.melt(df_interval, id_vars='dates',
+        df_melted = pd.melt(df_interval, id_vars='date',
                             value_vars=list(map(str, interval_.keys())))
         df_melted = df_melted.rename(columns={'value': 'interval_score'})
 
@@ -760,7 +760,7 @@ class Scorer:
         df_to_plot['model'] = df_to_plot['model'].astype(str)
 
         data = alt.Chart(df_true_).mark_circle(size=60).encode(
-            x='dates:T',
+            x='date:T',
             y='casos:Q',
             color=alt.Color('legend:N', scale=alt.Scale(
                 range=['black']), legend=alt.Legend(title=None))
@@ -772,8 +772,8 @@ class Scorer:
         # here we define the plot of the right figure
         timeseries = alt.Chart(df_to_plot, title=title).mark_line(
         ).encode(
-            x=alt.X('dates:T').title('Dates'),
-            y=alt.Y('preds:Q').title('New cases'),
+            x=alt.X('date:T').title('Dates'),
+            y=alt.Y('pred:Q').title('New cases'),
             color=alt.Color('model', legend=alt.Legend(title='Model'))
         )
 
@@ -782,14 +782,14 @@ class Scorer:
         timeseries_conf = timeseries.mark_area(
             opacity=0.25,
         ).encode(
-            x='dates:T',
+            x='date:T',
             y='lower:Q',
             y2='upper:Q',
             color=alt.Color('model', legend=None)
         )
 
         nearest = alt.selection_point(nearest=True, on="pointerover",
-                                      fields=["dates"], empty=False)
+                                      fields=["date"], empty=False)
 
         # Draw points on the line, and highlight based on selection
         points = timeseries.mark_point().encode(
@@ -797,7 +797,7 @@ class Scorer:
             opacity=alt.condition(nearest, alt.value(1), alt.value(0))
         )
 
-        df_true_ = df_true_.rename(columns={'casos': 'preds'})
+        df_true_ = df_true_.rename(columns={'casos': 'pred'})
 
         df_true_['model'] = 'cases'
 
@@ -806,14 +806,14 @@ class Scorer:
         columns = list(df_to_plot.model.unique())
         tooltip = [alt.Tooltip(c, type="quantitative", format=".0f")
                    for c in columns]
-        tooltip.insert(0, alt.Tooltip('dates:T', title='Date'))
+        tooltip.insert(0, alt.Tooltip('date:T', title='Date'))
 
         rules = alt.Chart(df_to_plot).transform_pivot(
             "model",
-            value="preds",
-            groupby=["dates"]
+            value="pred",
+            groupby=["date"]
         ).mark_rule(color="gray").encode(
-            x="dates",
+            x="date",
             opacity=alt.condition(nearest, alt.value(0.3), alt.value(0)),
             tooltip=tooltip,
         ).add_params(nearest)
