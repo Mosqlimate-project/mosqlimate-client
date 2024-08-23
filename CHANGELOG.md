@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.6.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.2...1.6.3) (2024-08-23)
+
+
+### Bug Fixes
+
+* **version:** bump version to 1.6.3 to apply latest commits on PyPI ([#45](https://github.com/Mosqlimate-project/mosqlimate-client/issues/45)) ([ee5e333](https://github.com/Mosqlimate-project/mosqlimate-client/commit/ee5e333d2f004be406b840f357c6fdfea951f256))
+
 ## [1.6.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.1...1.6.2) (2024-08-23)
 
 
