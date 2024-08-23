@@ -6,8 +6,8 @@ DISEASES = ["chikungunya", "dengue", "zika"]
 ADM_LEVELS = [0, 1, 2, 3]
 TIME_RESOLUTIONS = ["day", "week", "month", "year"]
 PREDICTION_DATA_COLUMNS = [
-    "dates",
-    "preds",
+    "date",
+    "pred",
     "lower",
     "upper",
     "adm_0",
