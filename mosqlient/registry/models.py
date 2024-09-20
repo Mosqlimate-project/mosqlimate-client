@@ -5,6 +5,10 @@ import json
 import requests
 import nest_asyncio
 import pandas as pd
+import numpy as np
+import scipy.stats as stats
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from scoringrules import crps_normal, logs_normal
 from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
@@ -487,6 +491,74 @@ class Prediction(Base):
 
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.data)
+
+    def calculate_score(
+        self,
+        data: pd.DataFrame,
+        confidence_level: float = 0.9,
+    ) -> dict:
+        score = {}
+        data_df = data[["date", "casos"]]
+        data_df.date = pd.to_datetime(data_df.date)
+
+        pred_df = self.to_dataframe()
+        pred_df = pred_df.sort_values(by='date')
+        pred_df.date = pd.to_datetime(pred_df.date)
+
+        min_date = max(min(data_df.date), min(pred_df.date))
+        max_date = min(max(data_df.date), max(pred_df.date))
+
+        def dt_range(df):
+            return (df.date >= min_date) & (df.date <= max_date)
+
+        data_df = data_df.loc[dt_range(data_df)]
+        data_df.reset_index(drop=True, inplace=True)
+        pred_df = pred_df.loc[dt_range(pred_df)]
+
+        z_value = stats.norm.ppf((1 + confidence_level) / 2)
+
+        score["mae"] = mean_absolute_error(
+            y_true=data_df.casos,
+            y_pred=pred_df.pred,
+        )
+
+        score["mse"] = mean_squared_error(
+            y_true=data_df.casos,
+            y_pred=pred_df.pred
+        )
+
+        score["crps"] = np.mean(crps_normal(
+            data_df.casos,
+            pred_df.pred,
+            (pred_df.upper - pred_df.lower) / (2 * z_value)
+        ))
+
+        log_score = logs_normal(
+            data_df.casos,
+            pred_df.pred,
+            (pred_df.upper - pred_df.lower) / (2 * z_value),
+            negative=False
+        )
+
+        score["log_score"] = np.mean(np.maximum(
+            log_score,
+            np.repeat(-100, len(log_score))
+        ))
+
+        alpha = 1 - confidence_level
+        upper_bound = pred_df.upper.values
+        lower_bound = pred_df.lower.values
+
+        penalty = (
+            (2 / alpha * np.maximum(0, lower_bound - data_df.casos.values)) +
+            (2 / alpha * np.maximum(0, data_df.casos.values - upper_bound))
+        )
+
+        score["interval_score"] = np.mean(
+            (upper_bound - lower_bound) + penalty
+        )
+
+        return score
 
     @classmethod
     def get(cls, **kwargs):
