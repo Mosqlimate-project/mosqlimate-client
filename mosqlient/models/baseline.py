@@ -169,7 +169,7 @@ class Arima:
         Forecast models
     """
 
-    def __init__(self, df:pd.DataFrame):
+    def __init__(self, df:pd.DataFrame, **auto_arima_kwargs):
         """
         Constructs all the necessary attributes for the Arima object.
 
@@ -177,7 +177,9 @@ class Arima:
         ----------
             df : pd.DataFrame
             A pandas dataframe with the column y and a datetime index
-
+            auto_arima_kwargs : dict
+            All parameters that can be passed to pmdarima.arima.auto_arima.
+    
         """
         if not pd.api.types.is_datetime64_any_dtype(df.index):
             raise InvalidDataFrameError("The DataFrame's index is not of datetime type.")
@@ -191,6 +193,18 @@ class Arima:
         df['y']= df['y'].astype(float)
 
         self.df = df
+
+        default_auto_arima_kwargs = {'seasonal':False,
+                    'trace':True,
+                    'maxiter' : 100,
+                    'error_action':'ignore',
+                    'information_criterion': 'aic',
+                    'suppress_warnings':True,
+                    'stepwise' : True}
+        
+        default_auto_arima_kwargs.update(auto_arima_kwargs)
+        
+        self.auto_arima_kwargs = default_auto_arima_kwargs
 
     def train(self, train_ini_date:str, train_end_date:str):
         """
@@ -217,14 +231,7 @@ class Arima:
         df_train.loc[:, 'y'] = boxcox.transform(df_train.y)[0]
 
         model = auto_arima(df_train.y,
-                    seasonal=False,
-                    trace=True,
-                    maxiter = 100,
-                    error_action='ignore',
-                    information_criterion = 'aic',suppress_warnings=True,
-                    stepwise = True,
-                   )
-
+                          **self.auto_arima_kwargs)
 
         model.fit(df_train.y)
 
