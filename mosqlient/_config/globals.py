@@ -2,7 +2,7 @@ import os
 
 # Constants
 DJANGO_APPS = ["registry", "datastore", "vis"]
-DISEASES = ["chikungunya", "dengue", "zika"]
+DISEASES = ["chikungunya", "chik", "dengue", "zika"]
 ADM_LEVELS = [0, 1, 2, 3]
 TIME_RESOLUTIONS = ["day", "week", "month", "year"]
 PREDICTION_DATA_COLUMNS = [
