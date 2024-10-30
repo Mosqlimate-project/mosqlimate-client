@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.7.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.3...1.7.0) (2024-10-30)
+
+
+### Features
+
+* **Prediction:** include calculate_score to calculate score for individual Predictions ([#47](https://github.com/Mosqlimate-project/mosqlimate-client/issues/47)) ([87757a0](https://github.com/Mosqlimate-project/mosqlimate-client/commit/87757a0ee8ba198ad8c7839d0dae738fcc50ed2e))
+
 ## [1.6.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.2...1.6.3) (2024-08-23)
 
 
