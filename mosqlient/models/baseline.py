@@ -179,7 +179,7 @@ class Arima:
             A pandas dataframe with the column y and a datetime index
             auto_arima_kwargs : dict
             All parameters that can be passed to pmdarima.arima.auto_arima.
-    
+
         """
         if not pd.api.types.is_datetime64_any_dtype(df.index):
             raise InvalidDataFrameError("The DataFrame's index is not of datetime type.")
@@ -201,9 +201,9 @@ class Arima:
                     'information_criterion': 'aic',
                     'suppress_warnings':True,
                     'stepwise' : True}
-        
+
         default_auto_arima_kwargs.update(auto_arima_kwargs)
-        
+
         self.auto_arima_kwargs = default_auto_arima_kwargs
 
     def train(self, train_ini_date:str, train_end_date:str):
