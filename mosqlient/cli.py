@@ -20,7 +20,7 @@ def get_parser() -> argparse.ArgumentParser:
     Return the CLI argument parser.
 
     Returns:
-        An argparse parser.
+        An argparse parser
     """
     return argparse.ArgumentParser(prog="mosqbench")
 
@@ -35,7 +35,7 @@ def main(args: Optional[List[str]] = None) -> int:
         args: Arguments passed from the command line.
 
     Returns:
-        An exit code.
+        An exit code
     """
     parser = get_parser()
     opts = parser.parse_args(args=args)
