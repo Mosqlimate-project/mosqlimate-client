@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.7.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.7.0...1.7.1) (2024-12-18)
+
+
+### Bug Fixes
+
+* **release:** bump version to 1.7.1 (fix) ([#51](https://github.com/Mosqlimate-project/mosqlimate-client/issues/51)) ([37a2e2f](https://github.com/Mosqlimate-project/mosqlimate-client/commit/37a2e2f9b7d3b373d6591835d8ba84871b41137a))
+
 # [1.7.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.6.3...1.7.0) (2024-10-30)
 
 
