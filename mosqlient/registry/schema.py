@@ -52,21 +52,16 @@ class PredictionDataRowSchema(BaseModel):
     adm_3: Optional[int] = None
 
     class Config:
-        json_encoders = {
-            date: lambda v: v.strftime('%Y-%m-%d')
-        }
+        json_encoders = {date: lambda v: v.strftime("%Y-%m-%d")}
 
     def dict(self, **kwargs):
         _d = super().dict(**kwargs)
-        _d['date'] = _d['date'].strftime('%Y-%m-%d')
+        _d["date"] = _d["date"].strftime("%Y-%m-%d")
         return _d
 
 
 class PredictionSchema(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True, protected_namespaces=())
 
     id: Optional[types.ID] = None
     model: ModelSchema

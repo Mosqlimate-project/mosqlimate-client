@@ -12,7 +12,7 @@ repos:
 - repo: https://github.com/psf/black
       # Replace by any tag/version:
       # https://github.com/psf/black/tags
-  rev: 21.10b0
+  rev: 24.10.0
   hooks:
   - id: black
             # Should be a command that runs python3.6+

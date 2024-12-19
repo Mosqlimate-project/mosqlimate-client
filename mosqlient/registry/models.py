@@ -24,10 +24,7 @@ nest_asyncio.apply()
 
 
 class Base(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        protected_namespaces=()
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True, protected_namespaces=())
 
     def __str__(self):
         return self.json()
@@ -39,17 +36,9 @@ class Base(BaseModel):
 class User(Base):
     _schema: schema.UserSchema
 
-    def __init__(
-        self,
-        name: types.AuthorName,
-        username: types.AuthorUserName,
-        **kwargs
-    ):
+    def __init__(self, name: types.AuthorName, username: types.AuthorUserName, **kwargs):
         super().__init__(**kwargs)
-        self._schema = schema.UserSchema(
-            name=name,
-            username=username
-        )
+        self._schema = schema.UserSchema(name=name, username=username)
 
     @property
     def name(self) -> types.AuthorName:
@@ -64,25 +53,17 @@ class Author(Base):
     user: User
     _schema: schema.AuthorSchema
 
-    def __init__(
-        self,
-        user: User | dict,
-        institution: types.AuthorInstitution,
-        **kwargs
-    ):
+    def __init__(self, user: User | dict, institution: types.AuthorInstitution, **kwargs):
 
         if isinstance(user, dict):
             user = User(**user)
 
-        kwargs['user'] = user
+        kwargs["user"] = user
 
         super().__init__(**kwargs)
         self.user = user
 
-        self._schema = schema.AuthorSchema(
-            user=user._schema,
-            institution=institution
-        )
+        self._schema = schema.AuthorSchema(user=user._schema, institution=institution)
 
     def __repr__(self) -> str:
         return self._schema.user.name
@@ -97,25 +78,16 @@ class Author(Base):
         name: Optional[types.AuthorName] = None,
         institution: Optional[types.AuthorInstitution] = None,
         username: Optional[types.AuthorUserName] = None,
-        **kwargs
+        **kwargs,
     ):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
-        params = {
-            "name": name,
-            "institution": institution,
-            "username": username
-        }
+        params = {"name": name, "institution": institution, "username": username}
         params = parse_params(**params)
 
         return [
-            Author(**m) for m in get_all_sync(
-                app="registry",
-                endpoint="authors",
-                params=params,
-                pagination=False,
-                timeout=timeout
-            )
+            Author(**m)
+            for m in get_all_sync(app="registry", endpoint="authors", params=params, pagination=False, timeout=timeout)
         ]
 
 
@@ -125,17 +97,11 @@ class ImplementationLanguage(Base):
     def __init__(self, language: types.ImplementationLanguage, **kwargs):
         super().__init__(**kwargs)
         if isinstance(language, dict):
-            self._schema = schema.ImplementationLanguageSchema(
-                language=language['language']
-            )
+            self._schema = schema.ImplementationLanguageSchema(language=language["language"])
         elif isinstance(language, str):
-            self._schema = schema.ImplementationLanguageSchema(
-                language=language
-            )
+            self._schema = schema.ImplementationLanguageSchema(language=language)
         else:
-            raise ValueError(
-                "`language` must be a str or a dict with {'language': `language`}"
-            )
+            raise ValueError("`language` must be a str or a dict with {'language': `language`}")
 
     def __repr__(self) -> str:
         return self._schema.language
@@ -168,20 +134,15 @@ class Model(Base):
         ADM_level: types.ADMLevel,
         time_resolution: types.TimeResolution,
         id: Optional[types.ID] = None,
-        **kwargs
+        **kwargs,
     ):
 
         if isinstance(author, dict):
-            author = Author(
-                user=author['user'],
-                institution=author['institution']
-            )
-        kwargs['author'] = author
+            author = Author(user=author["user"], institution=author["institution"])
+        kwargs["author"] = author
 
-        language = ImplementationLanguage(
-            language=implementation_language
-        )
-        kwargs['implementation_language'] = language
+        language = ImplementationLanguage(language=implementation_language)
+        kwargs["implementation_language"] = language
 
         super().__init__(**kwargs)
 
@@ -257,13 +218,8 @@ class Model(Base):
         params = parse_params(**kwargs)
 
         return [
-            Model(**m) for m in get_all_sync(
-                app="registry",
-                endpoint="models",
-                params=params,
-                pagination=True,
-                timeout=timeout
-            )
+            Model(**m)
+            for m in get_all_sync(app="registry", endpoint="models", params=params, pagination=True, timeout=timeout)
         ]
 
     def post(self, **kwargs):
@@ -296,17 +252,11 @@ class Model(Base):
         url = urljoin(get_api_url(), "/".join(("registry", "models")) + "/")
         headers = {"X-UID-Key": self.client.X_UID_KEY}
 
-        resp = requests.post(
-            url,
-            json=params,
-            headers=headers,
-            timeout=timeout
-        )
+        resp = requests.post(url, json=params, headers=headers, timeout=timeout)
 
         if resp.status_code != 201:
             raise ModelPostError(
-                "POST request returned status code "
-                f"{resp.status_code} \n {resp.reason} \n {resp.json()}"
+                "POST request returned status code " f"{resp.status_code} \n {resp.reason} \n {resp.json()}"
             )
 
         return resp
@@ -326,7 +276,7 @@ class Model(Base):
         # fmt: off
         time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
         # fmt: on
-        **kwargs
+        **kwargs,
     ):
         """
         https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L258
@@ -351,7 +301,7 @@ class Model(Base):
             "spatial": spatial,
             "categorical": categorical,
             "ADM_level": adm_level,
-            "time_resolution": time_resolution
+            "time_resolution": time_resolution,
         }
 
         ModelPUTParams(
@@ -368,9 +318,7 @@ class Model(Base):
             time_resolution=time_resolution,
         )
 
-        url = urljoin(
-            get_api_url(), "/".join(("registry", "models")) + f"/{id}"
-        )
+        url = urljoin(get_api_url(), "/".join(("registry", "models")) + f"/{id}")
         headers = {"X-UID-Key": self.client.X_UID_KEY}
         resp = requests.put(url, json=params, headers=headers, timeout=timeout)
 
@@ -422,12 +370,12 @@ class Prediction(Base):
         predict_date: types.Date,
         data: types.PredictionData,
         id: Optional[types.ID] = None,
-        **kwargs
+        **kwargs,
     ):
         if isinstance(model, dict):
             model = Model(**model)
 
-        kwargs['model'] = model
+        kwargs["model"] = model
 
         super().__init__(**kwargs)
 
@@ -436,34 +384,17 @@ class Prediction(Base):
                 _data = json.loads(data)
             except json.decoder.JSONDecodeError:
                 raise ValueError("str `data` must be JSON serializable")
-            _data = [
-                schema.PredictionDataRowSchema(**d)
-                for d in _data
-            ]
+            _data = [schema.PredictionDataRowSchema(**d) for d in _data]
         elif isinstance(data, pd.DataFrame):
-            _data = [
-                schema.PredictionDataRowSchema(**d)
-                for d in data.to_dict(orient="records")
-            ]
+            _data = [schema.PredictionDataRowSchema(**d) for d in data.to_dict(orient="records")]
         elif isinstance(data, list):
-            _data = [
-                schema.PredictionDataRowSchema(**d)
-                for d in data
-            ]
+            _data = [schema.PredictionDataRowSchema(**d) for d in data]
         else:
-            raise ValueError(
-                "`data` must be rather a DataFrame, a JSON str or a list of" +
-                " dictionaries"
-            )
+            raise ValueError("`data` must be rather a DataFrame, a JSON str or a list of" + " dictionaries")
 
         self.model = model
         self._schema = schema.PredictionSchema(
-            id=id,
-            model=model._schema,
-            description=description,
-            commit=commit,
-            predict_date=predict_date,
-            data=_data
+            id=id, model=model._schema, description=description, commit=commit, predict_date=predict_date, data=_data
         )
 
     def __repr__(self) -> str:
@@ -502,7 +433,7 @@ class Prediction(Base):
         data_df.date = pd.to_datetime(data_df.date)
 
         pred_df = self.to_dataframe()
-        pred_df = pred_df.sort_values(by='date')
+        pred_df = pred_df.sort_values(by="date")
         pred_df.date = pd.to_datetime(pred_df.date)
 
         min_date = max(min(data_df.date), min(pred_df.date))
@@ -522,41 +453,27 @@ class Prediction(Base):
             y_pred=pred_df.pred,
         )
 
-        score["mse"] = mean_squared_error(
-            y_true=data_df.casos,
-            y_pred=pred_df.pred
-        )
+        score["mse"] = mean_squared_error(y_true=data_df.casos, y_pred=pred_df.pred)
 
-        score["crps"] = np.mean(crps_normal(
-            data_df.casos,
-            pred_df.pred,
-            (pred_df.upper - pred_df.lower) / (2 * z_value)
-        ))
+        score["crps"] = np.mean(
+            crps_normal(data_df.casos, pred_df.pred, (pred_df.upper - pred_df.lower) / (2 * z_value))
+        )
 
         log_score = logs_normal(
-            data_df.casos,
-            pred_df.pred,
-            (pred_df.upper - pred_df.lower) / (2 * z_value),
-            negative=False
+            data_df.casos, pred_df.pred, (pred_df.upper - pred_df.lower) / (2 * z_value), negative=False
         )
 
-        score["log_score"] = np.mean(np.maximum(
-            log_score,
-            np.repeat(-100, len(log_score))
-        ))
+        score["log_score"] = np.mean(np.maximum(log_score, np.repeat(-100, len(log_score))))
 
         alpha = 1 - confidence_level
         upper_bound = pred_df.upper.values
         lower_bound = pred_df.lower.values
 
-        penalty = (
-            (2 / alpha * np.maximum(0, lower_bound - data_df.casos.values)) +
-            (2 / alpha * np.maximum(0, data_df.casos.values - upper_bound))
+        penalty = (2 / alpha * np.maximum(0, lower_bound - data_df.casos.values)) + (
+            2 / alpha * np.maximum(0, data_df.casos.values - upper_bound)
         )
 
-        score["interval_score"] = np.mean(
-            (upper_bound - lower_bound) + penalty
-        )
+        score["interval_score"] = np.mean((upper_bound - lower_bound) + penalty)
 
         return score
 
@@ -623,30 +540,21 @@ class Prediction(Base):
             "prediction": json.dumps(self.data),
         }
 
-        url = urljoin(
-            get_api_url(),
-            "/".join(("registry", "predictions")) + "/"
-        )
+        url = urljoin(get_api_url(), "/".join(("registry", "predictions")) + "/")
         headers = {"X-UID-Key": self.client.X_UID_KEY}
 
-        resp = requests.post(
-            url,
-            json=params,
-            headers=headers,
-            timeout=timeout
-        )
+        resp = requests.post(url, json=params, headers=headers, timeout=timeout)
 
         if str(resp.status_code).startswith("5"):
             raise ClientError(
-                f"{resp.status_code}: {resp.reason}. " +
-                "This error is from the API Server, please try again and " +
-                "contact the moderation if this error persists"
+                f"{resp.status_code}: {resp.reason}. "
+                + "This error is from the API Server, please try again and "
+                + "contact the moderation if this error persists"
             )
 
         if resp.status_code != 201:
             raise PredictionPostError(
-                "POST request returned status code " +
-                f"{resp.status_code}: {resp.reason} \n {resp.json()}"
+                "POST request returned status code " + f"{resp.status_code}: {resp.reason} \n {resp.json()}"
             )
 
         # TODO: Return a Prediction object retrieving it from the API

@@ -13,7 +13,7 @@ __all__ = [
     "get_predictions_by_repository",
     "get_predictions_by_implementation_language",
     "get_predictions_by_predict_date",
-    "get_predictions_between"
+    "get_predictions_between",
 ]
 
 from datetime import date
@@ -90,9 +90,7 @@ def get_predictions_by_adm_level(adm_level: int) -> List[Prediction]:
     return Prediction.get(adm_level=adm_level)
 
 
-def get_predictions_by_time_resolution(
-    time_resolution: str
-) -> List[Prediction]:
+def get_predictions_by_time_resolution(time_resolution: str) -> List[Prediction]:
     return Prediction.get(time_resolution=time_resolution)
 
 
@@ -104,27 +102,19 @@ def get_predictions_by_author_name(author_name: str) -> List[Prediction]:
     return Prediction.get(author_name=author_name)
 
 
-def get_predictions_by_author_username(
-    author_username: str
-) -> List[Prediction]:
+def get_predictions_by_author_username(author_username: str) -> List[Prediction]:
     return Prediction.get(author_username=author_username)
 
 
-def get_predictions_by_author_institution(
-    author_institution: str
-) -> List[Prediction]:
+def get_predictions_by_author_institution(author_institution: str) -> List[Prediction]:
     return Prediction.get(author_institution=author_institution)
 
 
-def get_predictions_by_repository(
-    repository: str
-) -> List[Prediction]:
+def get_predictions_by_repository(repository: str) -> List[Prediction]:
     return Prediction.get(repository=repository)
 
 
-def get_predictions_by_implementation_language(
-    implementation_language: str
-) -> List[Prediction]:
+def get_predictions_by_implementation_language(implementation_language: str) -> List[Prediction]:
     return Prediction.get(implementation_language=implementation_language)
 
 

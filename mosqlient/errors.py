@@ -13,9 +13,7 @@ class FieldTypeError(ValidationErrorBase):
 
     def __init__(self, field: str, _type: Union[Iterable, Any]):
         self.field = field
-        super().__init__(
-            f"Incorrect type for field: '{field}'. Expected type(s): '{_type}'"
-        )
+        super().__init__(f"Incorrect type for field: '{field}'. Expected type(s): '{_type}'")
 
     def __str__(self):
         return f"{self.field}: {self.args[0]}"

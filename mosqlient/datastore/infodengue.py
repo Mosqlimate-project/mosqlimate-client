@@ -10,13 +10,7 @@ from mosqlient._utils import parse_params
 
 class Infodengue(BaseModel):
     @classmethod
-    def get(
-        cls,
-        disease: Literal["dengue", "zika", "chikungunya"],
-        start: str | date,
-        end: str | date,
-        **kwargs
-    ):
+    def get(cls, disease: Literal["dengue", "zika", "chikungunya"], start: str | date, end: str | date, **kwargs):
         timeout = kwargs["timeout"] if "timeout" in kwargs else 300
 
         kwargs["disease"] = disease
