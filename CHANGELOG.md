@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.7.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.7.1...1.7.2) (2024-12-19)
+
+
+### Bug Fixes
+
+* **release:** deploy DOI on Zenodo ([#52](https://github.com/Mosqlimate-project/mosqlimate-client/issues/52)) ([9867ee9](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9867ee9ad84716fdd1a7c9b30b9380f42f35119c))
+
 ## [1.7.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.7.0...1.7.1) (2024-12-18)
 
 
