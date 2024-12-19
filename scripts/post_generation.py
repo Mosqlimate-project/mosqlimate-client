@@ -8,6 +8,7 @@ def silence_errors(func):
             func(*args, **kwargs)
         except Exception:
             pass
+
     return wrapped
 
 
