@@ -25,5 +25,5 @@ class Climate(BaseModel):
 class ClimateGETParams(BaseModel):
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
-    geocode: Optional[types.Geocode] = None
+    geocodigo: Optional[types.Geocode] = None
     uf: Optional[types.UF] = None
