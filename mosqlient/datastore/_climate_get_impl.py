@@ -45,5 +45,5 @@ def get_climate(
     ] = None,
     geocode: Optional[int] = None,
 ) -> pd.DataFrame:
-    params = {"uf": uf, "geocode": geocode}
+    params = {"uf": uf, "geocodigo": geocode}
     return pd.DataFrame(Climate.get(start=start_date, end=end_date, **params))
