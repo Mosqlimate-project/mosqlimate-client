@@ -365,7 +365,7 @@ def get_score(obs:float, mu:float, sd:float,
     raise ValueError(f"Invalid distribution '{dist}' and metric '{metric}'")
 
 
-def find_opt_weights_all(obs:pd.DataFrame,
+def find_opt_weights_log(obs:pd.DataFrame,
                      preds:pd.DataFrame,
                      order_models:list,
                      dist:str = 'log_normal', metric:str = 'crps') -> dict:
@@ -467,6 +467,7 @@ class Ensemble:
         self,
         df: pd.DataFrame,
         order_models:list, 
+        mixture:str = 'log', 
         dist: str = 'log_normal',
         fn_loss:str = 'median', 
         alpha:float=0.9
@@ -481,6 +482,9 @@ class Ensemble:
             DataFrame containing columns `date`, `pred`, `lower`, `upper`, and `model_id`.
         order_models : list
             List defining the order of models for weight computation.
+        mixture: str
+            Determine how the predictions are combined. Choose `linear` for a weighted 
+            linear mixture or `log` for logarithmic pooling. 
         dist : str, optional
             The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
         fn_loss : str, optional
@@ -510,6 +514,7 @@ class Ensemble:
 
         self.df = df 
         self.dist = dist 
+        self.mixture = mixture
         self.order_models = order_models
     
     def compute_weights(self, df_obs:pd.DataFrame, metric:str = 'crps') ->dict: 
@@ -531,7 +536,11 @@ class Ensemble:
 
         preds = self.df[['date', 'mu', 'sigma','model_id']]
 
-        weights = find_opt_weights_all(obs=df_obs,
+        if self.mixture == 'linear': 
+            weights = find_opt_weights_linear(df_obs, preds, self.order_models, dist = self.dist, metric = metric)
+            
+        if self.mixture == 'log':
+            weights = find_opt_weights_log(obs=df_obs,
                                        preds=preds,
                                        order_models=self.order_models,
                                        dist = self.dist,
@@ -575,14 +584,19 @@ class Ensemble:
 
         for d in preds.date.unique():
             preds_ = preds.loc[preds.date == d]
-            pool = pool_par_gauss(alpha = weights, m = preds_.mu,
-                    v = preds_.sigma**2)
-                    
-            if self.dist == 'log_normal':
-                quantiles = lognorm.ppf(p, s=pool[1], scale=np.exp(pool[0]))
+            
+            if self.mixture == 'log':
+                quantiles = get_quantiles_log(self.dist,                   
+                            weights = weights, 
+                            ms= preds_.mu,
+                            vs= preds_.sigma**2,
+                            p=p)
 
-            elif self.dist == 'normal':
-                quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
+            if self.mixture == 'linear':
+                quantiles = get_quantiles_linear(self.dist,
+                                                weights=weights, 
+                                                preds= preds_,
+                                                p = p)
             
             df_ = pd.DataFrame([quantiles], columns = ['pred', 'lower', 'upper'])
         
@@ -719,7 +733,40 @@ def crps_lognormal_mix(obs: Union[float, NDArray[np.float64]],
         crpsdens[i] = crps_lognormal(observation = obs, mulog = mu[i], sigmalog = sigma[i])
 
     return np.dot(np.array(weights), np.array(crpsdens))#, crpsdens 
-   
+
+def find_opt_weights_linear(obs:pd.DataFrame, preds:pd.DataFrame, order_models:list, dist:str, metric:str) -> dict:
+    '''
+    Find the weights of a linear mix distributions that minimizes the metric selected.
+
+    Parameters
+    -----------
+    obs: pd.Dataframe
+        Dataframe with the columns: `date` and `casos`
+    preds: pd.Dataframe
+        Dataframe with the columns: `date`, `mu`, `sigma`, `model_id`
+    order_models : list
+        List defining the order of models for weight computation.
+    dist : str, optional
+        The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+    metric : str, optional
+        Metric used for optimization. Options: `crps`, `log_score`.
+    
+    Return
+    -------
+    dict
+        A dictionary containing:
+        - `weights`: The optimized weights for the models.
+        - `loss`: The minimized loss value based on the selected metric. 
+    '''
+
+    if dist == 'log_normal':
+        weights = find_opt_weights_linear_mix_log(obs, preds, order_models, metric=metric)
+        
+    if dist == 'normal':
+        weights = find_opt_weights_linear_mix_norm(obs, preds, order_models, metric=metric)
+        
+    return weights
+
 def find_opt_weights_linear_mix_log(obs:pd.DataFrame, preds:pd.DataFrame, order_models:list, metric:str) -> dict:
     '''
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
@@ -755,7 +802,8 @@ def find_opt_weights_linear_mix_log(obs:pd.DataFrame, preds:pd.DataFrame, order_
             The computed loss value.
         """
         ws = alpha_01(eta)
-
+        ws = np.where(ws < 1e-6, 1e-6, ws)
+        
         score = 0
         for date in obs.date:
             preds_ = preds.loc[preds.date == date]
@@ -847,154 +895,75 @@ def find_opt_weights_linear_mix_norm(obs:pd.DataFrame, preds:pd.DataFrame, order
         'loss': opt_result.fun
     }
 
-class Ensemble_linear:
-    """
-    A class to compute the optimal weights and apply an ensemble of models,
-    assuming a linear mixture of log-normal distributions.
+def get_quantiles_log(dist:str, weights:NDArray[np.float64], 
+                      ms: NDArray[np.float64],
+                      vs:NDArray[np.float64],
+                      p:NDArray[np.float64] = np.array([0.5, 0.05, 0.95])):
+    '''
+    Function to get the quantiles of a logarithmic pooling. 
 
-    Attributes
-    ----------
-    df : pd.DataFrame
-        DataFrame containing model predictions with columns `date`, `pred`, `lower`, `upper`, and `model_id`.
-    order_models : list
-        List specifying the order of models used in the ensemble.
-    weights : dict, optional
-        Dictionary containing the computed weights for each model, obtained via `compute_weights`.
+    Parameters 
+    ------------
+    dist : str, optional
+        The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+    weights: np.array
+        The weights assigned to each prediction. 
+    ms: np.array
+        The mu parameter of each prediction.
+    vs: np.array
+        The variance parameter of each prediction.
+    p: np.array
+        Returned percentile values 
 
-    Methods 
-    -------
-    compute_weights(df_obs, metric='crps')
-        Computes the optimal weights for the ensemble based on observed data and the selected metric.
-    
-    apply_ensemble(weights=None)
-        Generates the ensemble distribution using computed weights from `compute_weights` or custom weights.
-    """
- 
-    def __init__(
-        self,
-        df: pd.DataFrame,
-        order_models: list,
-        dist: str,
-        fn_loss: str ,
-        alpha:float=0.9, 
+    Returns 
+    --------
+    quantiles: np.array
+        The quantiles obtained according to p. 
+    '''
+    pool = pool_par_gauss(alpha = weights, m = ms,
+                    v = vs)
+                    
+    if dist == 'log_normal':
+        quantiles = lognorm.ppf(p, s=pool[1], scale=np.exp(pool[0]))
 
-    ):
-        """
-        Initializes the ensemble model with prediction data and model ordering.
+    elif dist == 'normal':
+        quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
 
-        Parameters
-        ----------
-        df : pd.DataFrame
-            DataFrame containing model predictions with columns `date`, `pred`, `lower`, `upper`, and `model_id`.
-        order_models : list
-            List specifying the order of models used in the ensemble.
-        dist : str, optional
-            The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
-        fn_loss : str, optional
-            Loss function used for estimation ('median' or 'lower'). Default is 'median'.
-        alpha : float, optional, default=0.9
-            Confidence level used for computing the confidence intervals.
-        """
+    return quantiles 
 
-        try: 
-            df = df[['date', 'pred', 'lower', 'upper', 'model_id']]
+def get_quantiles_linear(dist:str, weights:NDArray[np.float64], 
+                      preds: pd.DataFrame,
+                      p:NDArray[np.float64] = np.array([0.5, 0.05, 0.95])):
+    '''
+    Function to get the quantiles of the linear mixture. 
 
-        except:
-            raise ValueError(
-                "The input dataframe must contain the columns: 'date', 'pred', 'lower', 'upper', 'model_id'"
-            )
+    Parameters 
+    ------------
+    dist : str, optional
+        The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+    weights: np.array
+        The weights assigned to each prediction. 
+    preds: pd.DataFrame
+        The Dataframe with the predictions.
+    p: np.array
+        Returned percentile values 
+
+    Returns 
+    --------
+    quantiles: np.array
+        The quantiles obtained according to p. 
+    '''
+
+    weights = np.where(weights < 1e-6, 1e-6, weights)
         
-        df = get_df_pars(df, alpha = alpha, fn_loss=fn_loss)
-
-        df['model_id'] = pd.Categorical(df['model_id'], categories = order_models,ordered=True)
-        df = df.sort_values(by = ['model_id','date'])
-
-        self.df = df 
-        self.order_models = order_models
-        self.dist = dist
-    
-    def compute_weights(self, df_obs:pd.DataFrame, metric:str = 'crps') -> dict: 
-        """
-        Computes the weights for the ensemble distribution based on observed data and the selected metric.
-
-        Parameters
-        ----------
-        df_obs : pd.DataFrame
-            DataFrame containing observed data with columns `date` and `casos`.
-        metric : str, optional, default='crps'
-            Metric used for optimization. Options: `crps`, `log_score`.
-        
-        Returns
-        -------
-        dict
-            Dictionary containing the computed `weights` and associated loss value.
-        """
-
-        preds = self.df[['date', 'mu', 'sigma','model_id']]
-        
-        if self.dist == 'log_normal':
-            weights = find_opt_weights_linear_mix_log(df_obs, preds, self.order_models, metric=metric)
-        
-        if self.dist == 'normal':
-            weights = find_opt_weights_linear_mix_norm(df_obs, preds, self.order_models, metric=metric)
-
-        self.weights = weights 
-
-        return  weights
-    
-    def apply_ensemble(self, weights:Union[None, NDArray[np.float64]] = None,
-                      p:NDArray[np.float64] = np.array([0.5, 0.05, 0.95])) -> pd.DataFrame: 
- 
-        """
-        Computes the ensemble distribution using the computed weights from `compute_weights`.
-        If `weights` is provided, it overrides the computed weights.
-
-        Parameters
-        ----------
-        weights : array-like, optional
-            Custom weights to be used for computing the ensemble distribution. If None,
-            the computed weights from `compute_weights` are used.
-
-        p: np.array
-            Returned percentile values 
-        
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame containing the ensemble predictions with columns `date`, `pred`, `lower`, and `upper`.
-        """
-        if weights is None:
-            try:
-                weights = self.weights['weights']
-            except: 
-                raise ValueError("Weights must be computed first using `compute_weights`, or provided explicitly.")
-         
-        
-        weights = cast(NDArray[np.float64], weights) 
-
-        preds = self.df
-
-        df_for = pd.DataFrame()
-
-        for d in preds.date.unique():
-            preds_ = preds.loc[preds.date == d]
-
-            if self.dist =='normal':
-                pool = linear_mix(weights = weights, ms = preds_.mu,
-                    vs = preds_.sigma**2)
+    if dist =='normal':
+        pool = linear_mix(weights = weights, ms = preds.mu,
+                    vs = preds.sigma**2)
                 
-                quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
+        quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
             
-            if self.dist =='log_normal':
-                quantiles = compute_ppf(mu = preds_['mu'].values, sigma = preds_['sigma'].values,
+    if dist =='log_normal':
+       quantiles = compute_ppf(mu = preds['mu'].values, sigma = preds['sigma'].values,
                                         weights = weights)
-                
-            df_ = pd.DataFrame([quantiles], columns = ['pred', 'lower', 'upper'])
-            
-            df_['date'] = d
-                
-            df_for = pd.concat([df_for, df_], axis =0).reset_index(drop = True)
-
-        df_for.date = pd.to_datetime(df_for.date)
-        
-        return df_for
+       
+    return quantiles   
