@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.8.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.7.3...1.8.0) (2025-03-25)
+
+
+### Features
+
+* **ensemble:** add module to compute ensemble of predictions based on mix of distributions ([0def6a7](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0def6a7d199dd49c6a3acb6bac5812e4d9f35163))
+
 ## [1.7.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.7.2...1.7.3) (2025-02-14)
 
 
