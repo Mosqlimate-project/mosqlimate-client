@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.8.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.8.0...1.8.1) (2025-03-26)
+
+
+### Performance Improvements
+
+* **ensemble:** improve the ensemble performance ([da12ed9](https://github.com/Mosqlimate-project/mosqlimate-client/commit/da12ed96497dbce668aab2369b93c3de2e419b10))
+
 # [1.8.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.7.3...1.8.0) (2025-03-25)
 
 
