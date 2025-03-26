@@ -39,7 +39,7 @@ def alpha_01(alpha_inv: NDArray[np.float64]) -> NDArray[np.float64]:
     alphas = np.zeros(K)      # Equivalent to rep(0, K)
     
     for k in range(K-1):
-        z[k] = invlogit(alpha_inv[k] + np.log(1 / (K - k)))
+        z[k] = invlogit(alpha_inv[k] + np.log(1 / (K - (k+1))))
         alphas[k] = (1 - np.sum(alphas[:k])) * z[k]
     
     alphas[K-1] = 1 - np.sum(alphas[:-1])
@@ -864,6 +864,7 @@ def find_opt_weights_linear_mix_norm(obs:pd.DataFrame, preds:pd.DataFrame, order
             The computed loss value.
         """
         ws = alpha_01(eta)
+        ws = np.where(ws < 1e-6, 1e-6, ws)
 
         score = 0
         for date in obs.date:
