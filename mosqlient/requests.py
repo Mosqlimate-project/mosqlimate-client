@@ -18,8 +18,7 @@ def get(
     timeout: int = 300,
 ) -> requests.models.Response:
     if pagination and ("page" not in params or "per_page" not in params):
-        raise ValueError(
-            "'page' and 'per_page' parameters are required to requests", " with pagination")
+        raise ValueError("'page' and 'per_page' parameters are required to requests", " with pagination")
 
     if not endpoint:
         raise ValueError("endpoint is required")
@@ -39,11 +38,9 @@ async def aget(
             if res.status == 200:
                 return await res.json()
             if str(res.status).startswith("4"):
-                raise aiohttp.ClientConnectionError(
-                    f"Response status: {res.status}. Reason: {res.reason}")
+                raise aiohttp.ClientConnectionError(f"Response status: {res.status}. Reason: {res.reason}")
             if retries == 0:
-                raise aiohttp.ClientConnectionError(
-                    f"Response status: {res.status}. Reason: {res.reason}")
+                raise aiohttp.ClientConnectionError(f"Response status: {res.status}. Reason: {res.reason}")
             await asyncio.sleep(10 / (retries + 1))
             return await aget(session, url, params, timeout, retries - 1)
     except aiohttp.ServerTimeoutError:
@@ -92,8 +89,7 @@ async def get_all(
     if results:
         results.insert(0, first_page)
 
-    res = list(chain.from_iterable(result["items"]
-               for result in results if result is not None))
+    res = list(chain.from_iterable(result["items"] for result in results if result is not None))
 
     return res
 
