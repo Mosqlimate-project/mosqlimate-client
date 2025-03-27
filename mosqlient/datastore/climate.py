@@ -19,11 +19,17 @@ class Climate(BaseModel):
         params = parse_params(**kwargs)
         ClimateGETParams(**kwargs)
 
-        return get_all_sync(app="datastore", endpoint="climate", params=params, pagination=True, timeout=timeout)
+        return get_all_sync(
+            app="datastore",
+            endpoint="climate",
+            params=params,
+            pagination=True,
+            timeout=timeout
+        )
 
 
 class ClimateGETParams(BaseModel):
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
-    geocodigo: Optional[types.Geocode] = None
+    geocode: Optional[types.Geocode] = None
     uf: Optional[types.UF] = None
