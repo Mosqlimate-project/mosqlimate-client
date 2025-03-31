@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from datetime import date
-from typing import Union, List, Dict, Optional, Literal
+from typing import Union, List, Dict, Optional, Literal, Self
 
 import pandas as pd
 import requests
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from mosqlient.validations import *  # noqa
 
@@ -45,17 +45,17 @@ UF = Annotated[str, AfterValidator(validate_uf)]
 Geocode = Annotated[int, AfterValidator(validate_geocode)]
 
 
-class RequestParams(BaseModel, ABC):
+class Schema(BaseModel, ABC):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, protected_namespaces=()
+    )
+
+
+class Params(BaseModel, ABC):
     method: Literal["GET", "POST", "PUT", "DELETE"] = None
     app: APP = None
     endpoint: str = None
 
-    @property
     @abstractmethod
-    def url(self):
-        raise NotImplementedError()
-
-    @property
-    @abstractmethod
-    def params(self):
+    def params(self) -> dict:
         raise NotImplementedError()

@@ -1,19 +1,18 @@
 from urllib.parse import urljoin
-from typing import Literal, Optional, Any, Dict, AnyStr, List
+from typing import Literal, Optional, Any, Dict, AnyStr, List, Self, Generator
 
 import json
 import requests
 import nest_asyncio
 import pandas as pd
 import numpy as np
-
 # import scipy.stats as stats
 # from sklearn.metrics import mean_squared_error, mean_absolute_error
 # from scoringrules import crps_normal, logs_normal
 from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
-from mosqlient.client import Client
+from mosqlient.client import Mosqlient, Client
 from mosqlient.errors import ClientError, ModelPostError, PredictionPostError
 from mosqlient._utils import parse_params
 from mosqlient.registry import schema
@@ -72,8 +71,11 @@ class Author(Base):
             user=user._schema, institution=institution
         )
 
+    def __str__(self) -> str:
+        return self._schema.user.username
+
     def __repr__(self) -> str:
-        return self._schema.user.name
+        return self._schema.user.username
 
     @property
     def institution(self) -> types.AuthorInstitution:
@@ -82,30 +84,27 @@ class Author(Base):
     @classmethod
     def get(
         cls,
+        api_key: str,
         name: Optional[types.AuthorName] = None,
         institution: Optional[types.AuthorInstitution] = None,
         username: Optional[types.AuthorUserName] = None,
-        **kwargs,
     ):
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
+        client = Mosqlient(x_uid_key=api_key)
 
         params = {
             "name": name,
             "institution": institution,
             "username": username,
         }
-        params = parse_params(**params)
+        params = schema.AuthorGETParams(**parse_params(**params))
 
-        return [
-            Author(**m)
-            for m in get_all_sync(
+        return list(
+            cls(**item) for item in client.get(
                 app="registry",
                 endpoint="authors",
                 params=params,
-                pagination=False,
-                timeout=timeout,
             )
-        ]
+        )
 
 
 class ImplementationLanguage(Base):
@@ -361,7 +360,7 @@ class Model(Base):
         return resp
 
 
-class ModelGETParams(types.RequestParams):
+class ModelGETParams(types.Params):
     # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
     method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
     app: types.APP = "registry"

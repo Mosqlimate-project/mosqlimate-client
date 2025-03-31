@@ -1,10 +1,9 @@
 import re
 import uuid
 import asyncio
-from itertools import chain
 from collections import defaultdict
-from typing import AnyStr, List, Any, Literal, Optional
-from urllib.parse import urljoin
+from itertools import chain
+from typing import AnyStr, Literal, Optional, List
 
 import trio
 import aiohttp
@@ -13,7 +12,7 @@ from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
 from tqdm.asyncio import tqdm_asyncio
 
-from mosqlient.types import APP, RequestParams
+from mosqlient.types import Params
 from mosqlient import errors
 
 
@@ -45,9 +44,10 @@ class Mosqlient:
         self,
         app: str,
         endpoint: AnyStr,
-        params: Optional[RequestParams] = None,
         page: Optional[int] = None,
-    ) -> ...:
+        params: Optional[Params] = None,
+        paginate: bool = True,
+    ) -> dict | List[dict]:
         self.__validate_request("GET", app, endpoint, params)
         url = self.api_url + app + "/" + endpoint.strip("/")
 
@@ -58,7 +58,7 @@ class Mosqlient:
                 timeout=self.timeout,
             )
 
-        params = params.params
+        params = params.params()
 
         if not page:
             return self.__get_all_sync(
@@ -66,21 +66,24 @@ class Mosqlient:
                 params=params,
             )
 
-        params["page"] = page
-        params["per_page"] = self.per_page
+        if paginate:
+            params["page"] = page
+            params["per_page"] = self.per_page
 
-        return requests.get(
+        res = requests.get(
             url=url,
             params=params,
             headers={"X-UID-Key": self.X_UID_KEY},
             timeout=self.timeout,
-        )
+        ).json()
+
+        return res['items'] if paginate else res
 
     def post(
         self,
         app: str,
         endpoint: AnyStr,
-        params: RequestParams,
+        params: Params,
     ) -> requests.models.Response:
         self.__validate_request("POST", app, endpoint, params)
         return requests.post(
@@ -94,7 +97,7 @@ class Mosqlient:
         self,
         app: str,
         endpoint: AnyStr,
-        params: RequestParams,
+        params: Params,
     ) -> requests.models.Response:
         self.__validate_request("PUT", app, endpoint, params)
         raise NotImplementedError()
@@ -113,11 +116,11 @@ class Mosqlient:
 
     async def __aget(
         self,
+        session: aiohttp.ClientSession,
         url: str,
         params: dict,
-        session: aiohttp.ClientSession,
         retries: int = 3,
-    ) -> Any:
+    ) -> dict:
         headers = {"X-UID-Key": self.X_UID_KEY}
         try:
             if retries < 0:
@@ -125,14 +128,7 @@ class Mosqlient:
             async with session.get(url, params=params, headers=headers) as res:
                 if res.status == 200:
                     return await res.json()
-                if str(res.status).startswith("4"):
-                    raise aiohttp.ClientConnectionError(
-                        f"Response status: {res.status}. Reason: {res.reason}"
-                    )
-                if retries == 0:
-                    raise aiohttp.ClientConnectionError(
-                        f"Response status: {res.status}. Reason: {res.reason}"
-                    )
+                res.raise_for_status()
                 await asyncio.sleep(10 / (retries + 1))
                 return await self.__aget(session, url, params, retries - 1)
         except aiohttp.ServerTimeoutError:
@@ -140,45 +136,42 @@ class Mosqlient:
             return await self.__aget(session, url, params, retries - 1)
         raise aiohttp.ClientConnectionError("Invalid request")
 
-    async def __get_all(self, url: str, params: dict):
-        semaphore = asyncio.Semaphore(self._max_concurrent_requests)
+    async def __get_all(
+        self,
+        url: str,
+        params: dict
+    ) -> List[dict]:
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.timeout)
         ) as session:
-
-            async def fetch_page(page):
-                params_c = params.copy()
-                params_c["page"] = page
-                async with semaphore:
-                    return await self.__aget(session, url, params_c)
-
+            params["page"] = 1
             first_page = await self.__aget(session, url, params)
             total_pages = first_page["pagination"]["total_pages"]
 
-            tasks = [fetch_page(page) for page in range(2, total_pages + 1)]
-            results = await tqdm_asyncio.gather(*tasks, total=total_pages - 1)
-
-            if results:
-                results.insert(0, first_page)
-            res = list(
-                chain.from_iterable(
-                    result["items"] for result in results if result is not None
-                )
-            )
-            return res
+            tasks = []
+            for page in range(1, total_pages + 1):
+                params_c = params.copy()
+                params_c["page"] = page
+                task = asyncio.create_task(self.__aget(session, url, params_c))
+                tasks.append(task)
+            results = await tqdm_asyncio.gather(*tasks, total=total_pages)
+        return list(chain.from_iterable(res['items'] for res in results))
 
     def __get_all_sync(
         self,
         url: str,
         params: dict,
-    ):
+    ) -> List[dict]:
         async def fetch_all():
             return await self.__get_all(
                 url=url,
                 params=params,
             )
-
-        return trio.run(fetch_all)
+        if asyncio.get_event_loop().is_running():
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(fetch_all())
+            return loop.run_until_complete(future)
+        return asyncio.run(fetch_all())
 
     def __fetch_openapi(self):
         self.openapi = requests.get(
@@ -194,7 +187,7 @@ class Mosqlient:
         method: Literal["GET", "POST", "PUT", "DELETE"],
         app: str,
         endpoint: str,
-        params: Optional[RequestParams] = None,
+        params: Optional[Params] = None,
     ) -> None:
         apps = list(self.endpoints.keys())
 
@@ -206,15 +199,15 @@ class Mosqlient:
         if not params:
             return
 
-        if not isinstance(params, RequestParams):
+        if not isinstance(params, Params):
             raise TypeError(
-                "`params` must be of type mosqlient.types.RequestParams"
+                "`params` must be of type mosqlient.types.Params"
             )
 
-        if params._method.lower() != method.lower():
+        if params.method.lower() != method.lower():
             raise TypeError(f"{type(params)} doesn't allow {method} requests")
 
-        if params._app != app:
+        if params.app != app:
             raise TypeError(
                 f"{type(params)} doesn't allow requests to '{app}'"
             )
