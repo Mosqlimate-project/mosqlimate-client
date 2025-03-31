@@ -51,7 +51,9 @@ def alpha_01(alpha_inv: NDArray[np.float64]) -> NDArray[np.float64]:
     return alphas
 
 
-def pool_par_gauss(alpha: NDArray[np.float64], m: NDArray[np.float64], v: NDArray[np.float64]) -> tuple:
+def pool_par_gauss(
+    alpha: NDArray[np.float64], m: NDArray[np.float64], v: NDArray[np.float64]
+) -> tuple:
     """
     Function to get the output distribution from a logarithmic pool of lognormal (or normal) distrutions
 
@@ -74,7 +76,9 @@ def pool_par_gauss(alpha: NDArray[np.float64], m: NDArray[np.float64], v: NDArra
     Bayesian inference for the weights in logarithmic pooling. Bayesian Analysis, 18(1), 223-251.
     """
     if not (len(alpha) == len(m) == len(v)):
-        raise ValueError("The arrays 'alpha', 'm', and 'v' must have the same length.")
+        raise ValueError(
+            "The arrays 'alpha', 'm', and 'v' must have the same length."
+        )
 
     ws = alpha / v
     vstar = 1 / np.sum(ws)
@@ -82,7 +86,13 @@ def pool_par_gauss(alpha: NDArray[np.float64], m: NDArray[np.float64], v: NDArra
     return mstar, np.sqrt(vstar)
 
 
-def get_lognormal_pars(med: float, lwr: float, upr: float, alpha: float = 0.90, fn_loss: str = "median") -> tuple:
+def get_lognormal_pars(
+    med: float,
+    lwr: float,
+    upr: float,
+    alpha: float = 0.90,
+    fn_loss: str = "median",
+) -> tuple:
     """
     Estimate the parameters of a log-normal distribution based on forecasted median,
     lower, and upper bounds.
@@ -124,25 +134,37 @@ def get_lognormal_pars(med: float, lwr: float, upr: float, alpha: float = 0.90, 
     """
 
     if fn_loss not in {"median", "lower"}:
-        raise ValueError("Invalid value for fn_loss. Choose 'median' or 'lower'.")
+        raise ValueError(
+            "Invalid value for fn_loss. Choose 'median' or 'lower'."
+        )
 
     if any(x < 0 for x in [med, lwr, upr]):
         raise ValueError("med, lwr, and upr must be non-negative.")
 
     def loss_lower(theta):
-        tent_qs = lognorm.ppf([(1 - alpha) / 2, (1 + alpha) / 2], s=theta[1], scale=np.exp(theta[0]))
+        tent_qs = lognorm.ppf(
+            [(1 - alpha) / 2, (1 + alpha) / 2],
+            s=theta[1],
+            scale=np.exp(theta[0]),
+        )
         if lwr == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
         else:
-            attained_loss = abs(lwr - tent_qs[0]) / lwr + abs(upr - tent_qs[1]) / upr
+            attained_loss = (
+                abs(lwr - tent_qs[0]) / lwr + abs(upr - tent_qs[1]) / upr
+            )
         return attained_loss
 
     def loss_median(theta):
-        tent_qs = lognorm.ppf([0.5, (1 + alpha) / 2], s=theta[1], scale=np.exp(theta[0]))
+        tent_qs = lognorm.ppf(
+            [0.5, (1 + alpha) / 2], s=theta[1], scale=np.exp(theta[0])
+        )
         if med == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
         else:
-            attained_loss = abs(med - tent_qs[0]) / med + abs(upr - tent_qs[1]) / upr
+            attained_loss = (
+                abs(med - tent_qs[0]) / med + abs(upr - tent_qs[1]) / upr
+            )
         return attained_loss
 
     if med == 0:
@@ -156,7 +178,12 @@ def get_lognormal_pars(med: float, lwr: float, upr: float, alpha: float = 0.90, 
             x0=[mustar, 0.5],
             bounds=[(-5 * abs(mustar), 5 * abs(mustar)), (0, 15)],
             method="Nelder-mead",
-            options={"xatol": 1e-6, "fatol": 1e-6, "maxiter": 1000, "maxfev": 1000},
+            options={
+                "xatol": 1e-6,
+                "fatol": 1e-6,
+                "maxiter": 1000,
+                "maxfev": 1000,
+            },
         )
     if fn_loss == "lower":
         result = minimize(
@@ -164,13 +191,20 @@ def get_lognormal_pars(med: float, lwr: float, upr: float, alpha: float = 0.90, 
             x0=[mustar, 0.5],
             bounds=[(-5 * abs(mustar), 5 * abs(mustar)), (0, 15)],
             method="Nelder-mead",
-            options={"xatol": 1e-8, "fatol": 1e-8, "maxiter": 5000, "maxfev": 5000},
+            options={
+                "xatol": 1e-8,
+                "fatol": 1e-8,
+                "maxiter": 5000,
+                "maxfev": 5000,
+            },
         )
 
     return result.x
 
 
-def get_normal_pars(med: float, lwr: float, upr: float, alpha: float = 0.90, fn_loss="median") -> tuple:
+def get_normal_pars(
+    med: float, lwr: float, upr: float, alpha: float = 0.90, fn_loss="median"
+) -> tuple:
     """
     Estimate the parameters of a normal (Gaussian) distribution given forecasted median,
     lower, and upper bounds.
@@ -212,37 +246,55 @@ def get_normal_pars(med: float, lwr: float, upr: float, alpha: float = 0.90, fn_
     """
 
     def loss_lower(theta):
-        tent_qs = norm.ppf([(1 - alpha) / 2, (1 + alpha) / 2], loc=theta[0], scale=theta[1])
+        tent_qs = norm.ppf(
+            [(1 - alpha) / 2, (1 + alpha) / 2], loc=theta[0], scale=theta[1]
+        )
         if lwr == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
         else:
-            attained_loss = abs(lwr - tent_qs[0]) / lwr + abs(upr - tent_qs[1]) / upr
+            attained_loss = (
+                abs(lwr - tent_qs[0]) / lwr + abs(upr - tent_qs[1]) / upr
+            )
         return attained_loss
 
     def loss_median(theta):
-        tent_qs = norm.ppf([0.5, (1 + alpha) / 2], loc=theta[0], scale=theta[1])
+        tent_qs = norm.ppf(
+            [0.5, (1 + alpha) / 2], loc=theta[0], scale=theta[1]
+        )
         if lwr == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
         else:
-            attained_loss = abs(med - tent_qs[0]) / med + abs(upr - tent_qs[1]) / upr
+            attained_loss = (
+                abs(med - tent_qs[0]) / med + abs(upr - tent_qs[1]) / upr
+            )
         return attained_loss
 
     sigmastar = max((upr - lwr) / 4, 1e-4)
 
     if fn_loss == "lower":
         result = minimize(
-            loss_lower, x0=[med, sigmastar], bounds=[(-5 * abs(med), 5 * abs(med)), (0, 100000)], method="Nelder-mead"
+            loss_lower,
+            x0=[med, sigmastar],
+            bounds=[(-5 * abs(med), 5 * abs(med)), (0, 100000)],
+            method="Nelder-mead",
         )
 
     if fn_loss == "median":
         result = minimize(
-            loss_median, x0=[med, sigmastar], bounds=[(-5 * abs(med), 5 * abs(med)), (0, 100000)], method="Nelder-mead"
+            loss_median,
+            x0=[med, sigmastar],
+            bounds=[(-5 * abs(med), 5 * abs(med)), (0, 100000)],
+            method="Nelder-mead",
         )
 
     return result.x
 
 
-def linear_mix(weights: NDArray[np.float64], ms: NDArray[np.float64], vs: NDArray[np.float64]) -> tuple:
+def linear_mix(
+    weights: NDArray[np.float64],
+    ms: NDArray[np.float64],
+    vs: NDArray[np.float64],
+) -> tuple:
     """
     Computes the mean (mu) and standard deviation (sd) of a linear mixture of normal distributions
     weighted by `weights`.
@@ -320,13 +372,23 @@ def get_df_pars(
 
     if dist == "log_normal":
         preds_[["mu", "sigma"]] = preds_.apply(
-            lambda row: get_lognormal_pars(med=row["pred"], lwr=row["lower"], upr=row["upper"], fn_loss=fn_loss),
+            lambda row: get_lognormal_pars(
+                med=row["pred"],
+                lwr=row["lower"],
+                upr=row["upper"],
+                fn_loss=fn_loss,
+            ),
             axis=1,
             result_type="expand",
         )
     elif dist == "normal":
         preds_[["mu", "sigma"]] = preds_.apply(
-            lambda row: get_normal_pars(med=row["pred"], lwr=row["lower"], upr=row["upper"], fn_loss=fn_loss),
+            lambda row: get_normal_pars(
+                med=row["pred"],
+                lwr=row["lower"],
+                upr=row["upper"],
+                fn_loss=fn_loss,
+            ),
             axis=1,
             result_type="expand",
         )
@@ -336,13 +398,21 @@ def get_df_pars(
 
     if dist == "log_normal":
         theo_pred_df = preds_.apply(
-            lambda row: lognorm.ppf([0.5, (1 - alpha) / 2, (1 + alpha) / 2], s=row["sigma"], scale=np.exp(row["mu"])),
+            lambda row: lognorm.ppf(
+                [0.5, (1 - alpha) / 2, (1 + alpha) / 2],
+                s=row["sigma"],
+                scale=np.exp(row["mu"]),
+            ),
             axis=1,
             result_type="expand",
         )
     elif dist == "normal":
         theo_pred_df = preds_.apply(
-            lambda row: norm.ppf([0.5, (1 - alpha) / 2, (1 + alpha) / 2], loc=row["mu"], scale=row["sigma"]),
+            lambda row: norm.ppf(
+                [0.5, (1 - alpha) / 2, (1 + alpha) / 2],
+                loc=row["mu"],
+                scale=row["sigma"],
+            ),
             axis=1,
             result_type="expand",
         )
@@ -353,7 +423,13 @@ def get_df_pars(
     return preds_
 
 
-def get_score(obs: float, mu: float, sd: float, dist: str = "log_normal", metric: str = "crps") -> float:
+def get_score(
+    obs: float,
+    mu: float,
+    sd: float,
+    dist: str = "log_normal",
+    metric: str = "crps",
+) -> float:
     """
     Function to compute the score given a distribution
     and a predefined metric.
@@ -399,7 +475,11 @@ def get_score(obs: float, mu: float, sd: float, dist: str = "log_normal", metric
 
 
 def find_opt_weights_log(
-    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, dist: str = "log_normal", metric: str = "crps"
+    obs: pd.DataFrame,
+    preds: pd.DataFrame,
+    order_models: list,
+    dist: str = "log_normal",
+    metric: str = "crps",
 ) -> dict:
     """
     Function that generate the weights of the ensemble minimizing the metric selected.
@@ -447,7 +527,13 @@ def find_opt_weights_log(
 
             mu, sd = pool_par_gauss(alpha=ws, m=ms, v=vs)
 
-            score = score + get_score(obs=obs.loc[obs.date == date].casos, mu=mu, sd=sd, dist=dist, metric=metric)
+            score = score + get_score(
+                obs=obs.loc[obs.date == date].casos,
+                mu=mu,
+                sd=sd,
+                dist=dist,
+                metric=metric,
+            )
 
             return score
 
@@ -535,7 +621,9 @@ class Ensemble:
         df = get_df_pars(df, alpha=alpha, dist=dist, fn_loss=fn_loss)
 
         # organize the dataframe:
-        df["model_id"] = pd.Categorical(df["model_id"], categories=order_models, ordered=True)
+        df["model_id"] = pd.Categorical(
+            df["model_id"], categories=order_models, ordered=True
+        )
         df = df.sort_values(by=["model_id", "date"])
 
         self.df = df
@@ -543,7 +631,9 @@ class Ensemble:
         self.mixture = mixture
         self.order_models = order_models
 
-    def compute_weights(self, df_obs: pd.DataFrame, metric: str = "crps") -> dict:
+    def compute_weights(
+        self, df_obs: pd.DataFrame, metric: str = "crps"
+    ) -> dict:
         """
         Computes the optimal weights for the ensemble based on observed data and a specified metric.
 
@@ -563,11 +653,17 @@ class Ensemble:
         preds = self.df[["date", "mu", "sigma", "model_id"]]
 
         if self.mixture == "linear":
-            weights = find_opt_weights_linear(df_obs, preds, self.order_models, dist=self.dist, metric=metric)
+            weights = find_opt_weights_linear(
+                df_obs, preds, self.order_models, dist=self.dist, metric=metric
+            )
 
         if self.mixture == "log":
             weights = find_opt_weights_log(
-                obs=df_obs, preds=preds, order_models=self.order_models, dist=self.dist, metric=metric
+                obs=df_obs,
+                preds=preds,
+                order_models=self.order_models,
+                dist=self.dist,
+                metric=metric,
             )
 
         self.weights = weights
@@ -575,7 +671,9 @@ class Ensemble:
         return weights
 
     def apply_ensemble(
-        self, weights: Union[None, NDArray[np.float64]] = None, p: NDArray[np.float64] = np.array([0.5, 0.05, 0.95])
+        self,
+        weights: Union[None, NDArray[np.float64]] = None,
+        p: NDArray[np.float64] = np.array([0.5, 0.05, 0.95]),
     ) -> pd.DataFrame:
         """
         Computes the final ensemble distribution using either precomputed or user-provided weights.
@@ -598,7 +696,9 @@ class Ensemble:
             try:
                 weights = self.weights["weights"]
             except:
-                raise ValueError("Weights must be computed first using `compute_weights`, or provided explicitly.")
+                raise ValueError(
+                    "Weights must be computed first using `compute_weights`, or provided explicitly."
+                )
 
         weights = cast(NDArray[np.float64], weights)
 
@@ -610,10 +710,18 @@ class Ensemble:
             preds_ = preds.loc[preds.date == d]
 
             if self.mixture == "log":
-                quantiles = get_quantiles_log(self.dist, weights=weights, ms=preds_.mu, vs=preds_.sigma**2, p=p)
+                quantiles = get_quantiles_log(
+                    self.dist,
+                    weights=weights,
+                    ms=preds_.mu,
+                    vs=preds_.sigma**2,
+                    p=p,
+                )
 
             if self.mixture == "linear":
-                quantiles = get_quantiles_linear(self.dist, weights=weights, preds=preds_, p=p)
+                quantiles = get_quantiles_linear(
+                    self.dist, weights=weights, preds=preds_, p=p
+                )
 
             df_ = pd.DataFrame([quantiles], columns=["pred", "lower", "upper"])
 
@@ -662,7 +770,10 @@ def dlnorm_mix(
 
     # Compute log-PDFs for each component in a vectorized manner
     ldens = np.array(
-        [lognorm.logpdf(obs, s=sigma[i], scale=np.exp(mu[i])) for i in range(K)]
+        [
+            lognorm.logpdf(obs, s=sigma[i], scale=np.exp(mu[i]))
+            for i in range(K)
+        ]
     ).T  # Transpose to align with obs dimensions
 
     # Combine using logsumexp for numerical stability
@@ -671,7 +782,9 @@ def dlnorm_mix(
     else:
         ans = np.exp(logsumexp(lw + ldens, axis=1))
 
-    return ans if ans.size > 1 else ans.item()  # Return scalar if input was scalar
+    return (
+        ans if ans.size > 1 else ans.item()
+    )  # Return scalar if input was scalar
 
 
 def compute_ppf(
@@ -709,14 +822,20 @@ def compute_ppf(
     dx = np.diff(x)  # Compute spacing between consecutive x-values
     dx = np.append(dx, dx[-1])  # Ensure length matches the x array
     area = np.sum(pdf_values * dx)  # Approximate the area under the PDF
-    pdf_values_normalized = pdf_values / area  # Normalize the PDF to ensure total area is 1
+    pdf_values_normalized = (
+        pdf_values / area
+    )  # Normalize the PDF to ensure total area is 1
 
     cdf_values = cumulative_trapezoid(pdf_values_normalized, x, initial=0)
 
     # Invert the CDF to obtain the PPF
-    ppf_function = interp1d(cdf_values, x, bounds_error=False, fill_value="extrapolate")
+    ppf_function = interp1d(
+        cdf_values, x, bounds_error=False, fill_value="extrapolate"
+    )
 
-    x_for_p = ppf_function(p)  # Get x-values corresponding to the probabilities
+    x_for_p = ppf_function(
+        p
+    )  # Get x-values corresponding to the probabilities
 
     return x_for_p
 
@@ -755,12 +874,20 @@ def crps_lognormal_mix(
 
     for i in np.arange(K):
 
-        crpsdens[i] = crps_lognormal(observation=obs, mulog=mu[i], sigmalog=sigma[i])
+        crpsdens[i] = crps_lognormal(
+            observation=obs, mulog=mu[i], sigmalog=sigma[i]
+        )
 
     return np.dot(np.array(weights), np.array(crpsdens))  # , crpsdens
 
 
-def find_opt_weights_linear(obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, dist: str, metric: str) -> dict:
+def find_opt_weights_linear(
+    obs: pd.DataFrame,
+    preds: pd.DataFrame,
+    order_models: list,
+    dist: str,
+    metric: str,
+) -> dict:
     """
     Find the weights of a linear mix distributions that minimizes the metric selected.
 
@@ -786,15 +913,21 @@ def find_opt_weights_linear(obs: pd.DataFrame, preds: pd.DataFrame, order_models
     """
 
     if dist == "log_normal":
-        weights = find_opt_weights_linear_mix_log(obs, preds, order_models, metric=metric)
+        weights = find_opt_weights_linear_mix_log(
+            obs, preds, order_models, metric=metric
+        )
 
     if dist == "normal":
-        weights = find_opt_weights_linear_mix_norm(obs, preds, order_models, metric=metric)
+        weights = find_opt_weights_linear_mix_norm(
+            obs, preds, order_models, metric=metric
+        )
 
     return weights
 
 
-def find_opt_weights_linear_mix_log(obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str) -> dict:
+def find_opt_weights_linear_mix_log(
+    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str
+) -> dict:
     """
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
 
@@ -847,7 +980,10 @@ def find_opt_weights_linear_mix_log(obs: pd.DataFrame, preds: pd.DataFrame, orde
 
             if metric == "crps":
                 score = score + crps_lognormal_mix(
-                    obs.loc[obs.date == date].casos, preds_["mu"].to_numpy(), preds_["sigma"].to_numpy(), weights=ws
+                    obs.loc[obs.date == date].casos,
+                    preds_["mu"].to_numpy(),
+                    preds_["sigma"].to_numpy(),
+                    weights=ws,
                 )
 
         return score
@@ -860,7 +996,9 @@ def find_opt_weights_linear_mix_log(obs: pd.DataFrame, preds: pd.DataFrame, orde
     return {"weights": optimal_weights, "loss": opt_result.fun}
 
 
-def find_opt_weights_linear_mix_norm(obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str) -> dict:
+def find_opt_weights_linear_mix_norm(
+    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str
+) -> dict:
     """
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
 
@@ -910,7 +1048,13 @@ def find_opt_weights_linear_mix_norm(obs: pd.DataFrame, preds: pd.DataFrame, ord
 
             mu, sd = linear_mix(weights=ws, ms=ms, vs=vs)
 
-            score = score + get_score(obs=obs.loc[obs.date == date].casos, mu=mu, sd=sd, dist="norm", metric=metric)
+            score = score + get_score(
+                obs=obs.loc[obs.date == date].casos,
+                mu=mu,
+                sd=sd,
+                dist="norm",
+                metric=metric,
+            )
 
         return score
 
@@ -962,7 +1106,10 @@ def get_quantiles_log(
 
 
 def get_quantiles_linear(
-    dist: str, weights: NDArray[np.float64], preds: pd.DataFrame, p: NDArray[np.float64] = np.array([0.5, 0.05, 0.95])
+    dist: str,
+    weights: NDArray[np.float64],
+    preds: pd.DataFrame,
+    p: NDArray[np.float64] = np.array([0.5, 0.05, 0.95]),
 ):
     """
     Function to get the quantiles of the linear mixture.
@@ -992,6 +1139,8 @@ def get_quantiles_linear(
         quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
 
     if dist == "log_normal":
-        quantiles = compute_ppf(mu=preds["mu"].values, sigma=preds["sigma"].values, weights=weights)
+        quantiles = compute_ppf(
+            mu=preds["mu"].values, sigma=preds["sigma"].values, weights=weights
+        )
 
     return quantiles

@@ -68,12 +68,16 @@ def get_models_by_author_name(author_name: str) -> Union[dict, list[dict]]:
     return res[0] if len(res) == 1 else res
 
 
-def get_models_by_author_username(author_username: str) -> Union[dict, list[dict]]:
+def get_models_by_author_username(
+    author_username: str,
+) -> Union[dict, list[dict]]:
     res = Model.get(author_username=author_username)
     return res[0] if len(res) == 1 else res
 
 
-def get_models_by_author_institution(author_institution: str) -> Union[dict, list[dict]]:
+def get_models_by_author_institution(
+    author_institution: str,
+) -> Union[dict, list[dict]]:
     res = Model.get(author_institution=author_institution)
     return res[0] if len(res) == 1 else res
 
@@ -83,7 +87,9 @@ def get_models_by_repository(repository: str) -> Union[dict, list[dict]]:
     return res[0] if len(res) == 1 else res
 
 
-def get_models_by_implementation_language(implementation_language: str) -> Union[dict, list[dict]]:
+def get_models_by_implementation_language(
+    implementation_language: str,
+) -> Union[dict, list[dict]]:
     res = Model.get(implementation_language=implementation_language)
     return res[0] if len(res) == 1 else res
 
@@ -98,7 +104,9 @@ def get_models_by_adm_level(adm_level: int) -> Union[dict, list[dict]]:
     return res[0] if len(res) == 1 else res
 
 
-def get_models_by_time_resolution(time_resolution: int) -> Union[dict, list[dict]]:
+def get_models_by_time_resolution(
+    time_resolution: int,
+) -> Union[dict, list[dict]]:
     res = Model.get(time_resolution=time_resolution)
     return res[0] if len(res) == 1 else res
 

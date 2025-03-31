@@ -110,12 +110,16 @@ def update_changelog(
             planned_tag = "0.1.0"
             last_version.tag = planned_tag
             last_version.url += planned_tag
-            last_version.compare_url = last_version.compare_url.replace("HEAD", planned_tag)
+            last_version.compare_url = last_version.compare_url.replace(
+                "HEAD", planned_tag
+            )
 
     lines = read_changelog(inplace_file)
     last_released = latest(lines, re.compile(version_regex))
     if last_released:
-        changelog.versions_list = unreleased(changelog.versions_list, last_released)
+        changelog.versions_list = unreleased(
+            changelog.versions_list, last_released
+        )
     rendered = template.render(changelog=changelog, inplace=True)
     lines[lines.index(marker)] = rendered
     write_changelog(inplace_file, lines)
@@ -143,7 +147,14 @@ def changelog(ctx):
     )
 
 
-@duty(pre=["check_code_quality", "check_types", "check_docs", "check_dependencies"])
+@duty(
+    pre=[
+        "check_code_quality",
+        "check_types",
+        "check_docs",
+        "check_dependencies",
+    ]
+)
 def check(ctx):
     """
     Check it all!
@@ -199,7 +210,11 @@ def check_dependencies(ctx):
                 )
                 return 1
 
-            ctx.run(safety_not_available, title="Checking dependencies", nofail=True)
+            ctx.run(
+                safety_not_available,
+                title="Checking dependencies",
+                nofail=True,
+            )
             return
     ctx.run(
         (
@@ -233,7 +248,11 @@ def check_types(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --config-file config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(
+        f"mypy --config-file config/mypy.ini {PY_SRC}",
+        title="Type-checking",
+        pty=PTY,
+    )
 
 
 @duty(silent=True)
@@ -277,7 +296,11 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
         host: The host to serve the docs from.
         port: The port to serve the docs on.
     """
-    ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
+    ctx.run(
+        f"mkdocs serve -a {host}:{port}",
+        title="Serving documentation",
+        capture=False,
+    )
 
 
 @duty
@@ -300,7 +323,10 @@ def format(ctx):
         ctx: The context instance (passed automatically).
     """
     ctx.run(
-        ("autoflake -ir --exclude tests/fixtures ", f"--remove-all-unused-imports {PY_SRC}"),
+        (
+            "autoflake -ir --exclude tests/fixtures ",
+            f"--remove-all-unused-imports {PY_SRC}",
+        ),
         title="Removing unused imports",
         pty=PTY,
     )
@@ -317,9 +343,19 @@ def release(ctx, version):
         ctx: The context instance (passed automatically).
         version: The new version number to use.
     """
-    ctx.run(f"poetry version {version}", title=f"Bumping version in pyproject.toml to {version}", pty=PTY)
-    ctx.run("git add pyproject.toml CHANGELOG.md", title="Staging files", pty=PTY)
-    ctx.run(["git", "commit", "-m", f"chore: Prepare release {version}"], title="Committing changes", pty=PTY)
+    ctx.run(
+        f"poetry version {version}",
+        title=f"Bumping version in pyproject.toml to {version}",
+        pty=PTY,
+    )
+    ctx.run(
+        "git add pyproject.toml CHANGELOG.md", title="Staging files", pty=PTY
+    )
+    ctx.run(
+        ["git", "commit", "-m", f"chore: Prepare release {version}"],
+        title="Committing changes",
+        pty=PTY,
+    )
     ctx.run(f"git tag {version}", title="Tagging commit", pty=PTY)
     if not TESTING:
         ctx.run("git push", title="Pushing commits", pty=False)
@@ -354,7 +390,16 @@ def test(ctx, match: str = ""):
     py_version = f"{sys.version_info.major}{sys.version_info.minor}"
     os.environ["COVERAGE_FILE"] = f".coverage-{py_version}"
     ctx.run(
-        ["pytest", "-c", "config/pytest.ini", "-n", "auto", "-k", match, "tests"],
+        [
+            "pytest",
+            "-c",
+            "config/pytest.ini",
+            "-n",
+            "auto",
+            "-k",
+            match,
+            "tests",
+        ],
         title="Running tests",
         pty=PTY,
     )

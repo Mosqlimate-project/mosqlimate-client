@@ -11,7 +11,9 @@ mpl.rcParams["xtick.labelcolor"] = "black"
 mpl.rcParams["ytick.labelcolor"] = "black"
 
 
-def plot_preds(data, df_preds, data_col="casprov", color_palette="Set2", linestyle="-"):
+def plot_preds(
+    data, df_preds, data_col="casprov", color_palette="Set2", linestyle="-"
+):
     """
     Plot data against predictions. If `data` is None, only the predictions will be plotted.
 
@@ -55,9 +57,21 @@ def plot_preds(data, df_preds, data_col="casprov", color_palette="Set2", linesty
 
         preds_ = df_preds.loc[df_preds.model_id == model]
 
-        ax.plot(preds_.date, preds_.pred, linestyle=linestyle, color=color_map[model], label=f"{model}")
+        ax.plot(
+            preds_.date,
+            preds_.pred,
+            linestyle=linestyle,
+            color=color_map[model],
+            label=f"{model}",
+        )
 
-        ax.fill_between(preds_.date, preds_.lower, preds_.upper, color=color_map[model], alpha=0.1)
+        ax.fill_between(
+            preds_.date,
+            preds_.lower,
+            preds_.upper,
+            color=color_map[model],
+            alpha=0.1,
+        )
 
     ax.grid()
     ax.legend()

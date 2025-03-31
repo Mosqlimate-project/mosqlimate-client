@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
-from mosqlient.requests import get_all_sync
 from mosqlient._utils import parse_params
 
 
@@ -19,7 +18,13 @@ class Climate(BaseModel):
         params = parse_params(**kwargs)
         ClimateGETParams(**kwargs)
 
-        return get_all_sync(app="datastore", endpoint="climate", params=params, pagination=True, timeout=timeout)
+        return get_all_sync(
+            app="datastore",
+            endpoint="climate",
+            params=params,
+            pagination=True,
+            timeout=timeout,
+        )
 
 
 class ClimateGETParams(BaseModel):

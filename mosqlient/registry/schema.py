@@ -61,7 +61,9 @@ class PredictionDataRowSchema(BaseModel):
 
 
 class PredictionSchema(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, protected_namespaces=())
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, protected_namespaces=()
+    )
 
     id: Optional[types.ID] = None
     model: ModelSchema

@@ -47,4 +47,8 @@ def get_infodengue(
 ) -> pd.DataFrame:
     params = {"uf": uf, "geocode": geocode}
 
-    return pd.DataFrame(Infodengue.get(disease=disease, start=start_date, end=end_date, **params))
+    return pd.DataFrame(
+        Infodengue.get(
+            disease=disease, start=start_date, end=end_date, **params
+        )
+    )
