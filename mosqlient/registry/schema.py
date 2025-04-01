@@ -233,6 +233,7 @@ class PredictionGETParams(types.Params):
     end: Optional[types.Date] = None
     adm_1: Optional[int] = None
     adm_2: Optional[types.Geocode] = None
+    sprint: Optional[bool] = None
 
     def params(self) -> dict:
         p = {
@@ -256,6 +257,7 @@ class PredictionGETParams(types.Params):
             "end": self.end,
             "adm_1": self.adm_1,
             "adm_2": self.adm_2,
+            "sprint": self.sprint,
             "page": self.page,
             "per_page": self.per_page,
         }

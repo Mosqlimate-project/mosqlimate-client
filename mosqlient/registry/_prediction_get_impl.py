@@ -18,16 +18,17 @@ __all__ = [
 
 from datetime import date
 
-from typing import Optional, Union, List
+from typing import Optional, List
 
 from .models import Prediction
 
 
-def get_all_predictions() -> list[dict]:
-    return Prediction.get()
+def get_all_predictions(api_key: str) -> list[dict]:
+    return Prediction.get(api_key=api_key)
 
 
 def get_predictions(
+    api_key: str,
     id: Optional[int] = None,
     model_id: Optional[int] = None,
     model_name: Optional[str] = None,
@@ -46,8 +47,10 @@ def get_predictions(
     predict_date: Optional[date] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
+    adm_1: Optional[int] = None,
+    adm_2: Optional[int] = None,
+    sprint: Optional[bool] = None
 ) -> list[dict] | dict:
-
     params = {
         "id": id,
         "model_id": model_id,
@@ -69,68 +72,104 @@ def get_predictions(
         ),
         "start": str(start) if start is not None else None,
         "end": str(end) if end is not None else None,
+        "adm_1": adm_1,
+        "adm_2": adm_2,
+        "sprint": sprint
     }
-
-    res = Prediction.get(**params)
-    return res[0] if len(res) == 1 else res
+    return Prediction.get(api_key=api_key, **params)
 
 
-def get_prediction_by_id(id: int) -> Prediction:
-    res = Prediction.get(id=id)
-    return res[0] if len(res) == 1 else res
+def get_prediction_by_id(api_key: str, id: int) -> Prediction:
+    res = Prediction.get(api_key=api_key, id=id)
+    return res[0] if len(res) == 1 else None
 
 
-def get_predictions_by_model_id(model_id: int) -> List[Prediction]:
-    return Prediction.get(model_id=model_id)
+def get_predictions_by_model_id(
+    api_key: str,
+    model_id: int
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, model_id=model_id)
 
 
-def get_predictions_by_model_name(model_name: str) -> List[Prediction]:
-    return Prediction.get(model_name=model_name)
+def get_predictions_by_model_name(
+    api_key: str,
+    model_name: str
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, model_name=model_name)
 
 
-def get_predictions_by_adm_level(adm_level: int) -> List[Prediction]:
-    return Prediction.get(adm_level=adm_level)
+def get_predictions_by_adm_level(
+    api_key: str,
+    adm_level: int
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, adm_level=adm_level)
 
 
 def get_predictions_by_time_resolution(
+    api_key: str,
     time_resolution: str,
 ) -> List[Prediction]:
-    return Prediction.get(time_resolution=time_resolution)
+    return Prediction.get(api_key=api_key, time_resolution=time_resolution)
 
 
-def get_predictions_by_disease(disease: str) -> List[Prediction]:
-    return Prediction.get(disease=disease)
+def get_predictions_by_disease(
+    api_key: str,
+    disease: str
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, disease=disease)
 
 
-def get_predictions_by_author_name(author_name: str) -> List[Prediction]:
-    return Prediction.get(author_name=author_name)
+def get_predictions_by_author_name(
+    api_key: str,
+    author_name: str
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, author_name=author_name)
 
 
 def get_predictions_by_author_username(
+    api_key: str,
     author_username: str,
 ) -> List[Prediction]:
-    return Prediction.get(author_username=author_username)
+    return Prediction.get(api_key=api_key, author_username=author_username)
 
 
 def get_predictions_by_author_institution(
+    api_key: str,
     author_institution: str,
 ) -> List[Prediction]:
-    return Prediction.get(author_institution=author_institution)
+    return Prediction.get(
+        api_key=api_key,
+        author_institution=author_institution
+    )
 
 
-def get_predictions_by_repository(repository: str) -> List[Prediction]:
-    return Prediction.get(repository=repository)
+def get_predictions_by_repository(
+    api_key: str,
+    repository: str
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, repository=repository)
 
 
 def get_predictions_by_implementation_language(
+    api_key: str,
     implementation_language: str,
 ) -> List[Prediction]:
-    return Prediction.get(implementation_language=implementation_language)
+    return Prediction.get(
+        api_key=api_key,
+        implementation_language=implementation_language
+    )
 
 
-def get_predictions_by_predict_date(predict_date: date) -> List[Prediction]:
-    return Prediction.get(predict_date=str(predict_date))
+def get_predictions_by_predict_date(
+    api_key: str,
+    predict_date: date
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, predict_date=str(predict_date))
 
 
-def get_predictions_between(start: date, end: date) -> List[Prediction]:
-    return Prediction.get(start=str(start), end=str(end))
+def get_predictions_between(
+    api_key: str,
+    start: date,
+    end: date
+) -> List[Prediction]:
+    return Prediction.get(api_key=api_key, start=str(start), end=str(end))
