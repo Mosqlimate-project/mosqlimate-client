@@ -37,8 +37,8 @@ Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 Commit = Annotated[str, AfterValidator(validate_commit)]
 Date = Annotated[Union[str, date], AfterValidator(validate_date)]
 PredictionData = Annotated[
-    Union[List[Dict], str, List],
-    AfterValidator(validate_prediction_data),
+    List[Dict],
+    AfterValidator(validate_prediction_data)
 ]
 
 UF = Annotated[str, AfterValidator(validate_uf)]

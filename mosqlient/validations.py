@@ -144,28 +144,20 @@ def validate_date(date: str | dt.date) -> str:
     return str(date)
 
 
-def validate_prediction_data(data: str | list | pd.DataFrame) -> pd.DataFrame:
-    if isinstance(data, list):
-        df = pd.DataFrame(data)
-    elif isinstance(data, str):
-        try:
-            df = pd.DataFrame(json.loads(data))
-        except json.decoder.JSONDecodeError:
-            raise ValueError(
-                "`data` object must be JSON serializable or a DataFrame"
-            )
-    elif isinstance(data, pd.DataFrame):
-        df = data
-    else:
-        raise ValueError(f"Invalid `data` type {type(data)}")
+def validate_prediction_data(data: list[dict]) -> list[dict]:
+    type_err = "invalid `data` type. Expecting a list of dictionaries"
+
+    assert isinstance(data, list), type_err
+    for item in data:
+        assert isinstance(item, dict), type_err
+    df = pd.DataFrame(data)
 
     if df.empty:
-        logging.warning("Empty data")
-        return data
+        raise ValueError("empty prediction")
 
     assert set(df.columns) == set(PREDICTION_DATA_COLUMNS), (
-        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}; "
-        f"Missing {set(PREDICTION_DATA_COLUMNS).difference(set(df.columns))}"
+        f"expected fields in prediction: {PREDICTION_DATA_COLUMNS}; "
+        f"Missing: {set(PREDICTION_DATA_COLUMNS).difference(set(df.columns))}"
     )
     # TODO: Include more checks
     return data

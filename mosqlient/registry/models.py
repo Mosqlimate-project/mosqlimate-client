@@ -157,10 +157,10 @@ class Model(Base):
         temporal: types.Temporal,
         ADM_level: types.ADMLevel,
         time_resolution: types.TimeResolution,
+        sprint: bool = False,
         id: Optional[types.ID] = None,
         **kwargs,
     ):
-
         if isinstance(author, dict):
             author = Author(
                 user=author["user"], institution=author["institution"]
@@ -188,6 +188,7 @@ class Model(Base):
             temporal=temporal,
             ADM_level=ADM_level,
             time_resolution=time_resolution,
+            sprint=sprint
         )
 
     def __repr__(self) -> str:
@@ -202,8 +203,37 @@ class Model(Base):
                 return schema.ModelGETParams
             case "POST":
                 return schema.ModelPOSTParams
+            case "DELETE":
+                return schema.ModelDELETEParams
             case _:
                 raise NotImplementedError()
+
+    @classmethod
+    def get(cls, api_key: str, **kwargs):
+        """
+        mosqlient.schema.ModelGETParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelGETParams(**kwargs)
+        return list(cls(**item) for item in client.get(params))
+
+    @classmethod
+    def post(cls, api_key: str, **kwargs):
+        """
+        mosqlient.schema.ModelPOSTParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelPOSTParams(**kwargs)
+        return client.post(params)
+
+    @classmethod
+    def update(cls, api_key: str, **kwargs):
+        """
+        mosqlient.schema.ModelPUTParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelPUTParams(**kwargs)
+        return client.put(params)
 
     @property
     def id(self) -> types.ID | None:
@@ -245,33 +275,6 @@ class Model(Base):
     def time_resolution(self) -> types.TimeResolution:
         return self._schema.time_resolution
 
-    @classmethod
-    def get(cls, api_key: str, **kwargs):
-        """
-        mosqlient.schema.ModelGETParams
-        """
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.ModelGETParams(**kwargs)
-        return list(cls(**item) for item in client.get(params))
-
-    @classmethod
-    def post(cls, api_key: str, **kwargs):
-        """
-        mosqlient.schema.ModelPOSTParams
-        """
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.ModelPOSTParams(**kwargs)
-        return client.post(params)
-
-    @classmethod
-    def update(cls, api_key: str, **kwargs):
-        """
-        mosqlient.schema.ModelPUTParams
-        """
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.ModelPUTParams(**kwargs)
-        return client.put(params)
-
 
 class Prediction(Base):
     client: Optional[Client] = None
@@ -286,6 +289,10 @@ class Prediction(Base):
         predict_date: types.Date,
         data: types.PredictionData,
         id: Optional[types.ID] = None,
+        adm_0: str = "BRA",
+        adm_1: Optional[int] = None,
+        adm_2: Optional[int] = None,
+        adm_3: Optional[int] = None,
         **kwargs,
     ):
         if isinstance(model, dict):
@@ -321,11 +328,35 @@ class Prediction(Base):
             description=description,
             commit=commit,
             predict_date=predict_date,
+            adm_0=adm_0,
+            adm_1=adm_1,
+            adm_2=adm_2,
+            adm_3=adm_3,
             data=_data,
         )
 
     def __repr__(self) -> str:
         return f"Prediction <{self.id}>"
+
+    @classmethod
+    def get(cls, api_key: str, **kwargs):
+        """
+        registry.schema.PredictionGETParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.PredictionGETParams(**kwargs)
+        return list(cls(**item) for item in client.get(params))
+
+    @classmethod
+    def post(self, api_key: str, **kwargs):
+        """
+        registry.schema.PredictionPOSTParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.PredictionPOSTParams(**kwargs)
+        if isinstance(params.prediction, list):
+            params.prediction = json.dumps(params.prediction)
+        return client.post(params)
 
     @property
     def id(self) -> types.ID | None:
@@ -349,158 +380,3 @@ class Prediction(Base):
 
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.data)
-
-    def calculate_score(
-        self,
-        data: pd.DataFrame,
-        confidence_level: float = 0.9,
-    ) -> dict:
-        score = {}
-        data_df = data[["date", "casos"]]
-        data_df.date = pd.to_datetime(data_df.date)
-
-        pred_df = self.to_dataframe()
-        pred_df = pred_df.sort_values(by="date")
-        pred_df.date = pd.to_datetime(pred_df.date)
-
-        min_date = max(min(data_df.date), min(pred_df.date))
-        max_date = min(max(data_df.date), max(pred_df.date))
-
-        def dt_range(df):
-            return (df.date >= min_date) & (df.date <= max_date)
-
-        data_df = data_df.loc[dt_range(data_df)]
-        data_df.reset_index(drop=True, inplace=True)
-        pred_df = pred_df.loc[dt_range(pred_df)]
-
-        z_value = stats.norm.ppf((1 + confidence_level) / 2)
-
-        score["mae"] = mean_absolute_error(
-            y_true=data_df.casos,
-            y_pred=pred_df.pred,
-        )
-
-        score["mse"] = mean_squared_error(
-            y_true=data_df.casos, y_pred=pred_df.pred
-        )
-
-        score["crps"] = np.mean(
-            crps_normal(
-                data_df.casos,
-                pred_df.pred,
-                (pred_df.upper - pred_df.lower) / (2 * z_value),
-            )
-        )
-
-        log_score = logs_normal(
-            data_df.casos,
-            pred_df.pred,
-            (pred_df.upper - pred_df.lower) / (2 * z_value),
-            negative=False,
-        )
-
-        score["log_score"] = np.mean(
-            np.maximum(log_score, np.repeat(-100, len(log_score)))
-        )
-
-        alpha = 1 - confidence_level
-        upper_bound = pred_df.upper.values
-        lower_bound = pred_df.lower.values
-
-        penalty = (
-            2 / alpha * np.maximum(0, lower_bound - data_df.casos.values)
-        ) + (2 / alpha * np.maximum(0, data_df.casos.values - upper_bound))
-
-        score["interval_score"] = np.mean(
-            (upper_bound - lower_bound) + penalty
-        )
-
-        return score
-
-    @classmethod
-    def get(cls, **kwargs):
-        """
-        [DOCUMENTATION](https://api.mosqlimate.org/docs/registry/GET/predictions/)
-
-        SEARCH PARAMETERS
-        All parameters are Optional, use them to filter the Predictions in the
-        result
-
-        id [int]: Search by Prediction ID
-        model_id [int]: Search by Model ID
-        model_name [str]: Search by Model Name
-        model_ADM_level [int]: Search by ADM Level
-        model_time_resolution [str]: Search by Time Resolution
-        model_disease [str]: Search by Disease
-        author_name [str]: Search by Author Name
-        author_username [str]: Search by Author Username
-        author_institution [str]: Search by Author Institution
-        repository [str]: Search by GitHub repository
-        implementation_language [str]: Search by Implementation Language
-        temporal [bool]: Search by Temporal Models
-        spatial [bool]: Search by Spatial Models
-        categorical [bool]: Search by Categorical Models
-        commit [str]: Search by Git Commit
-        predict_date [str]: Search by prediction date. Format: YYYY-MM-DD
-        start [str]: Search by prediction start date. Format: YYYY-MM-DD
-        end [str]: Search by prediction end date. Format: YYYY-MM-DD
-        """
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
-
-        PredictionGETParams(**kwargs)
-        params = parse_params(**kwargs)
-        data = get_all_sync(
-            app="registry",
-            endpoint="predictions",
-            params=params,
-            pagination=True,
-            timeout=timeout,
-        )
-        return [Prediction(**p) for p in data]
-
-    def post(self, **kwargs):
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 30
-
-        if self.id is not None:
-            raise PredictionPostError("The Prediction already has an ID")
-
-        if self.client is None:
-            raise ClientError(
-                "A Client instance must be provided, please instantiate Model "
-                "passing your Mosqlimate's credentials. For more info about "
-                "retrieving or inserting data from Mosqlimate, please see the "
-                "API Documentation"
-            )
-
-        params = {
-            "model": self.model.id,
-            "description": self.description,
-            "commit": self.commit,
-            "predict_date": self.predict_date,
-            "prediction": json.dumps(self.data),
-        }
-
-        url = urljoin(
-            get_api_url(), "/".join(("registry", "predictions")) + "/"
-        )
-        headers = {"X-UID-Key": self.client.X_UID_KEY}
-
-        resp = requests.post(
-            url, json=params, headers=headers, timeout=timeout
-        )
-
-        if str(resp.status_code).startswith("5"):
-            raise ClientError(
-                f"{resp.status_code}: {resp.reason}. "
-                + "This error is from the API Server, please try again and "
-                + "contact the moderation if this error persists"
-            )
-
-        if resp.status_code != 201:
-            raise PredictionPostError(
-                "POST request returned status code "
-                + f"{resp.status_code}: {resp.reason} \n {resp.json()}"
-            )
-
-        # TODO: Return a Prediction object retrieving it from the API
-        return resp
