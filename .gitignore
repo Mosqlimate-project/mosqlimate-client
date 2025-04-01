@@ -12,3 +12,6 @@ site/
 poetry.lock
 .venv/
 .env
+.ipynb_checkpoints/
+.pylintrc
+.virtual_documents/

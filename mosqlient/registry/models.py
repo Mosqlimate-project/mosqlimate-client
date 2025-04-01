@@ -77,6 +77,16 @@ class Author(Base):
     def __repr__(self) -> str:
         return self._schema.user.username
 
+    @staticmethod
+    def params(
+        method: Literal["GET", "POST", "PUT", "DELETE"]
+    ) -> types.Params:
+        match method.upper():
+            case "GET":
+                return schema.AuthorGETParams
+            case _:
+                raise NotImplementedError()
+
     @property
     def institution(self) -> types.AuthorInstitution:
         return self._schema.institution

@@ -78,26 +78,28 @@ class AuthorGETParams(types.Params):
     method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
     app: types.APP = "registry"
     endpoint: str = "authors"
+    page: Optional[int] = None
+    per_page: Optional[int] = None
     #
     name: Optional[types.AuthorName] = None
     institution: Optional[types.AuthorInstitution] = None
     username: Optional[types.AuthorUserName] = None
 
     def params(self) -> dict:
-        p = {}
-        if self.name:
-            p["name"] = self.name
-        if self.institution:
-            p["institution"] = self.institution
-        if self.username:
-            p["username"] = self.username
-        return p
+        p = {
+            "name": self.name,
+            "institution": self.institution,
+            "username": self.username,
+        }
+        return {k: v for k, v in p.items() if v is not None}
 
 
 class ModelGETParams(types.Params):
     method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
     app: types.APP = "registry"
     endpoint: str = "models"
+    page: Optional[int] = None
+    per_page: Optional[int] = None
     #
     id: Optional[types.ID] = None
     name: Optional[types.Name] = None
@@ -114,28 +116,28 @@ class ModelGETParams(types.Params):
     time_resolution: Optional[types.TimeResolution] = None
     tags: Optional[types.Tags] = None
     sprint: Optional[bool] = None
-    page: Optional[int] = None
-    per_page: Optional[int] = None
 
     def params(self) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "author_name": self.author_name,
-            "author_username": self.author_username,
-            "repository": self.repository,
-            "implementation_language": self.implementation_language,
-            "disease": self.disease,
-            "ADM_level": self.ADM_level,
-            "temporal": self.temporal,
-            "spatial": self.spatial,
-            "categorical": self.categorical,
-            "time_resolution": self.time_resolution,
-            "tags": self.tags,
-            "sprint": self.sprint,
-            "page": self.page,
-            "per_page": self.per_page
-        }
+        return dict(filter(
+            lambda x: not isinstance(x, type(None)),
+            {
+                "id": self.id,
+                "name": self.name,
+                "author_name": self.author_name,
+                "author_username": self.author_username,
+                "repository": self.repository,
+                "implementation_language": self.implementation_language,
+                "disease": self.disease,
+                "ADM_level": self.ADM_level,
+                "temporal": self.temporal,
+                "spatial": self.spatial,
+                "categorical": self.categorical,
+                "time_resolution": self.time_resolution,
+                "tags": self.tags,
+                "sprint": self.sprint,
+                "page": self.page,
+                "per_page": self.per_page
+            }))
 
 
 class ModelPOSTParams(types.Params):

@@ -1,3 +1,5 @@
+__all__ = ["Mosqlient", "Client"]
+
 import re
 import uuid
 import asyncio
@@ -5,8 +7,12 @@ from collections import defaultdict
 from itertools import chain
 from typing import AnyStr, Literal, Optional, List
 
-import trio
-import aiohttp
+from aiohttp import (
+    ClientSession,
+    ClientTimeout,
+    ClientConnectionError,
+    ServerTimeoutError
+)
 import requests
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
@@ -40,83 +46,48 @@ class Mosqlient:
     def X_UID_KEY(self):
         return f"{self.username}:{self.uid_key}"
 
-    def get(
-        self,
-        app: str,
-        endpoint: AnyStr,
-        page: Optional[int] = None,
-        params: Optional[Params] = None,
-        paginate: bool = True,
-    ) -> dict | List[dict]:
-        self.__validate_request("GET", app, endpoint, params)
-        url = self.api_url + app + "/" + endpoint.strip("/")
+    def get(self, params: Params) -> List[dict]:
+        self.__validate_request(params)
+        url = self.api_url + params.app + "/" + params.endpoint.strip("/")
 
-        if not params:
-            return requests.get(
+        if not hasattr(params, "page"):
+            res = requests.get(
                 url=url,
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
+            res.raise_for_status()
+            return res.json()
 
         params = params.params()
+        params["per_page"] = self.per_page
 
-        if not page:
-            return self.__get_all_sync(
-                url=self.api_url + app + "/" + endpoint.strip("/"),
-                params=params,
-            )
+        return self.__get_all_sync(url=url, params=params)
 
-        if paginate:
-            params["page"] = page
-            params["per_page"] = self.per_page
-
-        res = requests.get(
-            url=url,
-            params=params,
-            headers={"X-UID-Key": self.X_UID_KEY},
-            timeout=self.timeout,
-        ).json()
-
-        return res['items'] if paginate else res
-
-    def post(
-        self,
-        app: str,
-        endpoint: AnyStr,
-        params: Params,
-    ) -> requests.models.Response:
-        self.__validate_request("POST", app, endpoint, params)
+    def post(self, params: Params) -> requests.models.Response:
+        self.__validate_request(params)
         return requests.post(
-            url=self.api_url + app + "/" + endpoint.strip("/"),
+            url=self.api_url + params.app + "/" + params.endpoint.strip("/"),
             data=params.params,
             headers={"X-UID-Key": self.X_UID_KEY},
             timeout=self.timeout,
         )
 
-    def put(
-        self,
-        app: str,
-        endpoint: AnyStr,
-        params: Params,
-    ) -> requests.models.Response:
-        self.__validate_request("PUT", app, endpoint, params)
+    def put(self, params: Params) -> requests.models.Response:
+        self.__validate_request(params)
         raise NotImplementedError()
 
-    def delete(
-        self,
-        app: str,
-        endpoint: AnyStr,
-    ) -> requests.models.Response:
-        self.__validate_request("DELETE", app, endpoint)
+    def delete(self, params: Params) -> requests.models.Response:
+        self.__validate_request(params)
         return requests.delete(
-            url=self.api_url + app + "/" + endpoint.strip("/"),
+            url=self.api_url + params.app + "/" + params.endpoint.strip("/"),
             headers={"X-UID-Key": self.X_UID_KEY},
             timeout=self.timeout,
         )
 
     async def __aget(
         self,
-        session: aiohttp.ClientSession,
+        session: ClientSession,
         url: str,
         params: dict,
         retries: int = 3,
@@ -124,25 +95,21 @@ class Mosqlient:
         headers = {"X-UID-Key": self.X_UID_KEY}
         try:
             if retries < 0:
-                raise aiohttp.ClientConnectionError("Too many attempts")
+                raise ClientConnectionError("Too many attempts")
             async with session.get(url, params=params, headers=headers) as res:
                 if res.status == 200:
                     return await res.json()
                 res.raise_for_status()
                 await asyncio.sleep(10 / (retries + 1))
                 return await self.__aget(session, url, params, retries - 1)
-        except aiohttp.ServerTimeoutError:
+        except ServerTimeoutError:
             await asyncio.sleep(8 / (retries + 1))
             return await self.__aget(session, url, params, retries - 1)
-        raise aiohttp.ClientConnectionError("Invalid request")
+        raise ClientConnectionError("Invalid request")
 
-    async def __get_all(
-        self,
-        url: str,
-        params: dict
-    ) -> List[dict]:
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=self.timeout)
+    async def __get_all(self, url: str, params: dict) -> List[dict]:
+        async with ClientSession(
+            timeout=ClientTimeout(total=self.timeout)
         ) as session:
             params["page"] = 1
             first_page = await self.__aget(session, url, params)
@@ -157,16 +124,9 @@ class Mosqlient:
             results = await tqdm_asyncio.gather(*tasks, total=total_pages)
         return list(chain.from_iterable(res['items'] for res in results))
 
-    def __get_all_sync(
-        self,
-        url: str,
-        params: dict,
-    ) -> List[dict]:
+    def __get_all_sync(self, url: str, params: dict) -> List[dict]:
         async def fetch_all():
-            return await self.__get_all(
-                url=url,
-                params=params,
-            )
+            return await self.__get_all(url=url, params=params)
         if asyncio.get_event_loop().is_running():
             loop = asyncio.get_event_loop()
             future = asyncio.ensure_future(fetch_all())
@@ -182,19 +142,16 @@ class Mosqlient:
             endpoint = "/".join(endpoint)
             self.endpoints[app][endpoint] = list(methods.keys())
 
-    def __validate_request(
-        self,
-        method: Literal["GET", "POST", "PUT", "DELETE"],
-        app: str,
-        endpoint: str,
-        params: Optional[Params] = None,
-    ) -> None:
+    def __validate_request(self, params: Params) -> None:
         apps = list(self.endpoints.keys())
 
-        if app not in apps:
-            raise errors.ParameterError(f"Unknown app '{app}'", options=apps)
+        if params.app not in apps:
+            raise errors.ParameterError(
+                f"Unknown app '{params.app}'",
+                options=apps
+            )
 
-        self.__validate_endpoint(method, app, endpoint)
+        self.__validate_endpoint(params.method, params.app, params.endpoint)
 
         if not params:
             return
@@ -202,14 +159,6 @@ class Mosqlient:
         if not isinstance(params, Params):
             raise TypeError(
                 "`params` must be of type mosqlient.types.Params"
-            )
-
-        if params.method.lower() != method.lower():
-            raise TypeError(f"{type(params)} doesn't allow {method} requests")
-
-        if params.app != app:
-            raise TypeError(
-                f"{type(params)} doesn't allow requests to '{app}'"
             )
 
     def __validate_endpoint(
