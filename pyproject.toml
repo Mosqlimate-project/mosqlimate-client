@@ -30,6 +30,7 @@ pmdarima = "^2.0.4"
 cffi = "^1.17.0"
 trio = "^0.29.0"
 tqdm = "^4.67.1"
+loguru = "^0.7.3"
 
 [tool.poetry.dev-dependencies]
 # formatting, quality, tests

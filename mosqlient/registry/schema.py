@@ -90,6 +90,8 @@ class AuthorGETParams(types.Params):
             "name": self.name,
             "institution": self.institution,
             "username": self.username,
+            "page": self.page,
+            "per_page": self.per_page
         }
         return {k: v for k, v in p.items() if v is not None}
 
@@ -118,26 +120,25 @@ class ModelGETParams(types.Params):
     sprint: Optional[bool] = None
 
     def params(self) -> dict:
-        return dict(filter(
-            lambda x: not isinstance(x, type(None)),
-            {
-                "id": self.id,
-                "name": self.name,
-                "author_name": self.author_name,
-                "author_username": self.author_username,
-                "repository": self.repository,
-                "implementation_language": self.implementation_language,
-                "disease": self.disease,
-                "ADM_level": self.ADM_level,
-                "temporal": self.temporal,
-                "spatial": self.spatial,
-                "categorical": self.categorical,
-                "time_resolution": self.time_resolution,
-                "tags": self.tags,
-                "sprint": self.sprint,
-                "page": self.page,
-                "per_page": self.per_page
-            }))
+        p = {
+            "id": self.id,
+            "name": self.name,
+            "author_name": self.author_name,
+            "author_username": self.author_username,
+            "repository": self.repository,
+            "implementation_language": self.implementation_language,
+            "disease": self.disease,
+            "ADM_level": self.ADM_level,
+            "temporal": self.temporal,
+            "spatial": self.spatial,
+            "categorical": self.categorical,
+            "time_resolution": self.time_resolution,
+            "tags": self.tags,
+            "sprint": self.sprint,
+            "page": self.page,
+            "per_page": self.per_page
+        }
+        return {k: v for k, v in p.items() if v is not None}
 
 
 class ModelPOSTParams(types.Params):
@@ -188,3 +189,32 @@ class ModelPUTParams(types.Params):
     spatial: Optional[types.Spatial] = None
     categorical: Optional[types.Categorical] = None
     time_resolution: Optional[types.TimeResolution] = None
+
+
+class PredictionGETParams(types.Params):
+    id: Optional[types.ID] = None
+    model: Optional[types.ID] = None
+    model_name: Optional[types.Name] = None
+    model_ADM_level: Optional[types.ADMLevel] = None
+    model_time_resolution: Optional[types.TimeResolution] = None
+    model_disease: Optional[types.Disease] = None
+    author_name: Optional[types.AuthorName] = None
+    author_username: Optional[types.AuthorUserName] = None
+    author_institution: Optional[types.AuthorInstitution] = None
+    repository: Optional[types.Repository] = None
+    implementation_language: Optional[types.ImplementationLanguage] = None
+    temporal: Optional[types.Temporal] = None
+    spatial: Optional[types.Spatial] = None
+    categorical: Optional[types.Categorical] = None
+    commit: Optional[types.Commit] = None
+    predict_date: Optional[types.Date] = None
+    start: Optional[types.Date] = None
+    end: Optional[types.Date] = None
+
+
+class PredictionPUTParams(types.Params):
+    model: types.ID
+    description: Optional[types.Description] = None
+    commit: Optional[types.Commit] = None
+    predict_date: Optional[types.Date] = None
+    prediction: Optional[types.PredictionData] = None

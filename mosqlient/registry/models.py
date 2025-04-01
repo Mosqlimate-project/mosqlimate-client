@@ -100,21 +100,13 @@ class Author(Base):
         username: Optional[types.AuthorUserName] = None,
     ):
         client = Mosqlient(x_uid_key=api_key)
-
         params = {
             "name": name,
             "institution": institution,
             "username": username,
         }
         params = schema.AuthorGETParams(**parse_params(**params))
-
-        return list(
-            cls(**item) for item in client.get(
-                app="registry",
-                endpoint="authors",
-                params=params,
-            )
-        )
+        return list(cls(**item) for item in client.get(params=params))
 
 
 class ImplementationLanguage(Base):
@@ -201,6 +193,18 @@ class Model(Base):
     def __repr__(self) -> str:
         return self.name
 
+    @staticmethod
+    def params(
+        method: Literal["GET", "POST", "PUT", "DELETE"]
+    ) -> types.Params:
+        match method.upper():
+            case "GET":
+                return schema.ModelGETParams
+            case "POST":
+                return schema.ModelPOSTParams
+            case _:
+                raise NotImplementedError()
+
     @property
     def id(self) -> types.ID | None:
         return self._schema.id
@@ -242,166 +246,31 @@ class Model(Base):
         return self._schema.time_resolution
 
     @classmethod
-    def get(cls, **kwargs):
+    def get(cls, api_key: str, **kwargs):
         """
-        https://api.mosqlimate.org/docs/registry/GET/models/
+        mosqlient.schema.ModelGETParams
         """
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 300
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelGETParams(**kwargs)
+        return list(cls(**item) for item in client.get(params))
 
-        ModelGETParams(**kwargs)
-        params = parse_params(**kwargs)
-
-        return [
-            Model(**m)
-            for m in get_all_sync(
-                app="registry",
-                endpoint="models",
-                params=params,
-                pagination=True,
-                timeout=timeout,
-            )
-        ]
-
-    def post(self, **kwargs):
+    @classmethod
+    def post(cls, api_key: str, **kwargs):
         """
-        https://api.mosqlimate.org/docs/registry/POST/models/
+        mosqlient.schema.ModelPOSTParams
         """
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelPOSTParams(**kwargs)
+        return client.post(params)
 
-        if self.client is None:
-            raise ClientError(
-                "A Client instance must be provided, please instantiate Model "
-                "passing your Mosqlimate's credentials. For more info about "
-                "retrieving or inserting data from Mosqlimate, please see the "
-                "API Documentation"
-            )
-
-        params = {
-            "name": self.name,
-            "description": self.description,
-            "repository": self.repository,
-            "implementation_language": str(self.implementation_language),
-            "disease": self.disease,
-            "temporal": self.temporal,
-            "spatial": self.spatial,
-            "categorical": self.categorical,
-            "ADM_level": self.ADM_level,
-            "time_resolution": self.time_resolution,
-        }
-
-        url = urljoin(get_api_url(), "/".join(("registry", "models")) + "/")
-        headers = {"X-UID-Key": self.client.X_UID_KEY}
-
-        resp = requests.post(
-            url, json=params, headers=headers, timeout=timeout
-        )
-
-        if resp.status_code != 201:
-            raise ModelPostError(
-                "POST request returned status code "
-                f"{resp.status_code} \n {resp.reason} \n {resp.json()}"
-            )
-
-        return resp
-
-    def update(
-        self,
-        id: int,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        repository: Optional[str] = None,
-        implementation_language: Optional[str] = None,
-        disease: Optional[Literal["dengue", "chikungunya", "zika"]] = None,
-        temporal: Optional[bool] = None,
-        spatial: Optional[bool] = None,
-        categorical: Optional[bool] = None,
-        adm_level: Optional[Literal[0, 1, 2, 3]] = None,
-        # fmt: off
-        time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
-        # fmt: on
-        **kwargs,
-    ):
+    @classmethod
+    def update(cls, api_key: str, **kwargs):
         """
-        https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/api.py#L258
+        mosqlient.schema.ModelPUTParams
         """
-        timeout = kwargs["timeout"] if "timeout" in kwargs else 10
-
-        if self.client is None:
-            raise ClientError(
-                "A Client instance must be provided, please instantiate Model "
-                "passing your Mosqlimate's credentials. For more infor about "
-                "retrieving or inserting data from Mosqlimate, please see the "
-                "API Documentation"
-            )
-
-        params = {
-            "name": name,
-            "description": description,
-            "repository": repository,
-            "implementation_language": implementation_language,
-            "disease": disease,
-            "temporal": temporal,
-            "spatial": spatial,
-            "categorical": categorical,
-            "ADM_level": adm_level,
-            "time_resolution": time_resolution,
-        }
-
-        ModelPUTParams(
-            id=id,
-            name=name,
-            description=description,
-            repository=repository,
-            implementation_language=implementation_language,
-            disease=disease,
-            temporal=temporal,
-            spatial=spatial,
-            categorical=categorical,
-            ADM_level=adm_level,
-            time_resolution=time_resolution,
-        )
-
-        url = urljoin(
-            get_api_url(), "/".join(("registry", "models")) + f"/{id}"
-        )
-        headers = {"X-UID-Key": self.client.X_UID_KEY}
-        resp = requests.put(url, json=params, headers=headers, timeout=timeout)
-
-        return resp
-
-
-class ModelGETParams(types.Params):
-    # https://github.com/Mosqlimate-project/Data-platform/blob/main/src/registry/schema.py#L43
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
-    app: types.APP = "registry"
-    id: Optional[types.ID] = None
-    name: Optional[types.Name] = None
-    author_name: Optional[types.AuthorName] = None
-    author_username: Optional[types.AuthorUserName] = None
-    author_institution: Optional[types.AuthorInstitution] = None
-    repository: Optional[types.Repository] = None
-    implementation_language: Optional[types.ImplementationLanguage] = None
-    disease: Optional[types.Disease] = None
-    ADM_level: Optional[types.ADMLevel] = None
-    temporal: Optional[types.Temporal] = None
-    spatial: Optional[types.Spatial] = None
-    categorical: Optional[types.Categorical] = None
-    time_resolution: Optional[types.TimeResolution] = None
-    tags: Optional[types.Tags] = None
-
-
-class ModelPUTParams(Base):
-    id: types.ID
-    name: Optional[types.Name] = None
-    description: Optional[types.Description] = None
-    repository: Optional[types.Repository] = None
-    implementation_language: Optional[types.ImplementationLanguage] = None
-    disease: Optional[types.Disease] = None
-    ADM_level: Optional[types.ADMLevel] = None
-    temporal: Optional[types.Temporal] = None
-    spatial: Optional[types.Spatial] = None
-    categorical: Optional[types.Categorical] = None
-    time_resolution: Optional[types.TimeResolution] = None
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelPUTParams(**kwargs)
+        return client.put(params)
 
 
 class Prediction(Base):
@@ -635,32 +504,3 @@ class Prediction(Base):
 
         # TODO: Return a Prediction object retrieving it from the API
         return resp
-
-
-class PredictionGETParams(Base):
-    id: Optional[types.ID] = None
-    model: Optional[types.ID] = None
-    model_name: Optional[types.Name] = None
-    model_ADM_level: Optional[types.ADMLevel] = None
-    model_time_resolution: Optional[types.TimeResolution] = None
-    model_disease: Optional[types.Disease] = None
-    author_name: Optional[types.AuthorName] = None
-    author_username: Optional[types.AuthorUserName] = None
-    author_institution: Optional[types.AuthorInstitution] = None
-    repository: Optional[types.Repository] = None
-    implementation_language: Optional[types.ImplementationLanguage] = None
-    temporal: Optional[types.Temporal] = None
-    spatial: Optional[types.Spatial] = None
-    categorical: Optional[types.Categorical] = None
-    commit: Optional[types.Commit] = None
-    predict_date: Optional[types.Date] = None
-    start: Optional[types.Date] = None
-    end: Optional[types.Date] = None
-
-
-class PredictionPUTParams(Base):
-    model: types.ID
-    description: Optional[types.Description] = None
-    commit: Optional[types.Commit] = None
-    predict_date: Optional[types.Date] = None
-    prediction: Optional[types.PredictionData] = None

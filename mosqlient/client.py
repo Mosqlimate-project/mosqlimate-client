@@ -5,7 +5,7 @@ import uuid
 import asyncio
 from collections import defaultdict
 from itertools import chain
-from typing import AnyStr, Literal, Optional, List
+from typing import Literal, List
 
 from aiohttp import (
     ClientSession,
@@ -17,6 +17,7 @@ import requests
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
 from tqdm.asyncio import tqdm_asyncio
+from loguru import logger
 
 from mosqlient.types import Params
 from mosqlient import errors
@@ -60,7 +61,25 @@ class Mosqlient:
             return res.json()
 
         params = params.params()
-        params["per_page"] = self.per_page
+        if not "per_page" in params or params["per_page"] > self.per_page:
+            if params["per_page"] > self.per_page:
+                logger.warning(
+                    f"Maximum itens per page set to {self.per_page}"
+                )
+            params["per_page"] = self.per_page
+
+        if "page" in params:
+            res = requests.get(
+                url=url,
+                params=params,
+                headers={"X-UID-Key": self.X_UID_KEY},
+                timeout=self.timeout,
+            )
+            res.raise_for_status()
+            data = res.json()
+            if 'message' in data:
+                logger.warning(data['message'])
+            return data['items']
 
         return self.__get_all_sync(url=url, params=params)
 
@@ -121,7 +140,11 @@ class Mosqlient:
                 params_c["page"] = page
                 task = asyncio.create_task(self.__aget(session, url, params_c))
                 tasks.append(task)
-            results = await tqdm_asyncio.gather(*tasks, total=total_pages)
+            results = await tqdm_asyncio.gather(
+                *tasks,
+                total=total_pages,
+                unit="requests"
+            )
         return list(chain.from_iterable(res['items'] for res in results))
 
     def __get_all_sync(self, url: str, params: dict) -> List[dict]:

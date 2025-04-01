@@ -37,7 +37,7 @@ Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
 Commit = Annotated[str, AfterValidator(validate_commit)]
 Date = Annotated[Union[str, date], AfterValidator(validate_date)]
 PredictionData = Annotated[
-    Union[pd.DataFrame, List[Dict], str, List],
+    Union[List[Dict], str, List],
     AfterValidator(validate_prediction_data),
 ]
 
@@ -52,6 +52,9 @@ class Schema(BaseModel, ABC):
 
 
 class Params(BaseModel, ABC):
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, protected_namespaces=()
+    )
     method: Literal["GET", "POST", "PUT", "DELETE"] = None
     app: APP = None
     endpoint: str = None
