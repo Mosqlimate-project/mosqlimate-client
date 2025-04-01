@@ -1,5 +1,3 @@
-import os
-
 # Constants
 DJANGO_APPS = ["registry", "datastore", "vis"]
 DISEASES = ["chikungunya", "chik", "dengue", "zika"]

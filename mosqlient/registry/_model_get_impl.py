@@ -13,16 +13,17 @@ __all__ = [
     "get_models_by_tag_ids",
 ]
 
-from typing import Optional, List, Union
+from typing import Optional, List
 
 from .models import Model
 
 
-def get_all_models() -> list[dict]:
-    return Model.get()
+def get_all_models(api_key: str) -> list[dict]:
+    return Model.get(api_key=api_key)
 
 
 def get_models(
+    api_key: str,
     id: Optional[int] = None,
     name: Optional[str] = None,
     author_name: Optional[str] = None,
@@ -37,80 +38,91 @@ def get_models(
     categorical: Optional[bool] = None,
     time_resolution: Optional[str] = None,
     tags: Optional[List[int]] = None,
-) -> Union[dict, list[dict]]:
-    params = {
-        "id": id,
-        "name": name,
-        "author_name": author_name,
-        "author_username": author_username,
-        "author_institution": author_institution,
-        "repository": repository,
-        "implementation_language": implementation_language,
-        "disease": disease,
-        "ADM_level": ADM_level,
-        "temporal": temporal,
-        "spatial": spatial,
-        "categorical": categorical,
-        "time_resolution": time_resolution,
-        "tags": tags,
-    }
-    res = Model.get(**params)
-    return res[0] if len(res) == 1 else res
+    sprint: Optional[bool] = None
+) -> List[Model]:
+    return Model.get(
+        api_key=api_key,
+        id=id,
+        name=name,
+        author_name=author_name,
+        author_username=author_username,
+        author_institution=author_institution,
+        repository=repository,
+        implementation_language=implementation_language,
+        disease=disease,
+        ADM_level=ADM_level,
+        temporal=temporal,
+        spatial=spatial,
+        categorical=categorical,
+        time_resolution=time_resolution,
+        tags=tags,
+        sprint=sprint,
+    )
 
 
-def get_model_by_id(id: int) -> Union[dict, list]:
-    res = Model.get(id=id)
-    return res[0] if len(res) == 1 else res
+def get_model_by_id(api_key: str, id: int) -> Model | None:
+    res = Model.get(api_key=api_key, id=id)
+    return res[0] if len(res) == 1 else None
 
 
-def get_models_by_author_name(author_name: str) -> Union[dict, list[dict]]:
-    res = Model.get(author_name=author_name)
-    return res[0] if len(res) == 1 else res
+def get_models_by_author_name(api_key: str, author_name: str) -> List[Model]:
+    return Model.get(api_key=api_key, author_name=author_name)
 
 
 def get_models_by_author_username(
+    api_key: str,
     author_username: str,
-) -> Union[dict, list[dict]]:
-    res = Model.get(author_username=author_username)
-    return res[0] if len(res) == 1 else res
+) -> List[Model]:
+    return Model.get(api_key=api_key, author_username=author_username)
 
 
 def get_models_by_author_institution(
+    api_key: str,
     author_institution: str,
-) -> Union[dict, list[dict]]:
-    res = Model.get(author_institution=author_institution)
-    return res[0] if len(res) == 1 else res
+) -> List[Model]:
+    return Model.get(api_key=api_key, author_institution=author_institution)
 
 
-def get_models_by_repository(repository: str) -> Union[dict, list[dict]]:
-    res = Model.get(repository=repository)
-    return res[0] if len(res) == 1 else res
+def get_models_by_repository(
+    api_key: str,
+    repository: str
+) -> List[Model]:
+    return Model.get(api_key=api_key, repository=repository)
 
 
 def get_models_by_implementation_language(
+    api_key: str,
     implementation_language: str,
-) -> Union[dict, list[dict]]:
-    res = Model.get(implementation_language=implementation_language)
-    return res[0] if len(res) == 1 else res
+) -> List[Model]:
+    return Model.get(
+        api_key=api_key,
+        implementation_language=implementation_language
+    )
 
 
-def get_models_by_disease(disease: str) -> Union[dict, list[dict]]:
-    res = Model.get(disease=disease)
-    return res[0] if len(res) == 1 else res
+def get_models_by_disease(
+    api_key: str,
+    disease: str
+) -> List[Model]:
+    return Model.get(api_key=api_key, disease=disease)
 
 
-def get_models_by_adm_level(adm_level: int) -> Union[dict, list[dict]]:
-    res = Model.get(adm_level=adm_level)
-    return res[0] if len(res) == 1 else res
+def get_models_by_adm_level(
+    api_key: str,
+    adm_level: int
+) -> List[Model]:
+    return Model.get(api_key=api_key, adm_level=adm_level)
 
 
 def get_models_by_time_resolution(
+    api_key: str,
     time_resolution: int,
-) -> Union[dict, list[dict]]:
-    res = Model.get(time_resolution=time_resolution)
-    return res[0] if len(res) == 1 else res
+) -> List[Model]:
+    return Model.get(api_key=api_key, time_resolution=time_resolution)
 
 
-def get_models_by_tag_ids(tags_ids: list[int]) -> Union[dict, list[dict]]:
-    res = Model.get(tags=tags_ids)
-    return res[0] if len(res) == 1 else res
+def get_models_by_tag_ids(
+    api_key: str,
+    tags_ids: list[int]
+) -> List[Model]:
+    return Model.get(api_key=api_key, tags=tags_ids)

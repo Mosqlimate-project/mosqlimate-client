@@ -1,1 +1,1 @@
-from .models import Model, Prediction  # noqa
+from .models import Author, Model, Prediction  # noqa
