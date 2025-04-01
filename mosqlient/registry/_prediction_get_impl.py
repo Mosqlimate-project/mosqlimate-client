@@ -23,7 +23,7 @@ from typing import Optional, List
 from .models import Prediction
 
 
-def get_all_predictions(api_key: str) -> list[dict]:
+def get_all_predictions(api_key: str) -> list[Prediction]:
     return Prediction.get(api_key=api_key)
 
 

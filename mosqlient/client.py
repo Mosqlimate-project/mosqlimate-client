@@ -61,11 +61,14 @@ class Mosqlient:
             return res.json()
 
         params = params.params()
-        if not "per_page" in params or params["per_page"] > self.per_page:
-            if params["per_page"] > self.per_page:
-                logger.warning(
-                    f"Maximum itens per page set to {self.per_page}"
-                )
+
+        if not "per_page" in params:
+            params["per_page"] = self.per_page
+
+        if params["per_page"] > self.per_page:
+            logger.warning(
+                f"Maximum itens per page set to {self.per_page}"
+            )
             params["per_page"] = self.per_page
 
         if "page" in params:

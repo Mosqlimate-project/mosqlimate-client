@@ -42,15 +42,15 @@ class ModelSchema(types.Schema):
 
 class PredictionDataRowSchema(types.Schema):
     date: date
-    lower_95: float
+    lower_95: Optional[float] = None
     lower_90: float
-    lower_80: float
-    lower_50: float
+    lower_80: Optional[float] = None
+    lower_50: Optional[float] = None
     pred: float
-    upper_50: float
-    upper_80: float
+    upper_50: Optional[float] = None
+    upper_80: Optional[float] = None
     upper_90: float
-    upper_95: float
+    upper_95: Optional[float] = None
 
     class Config:
         json_encoders = {date: lambda v: v.strftime("%Y-%m-%d")}
