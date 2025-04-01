@@ -1,20 +1,12 @@
-from urllib.parse import urljoin
-from typing import Literal, Optional, Any, Dict, AnyStr, List, Self, Generator
+from typing import Literal, Optional, Any, Dict, AnyStr, List
 
 import json
-import requests
 import nest_asyncio
 import pandas as pd
-import numpy as np
-# import scipy.stats as stats
-# from sklearn.metrics import mean_squared_error, mean_absolute_error
-# from scoringrules import crps_normal, logs_normal
 from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
 from mosqlient.client import Mosqlient, Client
-from mosqlient.errors import ClientError, ModelPostError, PredictionPostError
-from mosqlient._utils import parse_params
 from mosqlient.registry import schema
 
 
@@ -92,20 +84,12 @@ class Author(Base):
         return self._schema.institution
 
     @classmethod
-    def get(
-        cls,
-        api_key: str,
-        name: Optional[types.AuthorName] = None,
-        institution: Optional[types.AuthorInstitution] = None,
-        username: Optional[types.AuthorUserName] = None,
-    ):
+    def get(cls, api_key: str, **kwargs):
+        """
+        registry.schema.AuthorGETParams
+        """
         client = Mosqlient(x_uid_key=api_key)
-        params = {
-            "name": name,
-            "institution": institution,
-            "username": username,
-        }
-        params = schema.AuthorGETParams(**parse_params(**params))
+        params = schema.AuthorGETParams(**kwargs)
         return list(cls(**item) for item in client.get(params=params))
 
 
@@ -231,9 +215,19 @@ class Model(Base):
         """
         mosqlient.schema.ModelPUTParams
         """
+        raise NotImplementedError()
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ModelPUTParams(**kwargs)
         return client.put(params)
+
+    @classmethod
+    def delete(self, api_key: str, id: int):
+        """
+        registry.schema.ModelDELETEParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.ModelDELETEParams(id=id)
+        return client.delete(params)
 
     @property
     def id(self) -> types.ID | None:
@@ -338,6 +332,20 @@ class Prediction(Base):
     def __repr__(self) -> str:
         return f"Prediction <{self.id}>"
 
+    @staticmethod
+    def params(
+        method: Literal["GET", "POST", "PUT", "DELETE"]
+    ) -> types.Params:
+        match method.upper():
+            case "GET":
+                return schema.PredictionGETParams
+            case "POST":
+                return schema.PredictionPOSTParams
+            case "DELETE":
+                return schema.PredictionDELETEParams
+            case _:
+                raise NotImplementedError()
+
     @classmethod
     def get(cls, api_key: str, **kwargs):
         """
@@ -357,6 +365,15 @@ class Prediction(Base):
         if isinstance(params.prediction, list):
             params.prediction = json.dumps(params.prediction)
         return client.post(params)
+
+    @classmethod
+    def delete(self, api_key: str, id: int):
+        """
+        registry.schema.PredictionDELETEParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.PredictionDELETEParams(id=id)
+        return client.delete(params)
 
     @property
     def id(self) -> types.ID | None:

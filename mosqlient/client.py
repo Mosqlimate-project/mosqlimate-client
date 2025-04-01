@@ -85,12 +85,14 @@ class Mosqlient:
 
     def post(self, params: Params) -> requests.models.Response:
         self.__validate_request(params)
-        return requests.post(
+        res = requests.post(
             url=self.api_url + params.app + "/" + params.endpoint.strip("/"),
             data=params.params,
             headers={"X-UID-Key": self.X_UID_KEY},
             timeout=self.timeout,
         )
+        res.raise_for_status()
+        return res
 
     def put(self, params: Params) -> requests.models.Response:
         self.__validate_request(params)
@@ -98,11 +100,13 @@ class Mosqlient:
 
     def delete(self, params: Params) -> requests.models.Response:
         self.__validate_request(params)
-        return requests.delete(
+        res = requests.delete(
             url=self.api_url + params.app + "/" + params.endpoint.strip("/"),
             headers={"X-UID-Key": self.X_UID_KEY},
             timeout=self.timeout,
         )
+        res.raise_for_status()
+        return res
 
     async def __aget(
         self,

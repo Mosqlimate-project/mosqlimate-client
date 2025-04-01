@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import date
-from typing import Union, List, Dict, Optional, Literal, Self
+from typing import Union, List, Dict, Optional, Literal
 
-import pandas as pd
-import requests
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
 from pydantic import BaseModel, ConfigDict

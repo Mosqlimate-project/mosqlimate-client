@@ -301,3 +301,18 @@ class PredictionPUTParams(types.Params):
     commit: Optional[types.Commit] = None
     predict_date: Optional[types.Date] = None
     prediction: Optional[types.PredictionData] = None
+
+
+class PredictionDELETEParams(types.Params):
+    method: Literal["GET", "POST", "PUT", "DELETE"] = "DELETE"
+    app: types.APP = "registry"
+    endpoint: str = "predictions/{predict_id}"
+    #
+    id: types.ID
+
+    def __init__(self, id: types.ID, **kwargs):
+        super().__init__(id=id, **kwargs)
+        self.endpoint = self.endpoint.replace("{predict_id}", str(id))
+
+    def params(self):
+        return
