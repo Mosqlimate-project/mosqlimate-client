@@ -1,5 +1,3 @@
-import json
-import logging
 from typing import Literal, Optional
 import datetime as dt
 from string import ascii_lowercase, digits
@@ -8,12 +6,20 @@ import pandas as pd
 
 from pydantic import ValidationError
 
-from mosqlient._config import *  # noqa
+from mosqlient._config import (
+    DJANGO_APPS,
+    DISEASES,
+    ADM_LEVELS,
+    TIME_RESOLUTIONS,
+    PREDICTION_DATA_COLUMNS,
+)
 from mosqlient._utils.brasil import UF_CODES
 
 
 def validate_django_app(app: str) -> str:
-    assert app in DJANGO_APPS, f"Unknown Mosqlimate app '{app}'. Options: {DJANGO_APPS}"
+    assert (
+        app in DJANGO_APPS
+    ), f"Unknown Mosqlimate app '{app}'. Options: {DJANGO_APPS}"
     return app
 
 
@@ -34,7 +40,9 @@ def validate_description(description: str) -> str:
     return description
 
 
-def validate_author_name(author_name: str) -> str:
+def validate_author_name(author_name: str | None) -> str | None:
+    if author_name == None:
+        return None
     assert len(author_name) <= 100, "author_name too long"
     assert len(author_name) > 0, "empty author_name"
     return author_name
@@ -46,7 +54,9 @@ def validate_author_username(author_username: str) -> str:
     return author_username
 
 
-def validate_author_institution(author_institution: Optional[str]) -> str | None:
+def validate_author_institution(
+    author_institution: Optional[str],
+) -> str | None:
     if not author_institution:
         return None
     assert len(author_institution) <= 100, "author_institution too long"
@@ -80,17 +90,23 @@ def validate_implementation_language(implementation_language: str) -> str:
         "c++",
         "python",
     ]
-    assert implementation_language.lower() in languages, f"Unknown implementation_language {implementation_language}"
+    assert (
+        implementation_language.lower() in languages
+    ), f"Unknown implementation_language {implementation_language}"
     return implementation_language
 
 
 def validate_disease(disease: Literal["dengue", "zika", "chikungunya"]) -> str:
-    assert disease.lower() in DISEASES, f"Unknown disease '{disease}'. Options: {DISEASES}"
+    assert (
+        disease.lower() in DISEASES
+    ), f"Unknown disease '{disease}'. Options: {DISEASES}"
     return disease
 
 
 def validate_adm_level(adm_level: int) -> int:
-    assert adm_level in ADM_LEVELS, f"Unknown adm_level {adm_level}. Options {ADM_LEVELS}"
+    assert (
+        adm_level in ADM_LEVELS
+    ), f"Unknown adm_level {adm_level}. Options {ADM_LEVELS}"
     return adm_level
 
 
@@ -134,26 +150,20 @@ def validate_date(date: str | dt.date) -> str:
     return str(date)
 
 
-def validate_prediction_data(data: str | list | pd.DataFrame) -> pd.DataFrame:
-    if isinstance(data, list):
-        df = pd.DataFrame(data)
-    elif isinstance(data, str):
-        try:
-            df = pd.DataFrame(json.loads(data))
-        except json.decoder.JSONDecodeError:
-            raise ValueError("`data` object must be JSON serializable or a DataFrame")
-    elif isinstance(data, pd.DataFrame):
-        df = data
-    else:
-        raise ValueError(f"Invalid `data` type {type(data)}")
+def validate_prediction_data(data: list[dict]) -> list[dict]:
+    type_err = "invalid `data` type. Expecting a list of dictionaries"
+
+    assert isinstance(data, list), type_err
+    for item in data:
+        assert isinstance(item, dict), type_err
+    df = pd.DataFrame(data)
 
     if df.empty:
-        logging.warning("Empty data")
-        return data
+        raise ValueError("empty prediction")
 
     assert set(df.columns) == set(PREDICTION_DATA_COLUMNS), (
-        f"Incorrect data columns. Expecting: {PREDICTION_DATA_COLUMNS}; "
-        f"Missing {set(PREDICTION_DATA_COLUMNS).difference(set(df.columns))}"
+        f"expected fields in prediction: {PREDICTION_DATA_COLUMNS}; "
+        f"Missing: {set(PREDICTION_DATA_COLUMNS).difference(set(df.columns))}"
     )
     # TODO: Include more checks
     return data

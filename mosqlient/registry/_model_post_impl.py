@@ -4,12 +4,12 @@ from typing import Literal
 
 import requests
 
-from mosqlient import Client, types
-from mosqlient.errors import ModelPostError
-from .models import Model, Author
+from mosqlient import types
+from .models import Model
 
 
 def upload_model(
+    api_key: str,
     name: str,
     description: str,
     repository: str,
@@ -20,18 +20,10 @@ def upload_model(
     categorical: bool,
     adm_level: Literal[0, 1, 2, 3],
     time_resolution: Literal["day", "week", "month", "year"],
-    api_key: str,
-    **kwargs
+    sprint: bool,
 ) -> requests.Response:
-    client = Client(x_uid_key=api_key)
-    author = Author.get(username=client.username)
-
-    if not author:
-        raise ModelPostError("Author not found")
-
-    model = Model(
-        client=client,
-        author=author[0],
+    return Model.post(
+        api_key=api_key,
         name=name,
         description=description,
         categorical=categorical,
@@ -42,6 +34,5 @@ def upload_model(
         implementation_language=implementation_language,
         ADM_level=adm_level,
         time_resolution=time_resolution,
+        sprint=sprint,
     )
-
-    return model.post(**kwargs)

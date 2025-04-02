@@ -3,11 +3,11 @@ from datetime import date
 
 
 def parse_params(**kwargs) -> dict[str, Any]:
-    from mosqlient.registry.models import Base
+    from mosqlient.types import Model
 
     params = {}
     for k, v in kwargs.items():
-        if isinstance(v, (bool, int, float, str, date, Base)):
+        if isinstance(v, (bool, int, float, str, date, Model)):
             params[k] = str(v)
         elif v is None:
             continue

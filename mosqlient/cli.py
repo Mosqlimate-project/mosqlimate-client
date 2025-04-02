@@ -29,7 +29,8 @@ def main(args: Optional[List[str]] = None) -> int:
     """
     Run the main program.
 
-    This function is executed when you type `mosqbench` or `python -m mosqlient`.
+    This function is executed when you type `mosqbench` or
+    `python -m mosqlient`
 
     Arguments:
         args: Arguments passed from the command line.

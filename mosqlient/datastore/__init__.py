@@ -1,2 +1,1 @@
-from .infodengue import Infodengue  # noqa
-from .climate import Climate  # noqa
+from .models import Climate, Infodengue  # noqa

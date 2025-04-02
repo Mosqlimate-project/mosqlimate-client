@@ -1,30 +1,34 @@
 __all__ = ["upload_prediction"]
 
-import requests
+from typing import Optional
 from datetime import date
 
-import pandas as pd
+import requests
 
-from mosqlient import Client
-from .models import Prediction, Model
+from .models import Prediction
 
 
 def upload_prediction(
+    api_key: str,
     model_id: int,
     description: str,
     commit: str,
     predict_date: str | date,
-    prediction: str | list[dict] | pd.DataFrame,
-    api_key: str,
-    **kwargs
+    prediction: list[dict],
+    adm_0: str = "BRA",
+    adm_1: Optional[str] = None,
+    adm_2: Optional[int] = None,
+    adm_3: Optional[int] = None,
 ) -> requests.Response:
-    client = Client(x_uid_key=api_key)
-    model = Model.get(id=model_id)[0]
-    return Prediction(
-        client=client,
-        model=model,
+    return Prediction.post(
+        api_key=api_key,
+        model=model_id,
         description=description,
         commit=commit,
         predict_date=predict_date,
-        data=prediction,
-    ).post(**kwargs)
+        adm_0=adm_0,
+        adm_1=adm_1,
+        adm_2=adm_2,
+        adm_3=adm_3,
+        prediction=prediction,
+    )

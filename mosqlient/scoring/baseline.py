@@ -1,11 +1,11 @@
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pmdarima.arima import auto_arima
 from pmdarima import preprocessing as ppc
-from mosqlient.datastore import Infodengue
-from datetime import date, datetime, timedelta
 
 
 def get_next_n_weeks(ini_date: str, next_days: int) -> list:
@@ -92,7 +92,13 @@ def plot_predictions(df_preds: pd.DataFrame, title: str = "") -> None:
 
     ax.plot(df_preds.date, df_preds.pred, color="tab:orange", label="ARIMA")
 
-    ax.fill_between(df_preds.date, df_preds.lower, df_preds.upper, color="tab:orange", alpha=0.3)
+    ax.fill_between(
+        df_preds.date,
+        df_preds.lower,
+        df_preds.upper,
+        color="tab:orange",
+        alpha=0.3,
+    )
 
     ax.legend()
 
@@ -107,7 +113,9 @@ def plot_predictions(df_preds: pd.DataFrame, title: str = "") -> None:
     ax.set_ylabel("New cases")
 
 
-def plot_forecast(df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs: int) -> None:
+def plot_forecast(
+    df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs: int
+) -> None:
     """
     Function to plot the forecast of the model.
 
@@ -129,7 +137,9 @@ def plot_forecast(df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs: int) -
 
     ax.plot(df_for.date, df_for.pred, color="tab:red", label="Forecast")
 
-    ax.fill_between(df_for.date, df_for.lower, df_for.upper, color="tab:red", alpha=0.3)
+    ax.fill_between(
+        df_for.date, df_for.lower, df_for.upper, color="tab:red", alpha=0.3
+    )
 
     ax.plot(
         [df_train.index[-1], df_for.date[0]],
@@ -191,10 +201,14 @@ class Arima:
 
         """
         if not pd.api.types.is_datetime64_any_dtype(df.index):
-            raise InvalidDataFrameError("The DataFrame's index is not of datetime type.")
+            raise InvalidDataFrameError(
+                "The DataFrame's index is not of datetime type."
+            )
 
         if df.shape[1] != 1:
-            raise InvalidDataFrameError("The DataFrame must have one single column.")
+            raise InvalidDataFrameError(
+                "The DataFrame must have one single column."
+            )
 
         if df.columns[0] != "y":
             raise InvalidDataFrameError("The column must be named `y`.")
@@ -232,7 +246,8 @@ class Arima:
         df_train = self.df.copy()
 
         df_train = df_train.loc[
-            (df_train.index >= pd.to_datetime(train_ini_date)) & (df_train.index <= pd.to_datetime(train_end_date))
+            (df_train.index >= pd.to_datetime(train_ini_date))
+            & (df_train.index <= pd.to_datetime(train_end_date))
         ]
 
         self.df_train = df_train
@@ -266,13 +281,19 @@ class Arima:
 
         df_train = self.df_train.copy()
 
-        df_in_sample = get_prediction_dataframe(preds_in_sample, df_train.index, self.boxcox)
+        df_in_sample = get_prediction_dataframe(
+            preds_in_sample, df_train.index, self.boxcox
+        )
 
-        df_in_sample = df_in_sample.merge(df_train, left_on="date", right_index=True)
+        df_in_sample = df_in_sample.merge(
+            df_train, left_on="date", right_index=True
+        )
 
         df_in_sample = df_in_sample.rename(columns={"y": "data"})
 
-        df_in_sample["data"] = self.boxcox.inverse_transform(df_in_sample["data"])[0]
+        df_in_sample["data"] = self.boxcox.inverse_transform(
+            df_in_sample["data"]
+        )[0]
 
         if plot:
 
@@ -280,7 +301,9 @@ class Arima:
 
         return df_in_sample
 
-    def predict_out_of_sample(self, horizon: int, end_date: str, plot=True) -> pd.DataFrame:
+    def predict_out_of_sample(
+        self, horizon: int, end_date: str, plot=True
+    ) -> pd.DataFrame:
         """
         Returns the model performance out of the sample.
         The predictions are returned by windows of {horizon} observations. After each window
@@ -304,17 +327,23 @@ class Arima:
 
         preds = model.predict(horizon, return_conf_int=True)
 
-        date = get_next_n_weeks(self.df_train.index[-1].strftime("%Y-%m-%d"), horizon)
+        date = get_next_n_weeks(
+            self.df_train.index[-1].strftime("%Y-%m-%d"), horizon
+        )
 
         df_preds = get_prediction_dataframe(preds, date, self.boxcox)
 
         while pd.Timestamp(date[-1]) < pd.to_datetime(end_date):
 
-            preds = model.update(df.loc[date[0] : date[-1]]).predict(horizon, return_conf_int=True)
+            preds = model.update(df.loc[date[0] : date[-1]]).predict(
+                horizon, return_conf_int=True
+            )
 
             date = get_next_n_weeks(date[-1].strftime("%Y-%m-%d"), horizon)
 
-            df_preds = pd.concat([df_preds, get_prediction_dataframe(preds, date, self.boxcox)])
+            df_preds = pd.concat(
+                [df_preds, get_prediction_dataframe(preds, date, self.boxcox)]
+            )
 
         df_preds.date = pd.to_datetime(df_preds.date)
 
@@ -334,7 +363,9 @@ class Arima:
 
         return df_preds
 
-    def forecast(self, horizon: int, plot: bool, last_obs: int) -> pd.DataFrame:
+    def forecast(
+        self, horizon: int, plot: bool, last_obs: int
+    ) -> pd.DataFrame:
         """
         Returns the forecast of the model.
         Before applying this method is necessary to call the `train()` method.
@@ -359,7 +390,9 @@ class Arima:
 
         model = self.model
 
-        date = get_next_n_weeks(df_train.index[-1].strftime("%Y-%m-%d"), horizon)
+        date = get_next_n_weeks(
+            df_train.index[-1].strftime("%Y-%m-%d"), horizon
+        )
 
         preds = model.predict(horizon, return_conf_int=True)
 
