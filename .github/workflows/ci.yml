@@ -16,6 +16,7 @@ env:
   LANG: en_US.utf-8
   LC_ALL: en_US.utf-8
   PYTHONIOENCODING: UTF-8
+  API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
 
   # To fix an error when running Poetry on Windows
   # (https://github.com/python-poetry/poetry/issues/2629),
@@ -63,6 +64,7 @@ jobs:
 
     - name: Pre-commit
       run: |
+        poetry install --no-root
         pre-commit run --all-files
 
   tests:
@@ -97,4 +99,6 @@ jobs:
       run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
 
     - name: Run the test suite
-      run: poetry run duty test
+      run: |
+        echo "API_KEY=$API_KEY" > .env
+        poetry run duty test

@@ -6,7 +6,7 @@ from mosqlient import types, Mosqlient
 
 
 class Infodengue(types.Model):
-    _schema = schema.InfodengueSchema
+    _schema: schema.InfodengueSchema
 
     @classmethod
     def get(
@@ -15,7 +15,7 @@ class Infodengue(types.Model):
         disease: Literal["dengue", "zika", "chikungunya"],
         start: str | date,
         end: str | date,
-        uf: Optional[str] = None,
+        uf: Optional[types.UF] = None,
         geocode: Optional[int] = None,
         page: Optional[int] = None,
     ):
@@ -35,7 +35,7 @@ class Infodengue(types.Model):
 
 
 class Climate(types.Model):
-    _schema = schema.ClimateSchema
+    _schema: schema.ClimateSchema
 
     @classmethod
     def get(

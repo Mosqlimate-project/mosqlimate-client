@@ -249,7 +249,7 @@ class Prediction(types.Model):
         data: types.PredictionData,
         id: Optional[types.ID] = None,
         adm_0: str = "BRA",
-        adm_1: Optional[int] = None,
+        adm_1: Optional[str] = None,
         adm_2: Optional[int] = None,
         adm_3: Optional[int] = None,
         **kwargs,

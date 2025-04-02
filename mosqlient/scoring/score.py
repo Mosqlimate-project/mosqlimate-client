@@ -326,6 +326,7 @@ class Scorer:
 
     def __init__(
         self,
+        api_key: str,
         df_true: pd.DataFrame,
         ids: Optional[list[int] | list[str]] = None,
         pred: Optional[pd.DataFrame] = None,
@@ -382,7 +383,7 @@ class Scorer:
         if ids is not None:
             ids = [str(id_) for id_ in ids]
             for id_ in ids:
-                prediction = get_prediction_by_id(id=int(id_))
+                prediction = get_prediction_by_id(api_key=api_key, id=int(id_))
 
                 if not prediction:
                     raise ValueError(f"No Prediction found for id: {id_}")

@@ -396,7 +396,6 @@ def test(ctx, match: str = ""):
         [
             "pytest",
             "--nbmake",
-            "docs/**/*ipynb",
         ],
         title="Testing notebooks",
         pty=PTY,

@@ -74,7 +74,7 @@ def get_predictions(
     return Prediction.get(api_key=api_key, **params)
 
 
-def get_prediction_by_id(api_key: str, id: int) -> Prediction:
+def get_prediction_by_id(api_key: str, id: int) -> Prediction | None:
     res = Prediction.get(api_key=api_key, id=id)
     return res[0] if len(res) == 1 else None
 

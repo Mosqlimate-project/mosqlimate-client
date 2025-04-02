@@ -26,7 +26,7 @@ def get_authors(
     )
 
 
-def get_author_by_username(api_key: str, username: str) -> Author:
+def get_author_by_username(api_key: str, username: str) -> Author | None:
     author = Author.get(api_key=api_key, username=username)
     return author[0] if len(author) == 1 else None
 

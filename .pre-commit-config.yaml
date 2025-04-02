@@ -27,10 +27,3 @@ repos:
       - file
       - python
     types_or: []
-
-  - entry: ruff
-    exclude: ^.*/scoring/.* # TODO:REMOVE IT
-    types_or: [python, pyi]
-    id: ruff
-    name: ruff
-    language: system
