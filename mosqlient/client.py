@@ -102,7 +102,11 @@ class Mosqlient:
         )
         if res.status_code == 422:
             raise ValueError(res.text)
-        res.raise_for_status()
+        try:
+            res.raise_for_status()
+        except requests.HTTPError as err:
+            logger.error(res.text)
+            raise err
         return res
 
     def put(self, params: Params) -> requests.models.Response:
@@ -116,7 +120,11 @@ class Mosqlient:
             headers={"X-UID-Key": self.X_UID_KEY},
             timeout=self.timeout,
         )
-        res.raise_for_status()
+        try:
+            res.raise_for_status()
+        except requests.HTTPError as err:
+            logger.error(res.text)
+            raise err
         return res
 
     async def __aget(
