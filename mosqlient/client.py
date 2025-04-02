@@ -3,6 +3,7 @@ __all__ = ["Mosqlient", "Client"]
 import re
 import uuid
 import asyncio
+import json
 from collections import defaultdict
 from itertools import chain
 from typing import Literal, List
@@ -20,6 +21,7 @@ from tqdm.asyncio import tqdm_asyncio
 from loguru import logger
 
 from mosqlient.types import Params
+from mosqlient._utils import parse_params
 from mosqlient import errors
 
 
@@ -74,7 +76,7 @@ class Mosqlient:
         if "page" in params:
             res = requests.get(
                 url=url,
-                params=params,
+                params=parse_params(**params),
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
@@ -84,16 +86,22 @@ class Mosqlient:
                 logger.warning(data['message'])
             return data['items']
 
-        return self.__get_all_sync(url=url, params=params)
+        return self.__get_all_sync(url=url, params=parse_params(**params))
 
     def post(self, params: Params) -> requests.models.Response:
         self.__validate_request(params)
+        headers = {
+            "X-UID-Key": self.X_UID_KEY,
+            "Content-Type": "application/json"
+        }
         res = requests.post(
-            url=self.api_url + params.app + "/" + params.endpoint.strip("/"),
-            data=params.params,
-            headers={"X-UID-Key": self.X_UID_KEY},
+            url=self.api_url + params.app + "/" + params.endpoint + "/",
+            data=json.dumps(params.params()),
             timeout=self.timeout,
+            headers=headers,
         )
+        if res.status_code == 422:
+            raise ValueError(res.text)
         res.raise_for_status()
         return res
 
@@ -141,18 +149,23 @@ class Mosqlient:
             first_page = await self.__aget(session, url, params)
             total_pages = first_page["pagination"]["total_pages"]
 
+            results = [first_page]
+
             tasks = []
-            for page in range(1, total_pages + 1):
+            for page in range(2, total_pages + 1):
                 params_c = params.copy()
                 params_c["page"] = page
                 task = asyncio.create_task(self.__aget(session, url, params_c))
                 tasks.append(task)
-            results = await tqdm_asyncio.gather(
-                *tasks,
-                total=total_pages,
-                unit="requests"
-            )
-        return list(chain.from_iterable(res['items'] for res in results))
+
+            if tasks:
+                results.extend(await tqdm_asyncio.gather(
+                    *tasks,
+                    total=total_pages - 1,
+                    unit="requests"
+                ))
+
+            return list(chain.from_iterable(res['items'] for res in results))
 
     def __get_all_sync(self, url: str, params: dict) -> List[dict]:
         async def fetch_all():

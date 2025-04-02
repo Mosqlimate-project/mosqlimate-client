@@ -1,5 +1,4 @@
 __all__ = [
-    "get_all_predictions",
     "get_predictions",
     "get_prediction_by_id",
     "get_predictions_by_model_id",
@@ -23,10 +22,6 @@ from typing import Optional, List
 from .models import Prediction
 
 
-def get_all_predictions(api_key: str) -> list[Prediction]:
-    return Prediction.get(api_key=api_key)
-
-
 def get_predictions(
     api_key: str,
     id: Optional[int] = None,
@@ -47,8 +42,8 @@ def get_predictions(
     predict_date: Optional[date] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
-    adm_1: Optional[int] = None,
-    adm_2: Optional[int] = None,
+    adm_1_geocode: Optional[int] = None,
+    adm_2_geocode: Optional[int] = None,
     sprint: Optional[bool] = None
 ) -> list[dict] | dict:
     params = {
@@ -72,8 +67,8 @@ def get_predictions(
         ),
         "start": str(start) if start is not None else None,
         "end": str(end) if end is not None else None,
-        "adm_1": adm_1,
-        "adm_2": adm_2,
+        "adm_1_geocode": adm_1_geocode,
+        "adm_2_geocode": adm_2_geocode,
         "sprint": sprint
     }
     return Prediction.get(api_key=api_key, **params)
@@ -116,7 +111,7 @@ def get_predictions_by_disease(
     api_key: str,
     disease: str
 ) -> List[Prediction]:
-    return Prediction.get(api_key=api_key, disease=disease)
+    return Prediction.get(api_key=api_key, model_disease=disease)
 
 
 def get_predictions_by_author_name(

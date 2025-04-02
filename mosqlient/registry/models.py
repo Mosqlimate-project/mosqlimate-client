@@ -24,6 +24,9 @@ class Base(BaseModel):
     def json(self):
         return self._schema.json()
 
+    def dict(self):
+        return self._schema.dict()
+
 
 class User(Base):
     _schema: schema.UserSchema
@@ -141,7 +144,7 @@ class Model(Base):
         temporal: types.Temporal,
         ADM_level: types.ADMLevel,
         time_resolution: types.TimeResolution,
-        sprint: bool = False,
+        sprint: bool,
         id: Optional[types.ID] = None,
         **kwargs,
     ):
@@ -208,7 +211,8 @@ class Model(Base):
         """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ModelPOSTParams(**kwargs)
-        return client.post(params)
+        res = client.post(params)
+        return cls(**json.loads(res.text))
 
     @classmethod
     def update(cls, api_key: str, **kwargs):
@@ -356,15 +360,14 @@ class Prediction(Base):
         return list(cls(**item) for item in client.get(params))
 
     @classmethod
-    def post(self, api_key: str, **kwargs):
+    def post(cls, api_key: str, **kwargs):
         """
         registry.schema.PredictionPOSTParams
         """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionPOSTParams(**kwargs)
-        if isinstance(params.prediction, list):
-            params.prediction = json.dumps(params.prediction)
-        return client.post(params)
+        res = client.post(params)
+        return cls(**json.loads(res.text))
 
     @classmethod
     def delete(self, api_key: str, id: int):

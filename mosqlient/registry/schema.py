@@ -27,7 +27,7 @@ class TagSchema(types.Schema):
 class ModelSchema(types.Schema):
     id: Optional[types.ID]
     name: types.Name
-    description: types.Description
+    description: str
     author: AuthorSchema
     repository: types.Repository
     implementation_language: ImplementationLanguageSchema
@@ -147,6 +147,7 @@ class ModelPOSTParams(types.Params):
     endpoint: str = "models"
     #
     name: types.Name
+    description: types.Description
     repository: types.Repository
     implementation_language: types.ImplementationLanguage
     disease: types.Disease
@@ -157,10 +158,10 @@ class ModelPOSTParams(types.Params):
     time_resolution: types.TimeResolution
     sprint: bool = False
 
-    @property
     def params(self):
         return {
             "name": self.name,
+            "description": self.description,
             "repository": self.repository,
             "implementation_language": self.implementation_language,
             "disease": self.disease,
@@ -214,7 +215,7 @@ class PredictionGETParams(types.Params):
     per_page: Optional[int] = None
     #
     id: Optional[types.ID] = None
-    model: Optional[types.ID] = None
+    model_id: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
     model_ADM_level: Optional[types.ADMLevel] = None
     model_time_resolution: Optional[types.TimeResolution] = None
@@ -231,14 +232,14 @@ class PredictionGETParams(types.Params):
     predict_date: Optional[types.Date] = None
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
-    adm_1: Optional[int] = None
-    adm_2: Optional[types.Geocode] = None
+    adm_1_geocode: Optional[int] = None
+    adm_2_geocode: Optional[types.Geocode] = None
     sprint: Optional[bool] = None
 
     def params(self) -> dict:
         p = {
             "id": self.id,
-            "model": self.model,
+            "model_id": self.model_id,
             "model_name": self.model_name,
             "model_ADM_level": self.model_ADM_level,
             "model_time_resolution": self.model_time_resolution,
@@ -255,8 +256,8 @@ class PredictionGETParams(types.Params):
             "predict_date": self.predict_date,
             "start": self.start,
             "end": self.end,
-            "adm_1": self.adm_1,
-            "adm_2": self.adm_2,
+            "adm_1_geocode": self.adm_1_geocode,
+            "adm_2_geocode": self.adm_2_geocode,
             "sprint": self.sprint,
             "page": self.page,
             "per_page": self.per_page,

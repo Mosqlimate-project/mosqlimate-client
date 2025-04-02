@@ -1,7 +1,9 @@
 __all__ = ["upload_prediction"]
 
-import requests
+from typing import Optional
 from datetime import date
+
+import requests
 
 from .models import Prediction
 
@@ -12,9 +14,9 @@ def upload_prediction(
     description: str,
     commit: str,
     predict_date: str | date,
-    adm_1: str,
-    adm_2: int,
     prediction: list[dict],
+    adm_1: Optional[str] = None,
+    adm_2: Optional[int] = None,
 ) -> requests.Response:
     return Prediction.post(
         api_key=api_key,
