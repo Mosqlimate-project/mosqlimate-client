@@ -1,11 +1,11 @@
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pmdarima.arima import auto_arima
 from pmdarima import preprocessing as ppc
-from mosqlient.datastore import Infodengue
-from datetime import date, datetime, timedelta
 
 
 def get_next_n_weeks(ini_date: str, next_days: int) -> list:

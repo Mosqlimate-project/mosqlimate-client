@@ -96,7 +96,8 @@ def update_changelog(
     Arguments:
         inplace_file: The file to update in-place.
         marker: The line after which to insert new contents.
-        version_regex: A regular expression to find currently documented versions in the file.
+        version_regex: A regular expression to find currently documented
+                       versions in the file.
         template_url: The URL to the Jinja template used to render contents.
         commit_style: The style of commit messages to parse.
     """
@@ -162,18 +163,6 @@ def check(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-
-
-@duty
-def check_code_quality(ctx, files=PY_SRC):
-    """
-    Check the code quality.
-
-    Arguments:
-        ctx: The context instance (passed automatically).
-        files: The files to check.
-    """
-    # ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
 
 
 @duty
@@ -401,5 +390,14 @@ def test(ctx, match: str = ""):
             "tests",
         ],
         title="Running tests",
+        pty=PTY,
+    )
+    ctx.run(
+        [
+            "pytest",
+            "--nbmake",
+            "docs/**/*ipynb",
+        ],
+        title="Testing notebooks",
         pty=PTY,
     )

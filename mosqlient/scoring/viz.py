@@ -1,6 +1,6 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from mosqlient.models.ensemble import validate_df_preds
+from mosqlient.scoring.ensemble import validate_df_preds
 
 # Definir a cor das bordas (spines) como cinza
 mpl.rcParams["axes.edgecolor"] = "gray"

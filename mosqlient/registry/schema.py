@@ -91,7 +91,7 @@ class AuthorGETParams(types.Params):
             "institution": self.institution,
             "username": self.username,
             "page": self.page,
-            "per_page": self.per_page
+            "per_page": self.per_page,
         }
         return {k: v for k, v in p.items() if v is not None}
 
@@ -136,7 +136,7 @@ class ModelGETParams(types.Params):
             "tags": self.tags,
             "sprint": self.sprint,
             "page": self.page,
-            "per_page": self.per_page
+            "per_page": self.per_page,
         }
         return {k: v for k, v in p.items() if v is not None}
 
@@ -170,7 +170,7 @@ class ModelPOSTParams(types.Params):
             "spatial": self.spatial,
             "categorical": self.categorical,
             "time_resolution": self.time_resolution,
-            "sprint": self.sprint
+            "sprint": self.sprint,
         }
 
 
@@ -200,7 +200,7 @@ class ModelDELETEParams(types.Params):
     id: types.ID
 
     def __init__(self, id: types.ID, **kwargs):
-        super().__init__(id=id, **kwargs)
+        super().__init__(**kwargs)
         self.endpoint = self.endpoint.replace("{model_id}", str(id))
 
     def params(self):
@@ -290,7 +290,7 @@ class PredictionPOSTParams(types.Params):
             "adm_1": self.adm_1,
             "adm_2": self.adm_2,
             "adm_3": self.adm_3,
-            "prediction": self.prediction
+            "prediction": self.prediction,
         }
 
 
@@ -314,7 +314,7 @@ class PredictionDELETEParams(types.Params):
     id: types.ID
 
     def __init__(self, id: types.ID, **kwargs):
-        super().__init__(id=id, **kwargs)
+        super().__init__(**kwargs)
         self.endpoint = self.endpoint.replace("{predict_id}", str(id))
 
     def params(self):

@@ -56,16 +56,6 @@ class Author(types.Model):
     def __repr__(self) -> str:
         return self._schema.user.username
 
-    @staticmethod
-    def params(
-        method: Literal["GET", "POST", "PUT", "DELETE"]
-    ) -> types.Params:
-        match method.upper():
-            case "GET":
-                return schema.AuthorGETParams
-            case _:
-                raise NotImplementedError()
-
     @property
     def institution(self) -> types.AuthorInstitution:
         return self._schema.institution
@@ -95,7 +85,8 @@ class ImplementationLanguage(types.Model):
             )
         else:
             raise ValueError(
-                "`language` must be a str or a dict with {'language': `language`}"
+                "`language` must be a str or a dict"
+                " with {'language': `language`}"
             )
 
     def __repr__(self) -> str:
@@ -159,25 +150,11 @@ class Model(types.Model):
             temporal=temporal,
             ADM_level=ADM_level,
             time_resolution=time_resolution,
-            sprint=sprint
+            sprint=sprint,
         )
 
     def __repr__(self) -> str:
         return self.name
-
-    @staticmethod
-    def params(
-        method: Literal["GET", "POST", "PUT", "DELETE"]
-    ) -> types.Params:
-        match method.upper():
-            case "GET":
-                return schema.ModelGETParams
-            case "POST":
-                return schema.ModelPOSTParams
-            case "DELETE":
-                return schema.ModelDELETEParams
-            case _:
-                raise NotImplementedError()
 
     @classmethod
     def get(cls, api_key: str, **kwargs):
@@ -319,20 +296,6 @@ class Prediction(types.Model):
 
     def __repr__(self) -> str:
         return f"Prediction <{self.id}>"
-
-    @staticmethod
-    def params(
-        method: Literal["GET", "POST", "PUT", "DELETE"]
-    ) -> types.Params:
-        match method.upper():
-            case "GET":
-                return schema.PredictionGETParams
-            case "POST":
-                return schema.PredictionPOSTParams
-            case "DELETE":
-                return schema.PredictionDELETEParams
-            case _:
-                raise NotImplementedError()
 
     @classmethod
     def get(cls, api_key: str, **kwargs):

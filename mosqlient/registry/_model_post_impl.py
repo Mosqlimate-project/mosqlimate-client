@@ -34,5 +34,5 @@ def upload_model(
         implementation_language=implementation_language,
         ADM_level=adm_level,
         time_resolution=time_resolution,
-        sprint=sprint
+        sprint=sprint,
     )

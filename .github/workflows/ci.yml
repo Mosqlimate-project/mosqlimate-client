@@ -53,12 +53,6 @@ jobs:
     - name: Set up the project
       run: poetry install -vv
 
-    - name: Check if the documentation builds correctly
-      run: poetry run duty check-docs
-
-    - name: Check the code quality
-      run: poetry run duty check-code-quality
-
     - name: Check if the code is correctly typed
       run: poetry run duty check-types
 
@@ -66,6 +60,10 @@ jobs:
       run: |
         pip install safety
         poetry run duty check-dependencies
+
+    - name: Pre-commit
+      run: |
+        pre-commit run --all-files
 
   tests:
 

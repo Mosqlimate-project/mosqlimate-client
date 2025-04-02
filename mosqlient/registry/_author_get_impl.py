@@ -19,13 +19,10 @@ def get_authors(
     api_key: str,
     name: Optional[str] = None,
     institution: Optional[str] = None,
-    username: Optional[str] = None
+    username: Optional[str] = None,
 ) -> list[Author]:
     return Author.get(
-        api_key=api_key,
-        name=name,
-        institution=institution,
-        username=username
+        api_key=api_key, name=name, institution=institution, username=username
     )
 
 

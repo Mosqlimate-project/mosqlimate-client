@@ -32,7 +32,7 @@ class InfodengueGETParams(types.Params):
             "uf": self.uf,
             "geocode": self.geocode,
             "page": self.page,
-            "per_page": self.per_page
+            "per_page": self.per_page,
         }
         return {k: v for k, v in p.items() if v is not None}
 
@@ -56,6 +56,6 @@ class ClimateGETParams(types.Params):
             "geocode": self.geocode,
             "uf": self.uf,
             "page": self.page,
-            "per_page": self.per_page
+            "per_page": self.per_page,
         }
         return {k: v for k, v in p.items() if v is not None}

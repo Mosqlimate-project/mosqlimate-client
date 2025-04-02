@@ -17,7 +17,7 @@ class Infodengue(types.Model):
         end: str | date,
         uf: Optional[str] = None,
         geocode: Optional[int] = None,
-        page: Optional[int] = None
+        page: Optional[int] = None,
     ):
         """
         datastore.schema.InfodengueGETParams
@@ -45,17 +45,13 @@ class Climate(types.Model):
         end: str | date,
         uf: Optional[str] = None,
         geocode: Optional[int] = None,
-        page: Optional[int] = None
+        page: Optional[int] = None,
     ):
         """
         datastore.schema.ClimateGETParams
         """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ClimateGETParams(
-            start=start,
-            end=end,
-            uf=uf,
-            geocode=geocode,
-            page=page
+            start=start, end=end, uf=uf, geocode=geocode, page=page
         )
         return client.get(params=params)

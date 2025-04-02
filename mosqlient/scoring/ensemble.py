@@ -1,3 +1,5 @@
+from typing import Union, cast
+
 import numpy as np
 import pandas as pd
 from epiweeks import Week
@@ -6,18 +8,17 @@ from scipy.optimize import minimize
 from scipy.stats import lognorm, norm
 from scipy.interpolate import interp1d
 from scipy.integrate import cumulative_trapezoid
-from scoringrules import crps_lognormal, crps_normal, interval_score
+from scoringrules import crps_lognormal, crps_normal
 from numpy.typing import NDArray
-from typing import Union, cast
 
 
 def validate_df_preds(df_preds: pd.DataFrame):
-    expected_columns = {"date", "lower", "pred", "upper", "model_id"}
+    expected_cols = {"date", "lower", "pred", "upper", "model_id"}
 
-    if not expected_columns.issubset(df_preds.columns):
+    if not expected_cols.issubset(df_preds.columns):
         raise ValueError(
-            f"df_preds must contain the following columns: {expected_columns}. "
-            f"Missing: {expected_columns - set(df_preds.columns)}"
+            f"df_preds must contain the following columns: {expected_cols}. "
+            f"Missing: {expected_cols - set(df_preds.columns)}"
         )
 
 

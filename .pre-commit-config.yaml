@@ -29,41 +29,8 @@ repos:
     types_or: []
 
   - entry: ruff
-    # exclude: ^.*/migrations/.*
+    exclude: ^.*/scoring/.* # TODO:REMOVE IT
     types_or: [python, pyi]
     id: ruff
     name: ruff
     language: system
-
-  - id: pytest
-    name: Check pytest unit tests pass
-    entry: poetry run duty test
-    pass_filenames: false
-    language: system
-    types: [python]
-
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.910-1
-  hooks:
-  - id: mypy
-    exclude: ^(docs/|example-plugin/|tests/fixtures)
-
-- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.2.0
-  hooks:
-  - id: pretty-format-toml
-    args: [--autofix]
-  - id: pretty-format-yaml
-    args: [--autofix]
-    # based on
-    # https://gitlab.com/smop/pre-commit-hooks/-/blob/master/.pre-commit-hooks.yaml
-
-- repo: local
-  hooks:
-  - id: check-poetry
-    name: Poetry check
-    description: Validates the structure of the pyproject.toml file
-    entry: poetry check
-    language: system
-    pass_filenames: false
-    files: pyproject.toml

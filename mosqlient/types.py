@@ -6,41 +6,40 @@ from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
 from pydantic import BaseModel, ConfigDict
 
-from mosqlient.validations import *  # noqa
+from mosqlient import validations as v
 
 
-APP = Annotated[str, AfterValidator(validate_django_app)]
+APP = Annotated[str, AfterValidator(v.validate_django_app)]
 
-ID = Annotated[int, AfterValidator(validate_id)]
-Name = Annotated[str, AfterValidator(validate_name)]
-Description = Annotated[str, AfterValidator(validate_description)]
-AuthorName = Annotated[str, AfterValidator(validate_author_name)]
-AuthorUserName = Annotated[str, AfterValidator(validate_author_username)]
+ID = Annotated[int, AfterValidator(v.validate_id)]
+Name = Annotated[str, AfterValidator(v.validate_name)]
+Description = Annotated[str, AfterValidator(v.validate_description)]
+AuthorName = Annotated[Optional[str], AfterValidator(v.validate_author_name)]
+AuthorUserName = Annotated[str, AfterValidator(v.validate_author_username)]
 AuthorInstitution = Annotated[
-    Optional[str], AfterValidator(validate_author_institution)
+    Optional[str], AfterValidator(v.validate_author_institution)
 ]
-Repository = Annotated[str, AfterValidator(validate_repository)]
+Repository = Annotated[str, AfterValidator(v.validate_repository)]
 ImplementationLanguage = Annotated[
     str | dict[Literal["language"], str],
-    AfterValidator(validate_implementation_language),
+    AfterValidator(v.validate_implementation_language),
 ]
-Disease = Annotated[str, AfterValidator(validate_disease)]
-ADMLevel = Annotated[int, AfterValidator(validate_adm_level)]
-Temporal = Annotated[bool, AfterValidator(validate_temporal)]
-Spatial = Annotated[bool, AfterValidator(validate_spatial)]
-Categorical = Annotated[bool, AfterValidator(validate_categorical)]
-TimeResolution = Annotated[str, AfterValidator(validate_time_resolution)]
-Tags = Annotated[list, AfterValidator(validate_tags)]  # TODO:
+Disease = Annotated[str, AfterValidator(v.validate_disease)]
+ADMLevel = Annotated[int, AfterValidator(v.validate_adm_level)]
+Temporal = Annotated[bool, AfterValidator(v.validate_temporal)]
+Spatial = Annotated[bool, AfterValidator(v.validate_spatial)]
+Categorical = Annotated[bool, AfterValidator(v.validate_categorical)]
+TimeResolution = Annotated[str, AfterValidator(v.validate_time_resolution)]
+Tags = Annotated[list, AfterValidator(v.validate_tags)]  # TODO:
 
-Commit = Annotated[str, AfterValidator(validate_commit)]
-Date = Annotated[Union[str, date], AfterValidator(validate_date)]
+Commit = Annotated[str, AfterValidator(v.validate_commit)]
+Date = Annotated[Union[str, date], AfterValidator(v.validate_date)]
 PredictionData = Annotated[
-    List[Dict],
-    AfterValidator(validate_prediction_data)
+    List[Dict], AfterValidator(v.validate_prediction_data)
 ]
 
-UF = Annotated[str, AfterValidator(validate_uf)]
-Geocode = Annotated[int, AfterValidator(validate_geocode)]
+UF = Annotated[str, AfterValidator(v.validate_uf)]
+Geocode = Annotated[int, AfterValidator(v.validate_geocode)]
 
 
 class Schema(BaseModel, ABC):
@@ -53,9 +52,9 @@ class Params(BaseModel, ABC):
     model_config = ConfigDict(
         arbitrary_types_allowed=True, protected_namespaces=()
     )
-    method: Literal["GET", "POST", "PUT", "DELETE"] = None
-    app: APP = None
-    endpoint: str = None
+    method: Literal["GET", "POST", "PUT", "DELETE"]
+    app: APP
+    endpoint: str
 
     @abstractmethod
     def params(self) -> dict:

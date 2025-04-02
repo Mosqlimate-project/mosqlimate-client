@@ -44,7 +44,7 @@ def get_predictions(
     end: Optional[date] = None,
     adm_1_geocode: Optional[int] = None,
     adm_2_geocode: Optional[int] = None,
-    sprint: Optional[bool] = None
+    sprint: Optional[bool] = None,
 ) -> list[dict] | dict:
     params = {
         "id": id,
@@ -69,7 +69,7 @@ def get_predictions(
         "end": str(end) if end is not None else None,
         "adm_1_geocode": adm_1_geocode,
         "adm_2_geocode": adm_2_geocode,
-        "sprint": sprint
+        "sprint": sprint,
     }
     return Prediction.get(api_key=api_key, **params)
 
@@ -80,22 +80,19 @@ def get_prediction_by_id(api_key: str, id: int) -> Prediction:
 
 
 def get_predictions_by_model_id(
-    api_key: str,
-    model_id: int
+    api_key: str, model_id: int
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, model_id=model_id)
 
 
 def get_predictions_by_model_name(
-    api_key: str,
-    model_name: str
+    api_key: str, model_name: str
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, model_name=model_name)
 
 
 def get_predictions_by_adm_level(
-    api_key: str,
-    adm_level: int
+    api_key: str, adm_level: int
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, adm_level=adm_level)
 
@@ -107,16 +104,12 @@ def get_predictions_by_time_resolution(
     return Prediction.get(api_key=api_key, time_resolution=time_resolution)
 
 
-def get_predictions_by_disease(
-    api_key: str,
-    disease: str
-) -> List[Prediction]:
+def get_predictions_by_disease(api_key: str, disease: str) -> List[Prediction]:
     return Prediction.get(api_key=api_key, model_disease=disease)
 
 
 def get_predictions_by_author_name(
-    api_key: str,
-    author_name: str
+    api_key: str, author_name: str
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, author_name=author_name)
 
@@ -133,14 +126,12 @@ def get_predictions_by_author_institution(
     author_institution: str,
 ) -> List[Prediction]:
     return Prediction.get(
-        api_key=api_key,
-        author_institution=author_institution
+        api_key=api_key, author_institution=author_institution
     )
 
 
 def get_predictions_by_repository(
-    api_key: str,
-    repository: str
+    api_key: str, repository: str
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, repository=repository)
 
@@ -150,21 +141,17 @@ def get_predictions_by_implementation_language(
     implementation_language: str,
 ) -> List[Prediction]:
     return Prediction.get(
-        api_key=api_key,
-        implementation_language=implementation_language
+        api_key=api_key, implementation_language=implementation_language
     )
 
 
 def get_predictions_by_predict_date(
-    api_key: str,
-    predict_date: date
+    api_key: str, predict_date: date
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, predict_date=str(predict_date))
 
 
 def get_predictions_between(
-    api_key: str,
-    start: date,
-    end: date
+    api_key: str, start: date, end: date
 ) -> List[Prediction]:
     return Prediction.get(api_key=api_key, start=str(start), end=str(end))

@@ -12,7 +12,7 @@ from aiohttp import (
     ClientSession,
     ClientTimeout,
     ClientConnectionError,
-    ServerTimeoutError
+    ServerTimeoutError,
 )
 import requests
 from typing_extensions import Annotated
@@ -37,7 +37,7 @@ class Mosqlient:
         self.timeout = timeout
         self.per_page = max_items_per_page
         self.api_url = _api_url
-        self.endpoints = defaultdict(dict)
+        self.endpoints: dict = defaultdict(dict)
         self.__validate_uuid4()
         self.__fetch_openapi()
         self._max_concurrent_requests = 10
@@ -62,37 +62,35 @@ class Mosqlient:
             res.raise_for_status()
             return res.json()
 
-        params = params.params()
+        _params = params.params()
 
-        if not "per_page" in params:
-            params["per_page"] = self.per_page
+        if "per_page" not in _params:
+            _params["per_page"] = self.per_page
 
-        if params["per_page"] > self.per_page:
-            logger.warning(
-                f"Maximum itens per page set to {self.per_page}"
-            )
-            params["per_page"] = self.per_page
+        if _params["per_page"] > self.per_page:
+            logger.warning(f"Maximum itens per page set to {self.per_page}")
+            _params["per_page"] = self.per_page
 
-        if "page" in params:
+        if "page" in _params:
             res = requests.get(
                 url=url,
-                params=parse_params(**params),
+                params=parse_params(**_params),
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
             res.raise_for_status()
             data = res.json()
-            if 'message' in data:
-                logger.warning(data['message'])
-            return data['items']
+            if "message" in data:
+                logger.warning(data["message"])
+            return data["items"]
 
-        return self.__get_all_sync(url=url, params=parse_params(**params))
+        return self.__get_all_sync(url=url, params=parse_params(**_params))
 
     def post(self, params: Params) -> requests.models.Response:
         self.__validate_request(params)
         headers = {
             "X-UID-Key": self.X_UID_KEY,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
         res = requests.post(
             url=self.api_url + params.app + "/" + params.endpoint + "/",
@@ -167,17 +165,18 @@ class Mosqlient:
                 tasks.append(task)
 
             if tasks:
-                results.extend(await tqdm_asyncio.gather(
-                    *tasks,
-                    total=total_pages - 1,
-                    unit="requests"
-                ))
+                results.extend(
+                    await tqdm_asyncio.gather(
+                        *tasks, total=total_pages - 1, unit="requests"
+                    )
+                )
 
-            return list(chain.from_iterable(res['items'] for res in results))
+            return list(chain.from_iterable(res["items"] for res in results))
 
     def __get_all_sync(self, url: str, params: dict) -> List[dict]:
         async def fetch_all():
             return await self.__get_all(url=url, params=params)
+
         if asyncio.get_event_loop().is_running():
             loop = asyncio.get_event_loop()
             future = asyncio.ensure_future(fetch_all())
@@ -198,8 +197,7 @@ class Mosqlient:
 
         if params.app not in apps:
             raise errors.ParameterError(
-                f"Unknown app '{params.app}'",
-                options=apps
+                f"Unknown app '{params.app}'", options=apps
             )
 
         self.__validate_endpoint(params.method, params.app, params.endpoint)
@@ -208,9 +206,7 @@ class Mosqlient:
             return
 
         if not isinstance(params, Params):
-            raise TypeError(
-                "`params` must be of type mosqlient.types.Params"
-            )
+            raise TypeError("`params` must be of type mosqlient.types.Params")
 
     def __validate_endpoint(
         self,
@@ -227,7 +223,7 @@ class Mosqlient:
         for e in endpoints:
             pat = "^" + re.sub(r"\{[^}]+\}", r"[^/]+", e) + "$"
             if re.match(pat, endpoint):
-                if not method.lower() in self.endpoints[app][e]:
+                if method.lower() not in self.endpoints[app][e]:
                     raise errors.ParameterError(
                         f"Invalid method '{method}' for endpoint '{endpoint}'",
                         options=options,

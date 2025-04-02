@@ -9,7 +9,4 @@ def delete_model(
     api_key: str,
     model_id: int,
 ) -> requests.Response:
-    return Model.delete(
-        api_key=api_key,
-        id=model_id
-    )
+    return Model.delete(api_key=api_key, id=model_id)

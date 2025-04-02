@@ -38,7 +38,7 @@ def get_models(
     categorical: Optional[bool] = None,
     time_resolution: Optional[str] = None,
     tags: Optional[List[int]] = None,
-    sprint: Optional[bool] = None
+    sprint: Optional[bool] = None,
 ) -> List[Model]:
     return Model.get(
         api_key=api_key,
@@ -83,10 +83,7 @@ def get_models_by_author_institution(
     return Model.get(api_key=api_key, author_institution=author_institution)
 
 
-def get_models_by_repository(
-    api_key: str,
-    repository: str
-) -> List[Model]:
+def get_models_by_repository(api_key: str, repository: str) -> List[Model]:
     return Model.get(api_key=api_key, repository=repository)
 
 
@@ -95,22 +92,15 @@ def get_models_by_implementation_language(
     implementation_language: str,
 ) -> List[Model]:
     return Model.get(
-        api_key=api_key,
-        implementation_language=implementation_language
+        api_key=api_key, implementation_language=implementation_language
     )
 
 
-def get_models_by_disease(
-    api_key: str,
-    disease: str
-) -> List[Model]:
+def get_models_by_disease(api_key: str, disease: str) -> List[Model]:
     return Model.get(api_key=api_key, disease=disease)
 
 
-def get_models_by_adm_level(
-    api_key: str,
-    adm_level: int
-) -> List[Model]:
+def get_models_by_adm_level(api_key: str, adm_level: int) -> List[Model]:
     return Model.get(api_key=api_key, adm_level=adm_level)
 
 
@@ -121,8 +111,5 @@ def get_models_by_time_resolution(
     return Model.get(api_key=api_key, time_resolution=time_resolution)
 
 
-def get_models_by_tag_ids(
-    api_key: str,
-    tags_ids: list[int]
-) -> List[Model]:
+def get_models_by_tag_ids(api_key: str, tags_ids: list[int]) -> List[Model]:
     return Model.get(api_key=api_key, tags=tags_ids)

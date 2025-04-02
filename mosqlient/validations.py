@@ -1,5 +1,3 @@
-import json
-import logging
 from typing import Literal, Optional
 import datetime as dt
 from string import ascii_lowercase, digits
@@ -8,7 +6,13 @@ import pandas as pd
 
 from pydantic import ValidationError
 
-from mosqlient._config import *  # noqa
+from mosqlient._config import (
+    DJANGO_APPS,
+    DISEASES,
+    ADM_LEVELS,
+    TIME_RESOLUTIONS,
+    PREDICTION_DATA_COLUMNS,
+)
 from mosqlient._utils.brasil import UF_CODES
 
 
@@ -36,7 +40,9 @@ def validate_description(description: str) -> str:
     return description
 
 
-def validate_author_name(author_name: str) -> str:
+def validate_author_name(author_name: str | None) -> str | None:
+    if author_name == None:
+        return None
     assert len(author_name) <= 100, "author_name too long"
     assert len(author_name) > 0, "empty author_name"
     return author_name
