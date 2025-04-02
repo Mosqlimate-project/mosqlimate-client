@@ -6,44 +6,25 @@ from datetime import date
 
 import pandas as pd
 
-from .climate import Climate
+from .models import Climate
 
 
 def get_climate(
+    api_key: str,
     start_date: date | str,
     end_date: date | str,
+    # fmt: off
     uf: Optional[
         Literal[
-            "AC",
-            "AL",
-            "AP",
-            "AM",
-            "BA",
-            "CE",
-            "ES",
-            "GO",
-            "MA",
-            "MT",
-            "MS",
-            "MG",
-            "PA",
-            "PB",
-            "PR",
-            "PE",
-            "PI",
-            "RJ",
-            "RN",
-            "RS",
-            "RO",
-            "RR",
-            "SC",
-            "SP",
-            "SE",
-            "TO",
-            "DF",
+            "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
+            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
+            "SC", "SP", "SE", "TO", "DF",
         ]
     ] = None,
+    # fmt: on
     geocode: Optional[int] = None,
 ) -> pd.DataFrame:
     params = {"uf": uf, "geocode": geocode}
-    return pd.DataFrame(Climate.get(start=start_date, end=end_date, **params))
+    return pd.DataFrame(
+        Climate.get(api_key=api_key, start=start_date, end=end_date, **params)
+    )

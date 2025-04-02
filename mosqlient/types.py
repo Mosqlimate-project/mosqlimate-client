@@ -60,3 +60,19 @@ class Params(BaseModel, ABC):
     @abstractmethod
     def params(self) -> dict:
         raise NotImplementedError()
+
+
+class Model(BaseModel, ABC):
+    _schema: Schema
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, protected_namespaces=()
+    )
+
+    def __str__(self):
+        return self.json()
+
+    def json(self):
+        return self._schema.json()
+
+    def dict(self):
+        return self._schema.dict()

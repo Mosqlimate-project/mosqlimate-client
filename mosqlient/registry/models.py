@@ -3,7 +3,6 @@ from typing import Literal, Optional, Any, Dict, AnyStr, List
 import json
 import nest_asyncio
 import pandas as pd
-from pydantic import BaseModel, ConfigDict
 
 from mosqlient import types
 from mosqlient.client import Mosqlient, Client
@@ -13,22 +12,7 @@ from mosqlient.registry import schema
 nest_asyncio.apply()
 
 
-class Base(BaseModel):
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True, protected_namespaces=()
-    )
-
-    def __str__(self):
-        return self.json()
-
-    def json(self):
-        return self._schema.json()
-
-    def dict(self):
-        return self._schema.dict()
-
-
-class User(Base):
+class User(types.Model):
     _schema: schema.UserSchema
 
     def __init__(
@@ -46,7 +30,7 @@ class User(Base):
         return self._schema.username
 
 
-class Author(Base):
+class Author(types.Model):
     user: User
     _schema: schema.AuthorSchema
 
@@ -96,7 +80,7 @@ class Author(Base):
         return list(cls(**item) for item in client.get(params=params))
 
 
-class ImplementationLanguage(Base):
+class ImplementationLanguage(types.Model):
     _schema: schema.ImplementationLanguageSchema
 
     def __init__(self, language: types.ImplementationLanguage, **kwargs):
@@ -125,7 +109,7 @@ class ImplementationLanguage(Base):
         return self._schema.language
 
 
-class Model(Base):
+class Model(types.Model):
     client: Optional[Client] = None
     author: Author
     implementation_language: ImplementationLanguage
@@ -274,7 +258,7 @@ class Model(Base):
         return self._schema.time_resolution
 
 
-class Prediction(Base):
+class Prediction(types.Model):
     client: Optional[Client] = None
     model: Model
     _schema: schema.PredictionSchema
