@@ -1,5 +1,5 @@
-from typing import Union, cast
-
+from typing import Union, cast, List
+from numpy.typing import NDArray
 import numpy as np
 import pandas as pd
 from epiweeks import Week
@@ -9,18 +9,31 @@ from scipy.stats import lognorm, norm
 from scipy.interpolate import interp1d
 from scipy.integrate import cumulative_trapezoid
 from scoringrules import crps_lognormal, crps_normal
-from numpy.typing import NDArray
+from mosqlient.prediction_optimize.pred_opt import get_df_pars
 
+def validate_df_preds(df_preds: pd.DataFrame, alpha = 0.9):
+    '''
+    Validade if the predictions dataframe contains the necessary columns 
 
-def validate_df_preds(df_preds: pd.DataFrame):
-    expected_cols = {"date", "lower", "pred", "upper", "model_id"}
+    Parameters
+    ------------
+
+    df_preds: pd.DataFrame
+
+    alpha : float, optional, default=0.90
+        Confidence level used to define the lower and upper bounds.
+
+    Returns 
+    ---------
+    Returns an error if df_preds is missing the required columns.
+    '''
+    expected_cols = {"date", f"lower_{int(100*alpha)}", "pred", f"upper_{int(100*alpha)}", "model_id"}
 
     if not expected_cols.issubset(df_preds.columns):
         raise ValueError(
             f"df_preds must contain the following columns: {expected_cols}. "
             f"Missing: {expected_cols - set(df_preds.columns)}"
         )
-
 
 def invlogit(y: float) -> float:
 
@@ -87,209 +100,6 @@ def pool_par_gauss(
     return mstar, np.sqrt(vstar)
 
 
-def get_lognormal_pars(
-    med: float,
-    lwr: float,
-    upr: float,
-    alpha: float = 0.90,
-    fn_loss: str = "median",
-) -> tuple:
-    """
-    Estimate the parameters of a log-normal distribution based on forecasted median,
-    lower, and upper bounds.
-
-    This function estimates the mu and sigma parameters of a log-normal distribution
-    given a forecast's known median (`med`), lower (`lwr`), and upper (`upr`) confidence
-    interval bounds. The optimization minimizes the discrepancy between the theoretical
-    quantiles of the log-normal distribution and the provided forecast values.
-
-    Parameters
-    ----------
-    med : float
-        The median of the forecast distribution.
-    lwr : float
-        The lower bound of the forecast (corresponding to `(1 - alpha)/2` quantile).
-    upr : float
-        The upper bound of the forecast (corresponding to `(1 + alpha)/2` quantile).
-    alpha : float, optional, default=0.90
-        Confidence level used to define the lower and upper bounds.
-    fn_loss : {'median', 'lower'}, optional, default='median'
-        The optimization criterion for fitting the log-normal distribution:
-        - 'median': Minimizes the error in estimating `med` and `upr`.
-        - 'lower': Minimizes the error in estimating `lwr` and `upr`.
-
-    Returns
-    -------
-    tuple
-        A tuple `(mu, sigma)`, where:
-        - `mu` is the estimated location parameter of the log-normal distribution.
-        - `sigma` is the estimated scale parameter.
-
-    Notes
-    -----
-    - The function uses the Nelder-Mead optimization method to minimize the loss function.
-    - If `fn_loss='median'`, the optimization prioritizes minimizing the difference
-      between the estimated and actual median (`med`) and upper bound (`upr`).
-    - If `fn_loss='lower'`, the optimization prioritizes minimizing the difference
-      between the estimated lower bound (`lwr`) and upper bound (`upr`).
-    """
-
-    if fn_loss not in {"median", "lower"}:
-        raise ValueError(
-            "Invalid value for fn_loss. Choose 'median' or 'lower'."
-        )
-
-    if any(x < 0 for x in [med, lwr, upr]):
-        raise ValueError("med, lwr, and upr must be non-negative.")
-
-    def loss_lower(theta):
-        tent_qs = lognorm.ppf(
-            [(1 - alpha) / 2, (1 + alpha) / 2],
-            s=theta[1],
-            scale=np.exp(theta[0]),
-        )
-        if lwr == 0:
-            attained_loss = abs(upr - tent_qs[1]) / upr
-        else:
-            attained_loss = (
-                abs(lwr - tent_qs[0]) / lwr + abs(upr - tent_qs[1]) / upr
-            )
-        return attained_loss
-
-    def loss_median(theta):
-        tent_qs = lognorm.ppf(
-            [0.5, (1 + alpha) / 2], s=theta[1], scale=np.exp(theta[0])
-        )
-        if med == 0:
-            attained_loss = abs(upr - tent_qs[1]) / upr
-        else:
-            attained_loss = (
-                abs(med - tent_qs[0]) / med + abs(upr - tent_qs[1]) / upr
-            )
-        return attained_loss
-
-    if med == 0:
-        mustar = np.log(0.1)
-    else:
-        mustar = np.log(med)
-
-    if fn_loss == "median":
-        result = minimize(
-            loss_median,
-            x0=[mustar, 0.5],
-            bounds=[(-5 * abs(mustar), 5 * abs(mustar)), (0, 15)],
-            method="Nelder-mead",
-            options={
-                "xatol": 1e-6,
-                "fatol": 1e-6,
-                "maxiter": 1000,
-                "maxfev": 1000,
-            },
-        )
-    if fn_loss == "lower":
-        result = minimize(
-            loss_lower,
-            x0=[mustar, 0.5],
-            bounds=[(-5 * abs(mustar), 5 * abs(mustar)), (0, 15)],
-            method="Nelder-mead",
-            options={
-                "xatol": 1e-8,
-                "fatol": 1e-8,
-                "maxiter": 5000,
-                "maxfev": 5000,
-            },
-        )
-
-    return result.x
-
-
-def get_normal_pars(
-    med: float, lwr: float, upr: float, alpha: float = 0.90, fn_loss="median"
-) -> tuple:
-    """
-    Estimate the parameters of a normal (Gaussian) distribution given forecasted median,
-    lower, and upper bounds.
-
-    This function estimates the mean (`mu`) and standard deviation (`sigma`) of a normal
-    distribution that best fits the given forecasted median (`med`), lower (`lwr`), and
-    upper (`upr`) confidence interval bounds. The optimization minimizes the discrepancy
-    between the theoretical quantiles of the normal distribution and the provided forecast values.
-
-    Parameters
-    ----------
-    med : float
-        The median of the forecast distribution.
-    lwr : float
-        The lower bound of the forecast (corresponding to `(1 - alpha)/2` quantile).
-    upr : float
-        The upper bound of the forecast (corresponding to `(1 + alpha)/2` quantile).
-    alpha : float, optional, default=0.90
-        Confidence level used to define the lower and upper bounds.
-        fn_loss : {'median', 'lower'}, optional, default='median'
-        The optimization criterion for fitting the log-normal distribution:
-        - 'median': Minimizes the error in estimating `med` and `upr`.
-        - 'lower': Minimizes the error in estimating `lwr` and `upr`.
-
-    Returns
-    -------
-    tuple
-        A tuple `(mu, sigma)`, where:
-        - `mu` is the estimated mean of the normal distribution.
-        - `sigma` is the estimated standard deviation of the normal distribution.
-
-    Notes
-    -----
-    - The function uses the Nelder-Mead optimization method to find the best-fitting parameters.
-    - The optimization minimizes the difference between the provided bounds (`lwr`, `upr`) and
-      the theoretical quantiles of the estimated normal distribution.
-    - If `lwr == 0`, only the upper bound (`upr`) is used in the optimization to prevent
-      division by zero.
-    """
-
-    def loss_lower(theta):
-        tent_qs = norm.ppf(
-            [(1 - alpha) / 2, (1 + alpha) / 2], loc=theta[0], scale=theta[1]
-        )
-        if lwr == 0:
-            attained_loss = abs(upr - tent_qs[1]) / upr
-        else:
-            attained_loss = (
-                abs(lwr - tent_qs[0]) / lwr + abs(upr - tent_qs[1]) / upr
-            )
-        return attained_loss
-
-    def loss_median(theta):
-        tent_qs = norm.ppf(
-            [0.5, (1 + alpha) / 2], loc=theta[0], scale=theta[1]
-        )
-        if lwr == 0:
-            attained_loss = abs(upr - tent_qs[1]) / upr
-        else:
-            attained_loss = (
-                abs(med - tent_qs[0]) / med + abs(upr - tent_qs[1]) / upr
-            )
-        return attained_loss
-
-    sigmastar = max((upr - lwr) / 4, 1e-4)
-
-    if fn_loss == "lower":
-        result = minimize(
-            loss_lower,
-            x0=[med, sigmastar],
-            bounds=[(-5 * abs(med), 5 * abs(med)), (0, 100000)],
-            method="Nelder-mead",
-        )
-
-    if fn_loss == "median":
-        result = minimize(
-            loss_median,
-            x0=[med, sigmastar],
-            bounds=[(-5 * abs(med), 5 * abs(med)), (0, 100000)],
-            method="Nelder-mead",
-        )
-
-    return result.x
-
 
 def linear_mix(
     weights: NDArray[np.float64],
@@ -323,106 +133,6 @@ def linear_mix(
     sd = np.sqrt(np.dot(weights**2, vs))
 
     return mu, sd
-
-
-def get_df_pars(
-    preds_: pd.DataFrame,
-    alpha: float = 0.9,
-    dist: str = "log_normal",
-    fn_loss: str = "median",
-    return_estimations: bool = False,
-) -> pd.DataFrame:
-    """
-    Compute distribution parameters and optionally return estimated confidence intervals.
-
-    This function processes a DataFrame containing prediction intervals and computes the
-    parameters of a specified probability distribution ('normal' or 'log_normal').
-    Additional columns for the estimated median, lower, and upper bounds are returned
-    if `return_estimations` is set to True.
-
-    Parameters
-    ----------
-    preds_ : pd.DataFrame
-        DataFrame with columns: 'date', 'pred', 'lower', 'upper', and 'model_id'.
-    alpha : float, optional, default=0.9
-        Confidence level used for computing the confidence intervals.
-    dist : {'normal', 'log_normal'}, optional, default='log_normal'
-        The type of distribution used for parameter estimation.
-    fn_loss : {'median', 'lower'}, optional, default='median'
-        Specifies the method for parameter estimation:
-        - 'median': Fits the log-normal distribution by minimizing `pred` and `upper` columns.
-        - 'lower': Fits the log-normal distribution by minimizing `lower` and `upper` columns.
-    return_estimations : bool, optional, default=False
-        If True, returns additional columns with estimated median ('fit_med'), lower bound ('fit_lwr'),
-        and upper bound ('fit_upr').
-
-    Returns
-    -------
-    pd.DataFrame
-        The input DataFrame augmented with the following columns:
-        - 'mu', 'sigma': Parameters of the specified distribution.
-        - If `return_estimations=True`, also includes: 'fit_med', 'fit_lwr', 'fit_upr'.
-
-    Notes
-    -----
-    - The function applies `get_lognormal_pars` or `get_normal_pars` row-wise to estimate
-      the distribution parameters.
-    - When `return_estimations=True`, the function also computes the theoretical quantiles
-      based on the estimated distribution parameters.
-    """
-
-    if dist == "log_normal":
-        preds_[["mu", "sigma"]] = preds_.apply(
-            lambda row: get_lognormal_pars(
-                med=row["pred"],
-                lwr=row["lower"],
-                upr=row["upper"],
-                fn_loss=fn_loss,
-            ),
-            axis=1,
-            result_type="expand",
-        )
-    elif dist == "normal":
-        preds_[["mu", "sigma"]] = preds_.apply(
-            lambda row: get_normal_pars(
-                med=row["pred"],
-                lwr=row["lower"],
-                upr=row["upper"],
-                fn_loss=fn_loss,
-            ),
-            axis=1,
-            result_type="expand",
-        )
-
-    if not return_estimations:
-        return preds_
-
-    if dist == "log_normal":
-        theo_pred_df = preds_.apply(
-            lambda row: lognorm.ppf(
-                [0.5, (1 - alpha) / 2, (1 + alpha) / 2],
-                s=row["sigma"],
-                scale=np.exp(row["mu"]),
-            ),
-            axis=1,
-            result_type="expand",
-        )
-    elif dist == "normal":
-        theo_pred_df = preds_.apply(
-            lambda row: norm.ppf(
-                [0.5, (1 - alpha) / 2, (1 + alpha) / 2],
-                loc=row["mu"],
-                scale=row["sigma"],
-            ),
-            axis=1,
-            result_type="expand",
-        )
-
-    theo_pred_df.columns = ["fit_med", "fit_lwr", "fit_upr"]
-    preds_ = pd.concat([preds_, theo_pred_df], axis=1)
-
-    return preds_
-
 
 def get_score(
     obs: float,
@@ -481,6 +191,7 @@ def find_opt_weights_log(
     order_models: list,
     dist: str = "log_normal",
     metric: str = "crps",
+    bounds:tuple = (-100, 100), 
 ) -> dict:
     """
     Function that generate the weights of the ensemble minimizing the metric selected.
@@ -502,6 +213,10 @@ def find_opt_weights_log(
     metric: str ['crps', 'log_score']
         Metric used to optimize the weights
 
+    bounds: tuple
+        Tuple where the first element represents the minimum value and the second 
+        represents the maximum value for the bounds.
+   
     Returns
     --------
     dict
@@ -536,10 +251,11 @@ def find_opt_weights_log(
                 metric=metric,
             )
 
-            return score
+        return score
 
     initial_guess = np.random.normal(size=K - 1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead")
+    bounds = [bounds] * (K-1)
+    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds)
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -552,6 +268,33 @@ def get_epiweek(date):
     """
     epiweek = Week.fromdate(date)
     return (epiweek.year, epiweek.week)
+
+def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
+    '''
+    Function that given the confidence interval return the columns names
+
+    Parameters
+    -----------
+    p: NDArray[np.float64]
+    percentile values
+
+    Returns
+    --------
+    List of columns name
+    '''
+
+    median_index = len(p) // 2 
+    columns = []
+    
+    for i, value in enumerate(p):
+        if i < median_index:
+            columns.append(f"lower_{int((1 - value) * 100)}")
+        elif i == median_index:
+            columns.append("pred")
+        else:
+            columns.append(f"upper_{int(value * 100)}")
+    
+    return columns
 
 
 class Ensemble:
@@ -612,14 +355,14 @@ class Ensemble:
         """
 
         try:
-            df = df[["date", "pred", "lower", "upper", "model_id"]]
+            df = df[["date", "pred", f"lower_{int(100*alpha)}", f"upper_{int(100*alpha)}", "model_id"]]
 
         except:
             raise ValueError(
                 "The input dataframe must contain the columns: 'date', 'pred', 'lower', 'upper', 'model_id'"
             )
 
-        df = get_df_pars(df, alpha=alpha, dist=dist, fn_loss=fn_loss)
+        df = get_df_pars(df.copy(), alpha=alpha, dist=dist, fn_loss=fn_loss)
 
         # organize the dataframe:
         df["model_id"] = pd.Categorical(
@@ -633,7 +376,8 @@ class Ensemble:
         self.order_models = order_models
 
     def compute_weights(
-        self, df_obs: pd.DataFrame, metric: str = "crps"
+        self, df_obs: pd.DataFrame, metric: str = "crps", bounds:tuple = (-100, 100), 
+
     ) -> dict:
         """
         Computes the optimal weights for the ensemble based on observed data and a specified metric.
@@ -644,7 +388,10 @@ class Ensemble:
             DataFrame containing observed values with columns `date` and `casos`.
         metric : str, optional
             Scoring metric used for optimization. Options: ['crps', 'log_score']. Default is 'crps'.
-
+        bounds: tuple
+            Tuple where the first element represents the minimum value and the second 
+            represents the maximum value for the bounds.
+        
         Returns
         -------
         dict
@@ -655,7 +402,12 @@ class Ensemble:
 
         if self.mixture == "linear":
             weights = find_opt_weights_linear(
-                df_obs, preds, self.order_models, dist=self.dist, metric=metric
+                df_obs,
+                preds,
+                self.order_models,
+                dist=self.dist,
+                metric=metric,
+                bounds=bounds
             )
 
         if self.mixture == "log":
@@ -665,6 +417,7 @@ class Ensemble:
                 order_models=self.order_models,
                 dist=self.dist,
                 metric=metric,
+                bounds=bounds
             )
 
         self.weights = weights
@@ -674,7 +427,8 @@ class Ensemble:
     def apply_ensemble(
         self,
         weights: Union[None, NDArray[np.float64]] = None,
-        p: NDArray[np.float64] = np.array([0.5, 0.05, 0.95]),
+        p: NDArray[np.float64] = np.array([ 0.025, 0.05, 0.1, 0.25, 
+                                            0.5, 0.75, 0.9, 0.95, 0.975]),
     ) -> pd.DataFrame:
         """
         Computes the final ensemble distribution using either precomputed or user-provided weights.
@@ -703,6 +457,8 @@ class Ensemble:
 
         weights = cast(NDArray[np.float64], weights)
 
+        columns = get_ci_columns(p)
+
         preds = self.df
 
         df_for = pd.DataFrame()
@@ -724,7 +480,7 @@ class Ensemble:
                     self.dist, weights=weights, preds=preds_, p=p
                 )
 
-            df_ = pd.DataFrame([quantiles], columns=["pred", "lower", "upper"])
+            df_ = pd.DataFrame([quantiles], columns=columns)
 
             df_["date"] = d
 
@@ -888,6 +644,7 @@ def find_opt_weights_linear(
     order_models: list,
     dist: str,
     metric: str,
+    bounds:tuple = (-100, 100)
 ) -> dict:
     """
     Find the weights of a linear mix distributions that minimizes the metric selected.
@@ -904,6 +661,9 @@ def find_opt_weights_linear(
         The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
     metric : str, optional
         Metric used for optimization. Options: `crps`, `log_score`.
+    bounds: tuple
+        Tuple where the first element represents the minimum value and the second 
+        represents the maximum value for the bounds.
 
     Return
     -------
@@ -915,19 +675,19 @@ def find_opt_weights_linear(
 
     if dist == "log_normal":
         weights = find_opt_weights_linear_mix_log(
-            obs, preds, order_models, metric=metric
+            obs, preds, order_models, metric=metric, bounds = bounds
         )
 
     if dist == "normal":
         weights = find_opt_weights_linear_mix_norm(
-            obs, preds, order_models, metric=metric
+            obs, preds, order_models, metric=metric, bounds = bounds
         )
 
     return weights
 
 
 def find_opt_weights_linear_mix_log(
-    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str
+    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str, bounds:tuple
 ) -> dict:
     """
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
@@ -938,6 +698,13 @@ def find_opt_weights_linear_mix_log(
         Dataframe with the columns: `date` and `casos`
     preds: pd.Dataframe
         Dataframe with the columns: `date`, `mu`, `sigma`, `model_id`
+    order_models: list
+        Order of the different models in the model_id column
+    metric: str ['crps', 'log_score']
+        Metric used to optimize the weights
+    bounds: tuple
+        Tuple where the first element represents the minimum value and the second 
+        represents the maximum value for the bounds.
 
     Return
     -------
@@ -990,7 +757,8 @@ def find_opt_weights_linear_mix_log(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead")
+    bounds = [bounds] * (K-1)
+    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds)
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -998,7 +766,9 @@ def find_opt_weights_linear_mix_log(
 
 
 def find_opt_weights_linear_mix_norm(
-    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str
+    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str,
+    bounds:tuple
+    
 ) -> dict:
     """
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
@@ -1009,6 +779,13 @@ def find_opt_weights_linear_mix_norm(
         Dataframe with the columns: `date` and `casos`
     preds: pd.Dataframe
         Dataframe with the columns: `date`, `mu`, `sigma`, `model_id`
+    order_models: list
+        Order of the different models in the model_id column
+    metric: str ['crps', 'log_score']
+        Metric used to optimize the weights
+    bounds: tuple
+        Tuple where the first element represents the minimum value and the second 
+        represents the maximum value for the bounds.
 
     Return
     -------
@@ -1060,7 +837,8 @@ def find_opt_weights_linear_mix_norm(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead")
+    bounds = [bounds] * (K-1)
+    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds)
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -1141,7 +919,7 @@ def get_quantiles_linear(
 
     if dist == "log_normal":
         quantiles = compute_ppf(
-            mu=preds["mu"].values, sigma=preds["sigma"].values, weights=weights
+            mu=preds["mu"].values, sigma=preds["sigma"].values, weights=weights, p=p
         )
 
     return quantiles
