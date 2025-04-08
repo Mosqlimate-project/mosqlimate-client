@@ -359,7 +359,7 @@ class Ensemble:
 
         except:
             raise ValueError(
-                "The input dataframe must contain the columns: 'date', 'pred', 'lower', 'upper', 'model_id'"
+                f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100*alpha)}', 'upper_{int(100*alpha)}', 'model_id'"
             )
 
         df = get_df_pars(df.copy(), alpha=alpha, dist=dist, fn_loss=fn_loss)
