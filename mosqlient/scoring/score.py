@@ -717,6 +717,46 @@ class Scorer:
         self.interval_score_curve = scores_curve
 
         return scores_curve, scores_mean
+    
+    @property
+    def wis(
+        self, w_0 =0.5, w_k =None
+    ):
+        """
+        tuple of dict: Dict where the keys are the id of the models or `pred`
+        when a dataframe of predictions is provided by the user,
+        and the values of the dict are the scores computed.
+
+        The first dict contains the interval score computed for every predicted
+        point, and the second one contains the mean values of the interval score
+        for all the points.
+        """
+
+        ids = self.ids
+        dict_df_ids = self.filtered_dict_df_ids
+        df_true = self.filtered_df_true
+
+        scores_curve = {}
+
+        scores_mean = {}
+
+        for id_ in dict_df_ids.keys():
+
+            df_id_ = dict_df_ids[id_]
+            
+            score = compute_wis(
+                df = df_id_,
+                observed_value = df_true.casos.values,
+                w_0 = w_0, 
+                w_k = w_k)
+
+            scores_curve[id_] = pd.Series(score, index=df_true.date)
+
+            scores_mean[id_] = np.mean(score)
+
+        self.interval_score_curve = scores_curve
+
+        return scores_curve, scores_mean
 
     @property
     def summary(
@@ -739,6 +779,8 @@ class Scorer:
         sum_scores["log_score"] = self.log_score[1]
 
         sum_scores["interval_score"] = self.interval_score[1]
+
+        sum_scores["wis"] = self.wis[1]
 
         df_score = pd.DataFrame.from_dict(sum_scores, orient="columns")
 
