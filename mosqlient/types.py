@@ -55,7 +55,7 @@ class Params(BaseModel, ABC):
     method: Literal["GET", "POST", "PUT", "DELETE"]
     app: APP
     endpoint: str
-
+    id: Optional[int] = None
     @abstractmethod
     def params(self) -> dict:
         raise NotImplementedError()

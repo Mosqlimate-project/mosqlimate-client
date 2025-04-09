@@ -254,8 +254,8 @@ def find_opt_weights_log(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    bounds = [bounds] * (K-1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds)
+    bounds_ = [bounds] * (K-1)
+    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds_)
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -757,8 +757,8 @@ def find_opt_weights_linear_mix_log(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    bounds = [bounds] * (K-1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds)
+    bounds_ = [bounds] * (K-1)
+    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds_)
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -837,8 +837,8 @@ def find_opt_weights_linear_mix_norm(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    bounds = [bounds] * (K-1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds)
+    bounds_ = [bounds] * (K-1)
+    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds_)
 
     optimal_weights = alpha_01(opt_result.x)
 

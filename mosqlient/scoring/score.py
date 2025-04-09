@@ -362,7 +362,7 @@ class Scorer:
 
     def __init__(
         self,
-        api_key: Optional[str],
+        api_key: str,
         df_true: pd.DataFrame,
         ids: Optional[list[int] | list[str]] = None,
         pred: Optional[pd.DataFrame] = None,

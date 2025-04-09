@@ -34,7 +34,7 @@ def upload_prediction(
                             'upper_95']
         
         assert all(col in prediction.columns for col in required_columns), \
-            f"Missing required columns: {[col for col in required_columns if col not in df_.columns]}"
+            f"Missing required columns: {[col for col in required_columns if col not in prediction.columns]}"
 
         json_prediction = prediction.to_json(orient = 'records', date_format = 'iso')
 
