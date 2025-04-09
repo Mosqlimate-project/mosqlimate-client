@@ -11,25 +11,6 @@ from mosqlient.prediction_optimize.pred_opt import get_df_pars
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
-def transform_json_to_dataframe(res: dict) -> pd.DataFrame:
-    """
-    A function that transforms the prediction output from the API and
-    transforms it in a DataFrame.
-
-    Parameters:
-    rest (dict): Output of the  prediction's API.
-
-    Returns:
-    pd.DataFrame.
-    """
-
-    json_struct = json.loads(res["prediction"])
-    df = pd.json_normalize(json_struct)
-    df.date = pd.to_datetime(df.date)
-
-    return df
-
-
 def evaluate_point_metrics(y_true, y_pred, metric):
     """
     Evaluate multiple sklearn metrics on given true and predicted values.
