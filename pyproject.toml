@@ -32,13 +32,17 @@ tqdm = "^4.67.1"
 loguru = "^0.7.3"
 tabulate = "^0.9.0"
 vl-convert-python = "^1.7.0"
+epiweeks = "^2.3.0"
 
 [tool.poetry.extras]
-scoring = [
+analyze = [
   "scikit-learn",
   "scoringrules",
   "altair",
-  "matplotlib"
+  "matplotlib", 
+  "scipy", 
+  "pmdarima",
+  "epiweeks"
 ]
 
 [tool.poetry.dev-dependencies]

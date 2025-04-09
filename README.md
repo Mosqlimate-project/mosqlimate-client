@@ -18,8 +18,8 @@ Mosqlimate client requires Python 3.10 or above.
 
 ```bash
 pip install mosqlient
-# if scoring needed:
-pip install mosqlient[scoring]
+# if score ou forecast functions are needed:
+pip install mosqlient[analyze]
 ```
 
 ## Using from R

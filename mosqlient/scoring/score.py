@@ -1,4 +1,3 @@
-import json
 import numpy as np
 import pandas as pd
 import altair as alt
@@ -7,7 +6,7 @@ from numpy.typing import NDArray
 from scipy.stats import lognorm
 from mosqlient import get_prediction_by_id
 from scoringrules import crps_normal, crps_lognormal, logs_normal
-from mosqlient.prediction_optimize.pred_opt import get_df_pars
+from mosqlient.prediction_optimize import get_df_pars
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
