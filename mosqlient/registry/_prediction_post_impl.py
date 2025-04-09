@@ -2,7 +2,7 @@ __all__ = ["upload_prediction"]
 
 from typing import Optional
 from datetime import date
-import json 
+import json
 import requests
 import pandas as pd
 from .models import Prediction
@@ -20,23 +20,29 @@ def upload_prediction(
     adm_2: Optional[int] = None,
     adm_3: Optional[int] = None,
 ) -> requests.Response:
-    
-    if type(prediction) == pd.DataFrame: 
 
-        required_columns = ['date', 'lower_95',
-                            'lower_90',
-                            'lower_80',
-                            'lower_50',
-                            'pred',
-                            'upper_50',
-                            'upper_80',
-                            'upper_90',
-                            'upper_95']
-        
-        assert all(col in prediction.columns for col in required_columns), \
-            f"Missing required columns: {[col for col in required_columns if col not in prediction.columns]}"
+    if type(prediction) == pd.DataFrame:
 
-        json_prediction = prediction.to_json(orient = 'records', date_format = 'iso')
+        required_columns = [
+            "date",
+            "lower_95",
+            "lower_90",
+            "lower_80",
+            "lower_50",
+            "pred",
+            "upper_50",
+            "upper_80",
+            "upper_90",
+            "upper_95",
+        ]
+
+        assert all(
+            col in prediction.columns for col in required_columns
+        ), f"Missing required columns: {[col for col in required_columns if col not in prediction.columns]}"
+
+        json_prediction = prediction.to_json(
+            orient="records", date_format="iso"
+        )
 
         prediction = [
             {

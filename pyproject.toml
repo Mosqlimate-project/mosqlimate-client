@@ -39,8 +39,8 @@ analyze = [
   "scikit-learn",
   "scoringrules",
   "altair",
-  "matplotlib", 
-  "scipy", 
+  "matplotlib",
+  "scipy",
   "pmdarima",
   "epiweeks"
 ]

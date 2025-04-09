@@ -69,7 +69,13 @@ def compute_interval_score(
 
     return interval_width + penalty
 
-def compute_wis(df:pd.DataFrame, observed_value: NDArray[np.float64], w_0:float = 1/2, w_k: Optional[NDArray[np.float64]] =None) -> NDArray[np.float64]:
+
+def compute_wis(
+    df: pd.DataFrame,
+    observed_value: NDArray[np.float64],
+    w_0: float = 1 / 2,
+    w_k: Optional[NDArray[np.float64]] = None,
+) -> NDArray[np.float64]:
     """
     Calculate the weighted interval score for a given prediction dataframe and observed value. In the dataframe the column `pred``
     must represent the median and each prediction interval must be enconded as `lower_{1-alpha}*100` and `upper_{1-alpha}*100`,
@@ -84,39 +90,43 @@ def compute_wis(df:pd.DataFrame, observed_value: NDArray[np.float64], w_0:float 
     w_0: float
         Initial weight.
     w_k: Optional | np.array
-        Weights for each prediction interval, if None the weights are computed based on the 
-        prediction intervals (w_k = alpha_k/2). 
+        Weights for each prediction interval, if None the weights are computed based on the
+        prediction intervals (w_k = alpha_k/2).
 
     Returns:
     -----------
-    float or np.array: 
+    float or np.array:
         The weighted interval score.
     """
     observed_value = np.asarray(observed_value)
     if observed_value.ndim == 0:
         observed_value = observed_value.reshape(1)
-    
-    lower_cols = [col for col in df.columns if col.startswith('lower_')]
-    alphas = 1 - (np.array([float(col.split('_')[-1]) for col in lower_cols]))/ 100
+
+    lower_cols = [col for col in df.columns if col.startswith("lower_")]
+    alphas = (
+        1 - (np.array([float(col.split("_")[-1]) for col in lower_cols])) / 100
+    )
     K = len(alphas)
-    
+
     if w_k is None:
         w_k = alphas / 2
     elif len(w_k) != K:
-        raise ValueError(f"Weights length {len(w_k)} doesn't match intervals count {K}")
-    
+        raise ValueError(
+            f"Weights length {len(w_k)} doesn't match intervals count {K}"
+        )
+
     interval_scores = np.zeros_like(observed_value, dtype=np.float64)
-    
+
     for alpha, weight in zip(alphas, w_k):
         level = int((1 - alpha) * 100)
         interval_scores += weight * compute_interval_score(
-            lower_bound=df[f'lower_{level}'].values,
-            upper_bound=df[f'upper_{level}'].values,
+            lower_bound=df[f"lower_{level}"].values,
+            upper_bound=df[f"upper_{level}"].values,
             observed_value=observed_value,
-            alpha=alpha
+            alpha=alpha,
         )
-    
-    median_error = np.abs(observed_value - df['pred'].values.reshape(-1))
+
+    median_error = np.abs(observed_value - df["pred"].values.reshape(-1))
     return (w_0 * median_error + interval_scores) / (K + 0.5)
 
 
@@ -407,15 +417,22 @@ class Scorer:
         dict_df_ids = {}
 
         if pred is not None:
-            cols_preds = ["date", f"lower_{int(100*conf_level)}", "pred", f"upper_{int(100*conf_level)}"]
+            cols_preds = [
+                "date",
+                f"lower_{int(100*conf_level)}",
+                "pred",
+                f"upper_{int(100*conf_level)}",
+            ]
             if not set(cols_preds).issubset(set(list(pred.columns))):
                 raise ValueError(
                     "Missing required keys in the pred:"
                     f"{set(cols_preds).difference(set(list(pred.columns)))}"
                 )
-            
-            pred = get_df_pars(pred.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss)
- 
+
+            pred = get_df_pars(
+                pred.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss
+            )
+
             dict_df_ids["pred"] = pred
             pred.date = pd.to_datetime(pred.date)
             min_dates.append(min(pred.date))
@@ -438,7 +455,12 @@ class Scorer:
                 df_ = df_.dropna(axis=1)
                 df_ = df_.sort_values(by="date")
                 df_.date = pd.to_datetime(df_.date)
-                df_ = get_df_pars(df_.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss)
+                df_ = get_df_pars(
+                    df_.copy(),
+                    conf_level=conf_level,
+                    dist=dist,
+                    fn_loss=fn_loss,
+                )
                 dict_df_ids[id_] = df_
                 min_dates.append(min(df_.date))
                 max_dates.append(max(df_.date))
@@ -593,13 +615,13 @@ class Scorer:
 
             df_id_ = dict_df_ids[id_]
 
-            if dist == 'normal':
+            if dist == "normal":
                 score = crps_normal(
                     df_true.casos,
                     df_id_.mu,
                     df_id_.sigma,
                 )
-            if dist == 'log_normal': 
+            if dist == "log_normal":
                 score = crps_lognormal(
                     df_true.casos,
                     df_id_.mu,
@@ -642,15 +664,19 @@ class Scorer:
 
             df_id_ = dict_df_ids[id_]
 
-            if dist == 'normal':
+            if dist == "normal":
                 score = logs_normal(
                     df_true.casos,
                     df_id_.mu,
                     df_id_.sigma,
                     negative=False,
                 )
-            if dist == 'log_normal':
-                score =  lognorm.logpdf(df_true.casos.values, s=df_id_.sigma.values, scale=np.exp(df_id_.mu.values))
+            if dist == "log_normal":
+                score = lognorm.logpdf(
+                    df_true.casos.values,
+                    s=df_id_.sigma.values,
+                    scale=np.exp(df_id_.mu.values),
+                )
 
             # truncated the output
             score = np.maximum(score, np.repeat(-100, len(score)))
@@ -693,7 +719,7 @@ class Scorer:
                 df_id_[f"lower_{int(100*conf_level)}"].values,
                 df_id_[f"lower_{int(100*conf_level)}"].values,
                 df_true.casos.values,
-                alpha=1-conf_level,
+                alpha=1 - conf_level,
             )
 
             scores_curve[id_] = pd.Series(score, index=df_true.date)
@@ -703,11 +729,9 @@ class Scorer:
         self.interval_score_curve = scores_curve
 
         return scores_curve, scores_mean
-    
+
     @property
-    def wis(
-        self, w_0 =0.5, w_k =None
-    ):
+    def wis(self, w_0=0.5, w_k=None):
         """
         tuple of dict: Dict where the keys are the id of the models or `pred`
         when a dataframe of predictions is provided by the user,
@@ -729,12 +753,13 @@ class Scorer:
         for id_ in dict_df_ids.keys():
 
             df_id_ = dict_df_ids[id_]
-            
+
             score = compute_wis(
-                df = df_id_,
-                observed_value = df_true.casos.values,
-                w_0 = w_0, 
-                w_k = w_k)
+                df=df_id_,
+                observed_value=df_true.casos.values,
+                w_0=w_0,
+                w_k=w_k,
+            )
 
             scores_curve[id_] = pd.Series(score, index=df_true.date)
 
@@ -868,7 +893,7 @@ class Scorer:
         df_melted = df_melted.rename(columns={"value": "interval_score"})
 
         return plot_score(self.df_true, df_melted, score="interval")
-    
+
     def plot_wis(
         self,
     ) -> alt.VConcatChart:

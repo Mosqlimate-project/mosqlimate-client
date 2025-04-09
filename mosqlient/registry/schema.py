@@ -200,7 +200,7 @@ class ModelDELETEParams(types.Params):
     id: types.ID
 
     def __init__(self, id: types.ID, **kwargs):
-        super().__init__(id=id,**kwargs)
+        super().__init__(id=id, **kwargs)
         self.endpoint = self.endpoint.replace("{model_id}", str(id))
 
     def params(self):
@@ -314,7 +314,7 @@ class PredictionDELETEParams(types.Params):
     id: types.ID
 
     def __init__(self, id: types.ID, **kwargs):
-        super().__init__(id=id,**kwargs)
+        super().__init__(id=id, **kwargs)
         self.endpoint = self.endpoint.replace("{predict_id}", str(id))
 
     def params(self):

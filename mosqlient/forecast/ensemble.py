@@ -11,9 +11,10 @@ from scipy.integrate import cumulative_trapezoid
 from scoringrules import crps_lognormal, crps_normal
 from mosqlient.prediction_optimize import get_df_pars
 
-def validate_df_preds(df_preds: pd.DataFrame, conf_level = 0.9):
-    '''
-    Validade if the predictions dataframe contains the necessary columns 
+
+def validate_df_preds(df_preds: pd.DataFrame, conf_level=0.9):
+    """
+    Validade if the predictions dataframe contains the necessary columns
 
     Parameters
     ------------
@@ -23,17 +24,24 @@ def validate_df_preds(df_preds: pd.DataFrame, conf_level = 0.9):
     conf_level : float, optional, default=0.90
         Confidence level used to define the lower and upper bounds.
 
-    Returns 
+    Returns
     ---------
     Returns an error if df_preds is missing the required columns.
-    '''
-    expected_cols = {"date", f"lower_{int(100*conf_level)}", "pred", f"upper_{int(100*conf_level)}", "model_id"}
+    """
+    expected_cols = {
+        "date",
+        f"lower_{int(100*conf_level)}",
+        "pred",
+        f"upper_{int(100*conf_level)}",
+        "model_id",
+    }
 
     if not expected_cols.issubset(df_preds.columns):
         raise ValueError(
             f"df_preds must contain the following columns: {expected_cols}. "
             f"Missing: {expected_cols - set(df_preds.columns)}"
         )
+
 
 def invlogit(y: float) -> float:
 
@@ -100,7 +108,6 @@ def pool_par_gauss(
     return mstar, np.sqrt(vstar)
 
 
-
 def linear_mix(
     weights: NDArray[np.float64],
     ms: NDArray[np.float64],
@@ -133,6 +140,7 @@ def linear_mix(
     sd = np.sqrt(np.dot(weights**2, vs))
 
     return mu, sd
+
 
 def get_score(
     obs: float,
@@ -191,7 +199,7 @@ def find_opt_weights_log(
     order_models: list,
     dist: str = "log_normal",
     metric: str = "crps",
-    bounds:tuple = (-100, 100), 
+    bounds: tuple = (-100, 100),
 ) -> dict:
     """
     Function that generate the weights of the ensemble minimizing the metric selected.
@@ -214,9 +222,9 @@ def find_opt_weights_log(
         Metric used to optimize the weights
 
     bounds: tuple
-        Tuple where the first element represents the minimum value and the second 
+        Tuple where the first element represents the minimum value and the second
         represents the maximum value for the bounds.
-   
+
     Returns
     --------
     dict
@@ -254,8 +262,10 @@ def find_opt_weights_log(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    bounds_ = [bounds] * (K-1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds_)
+    bounds_ = [bounds] * (K - 1)
+    opt_result = minimize(
+        loss, initial_guess, method="Nelder-mead", bounds=bounds_
+    )
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -269,8 +279,9 @@ def get_epiweek(date):
     epiweek = Week.fromdate(date)
     return (epiweek.year, epiweek.week)
 
+
 def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
-    '''
+    """
     Function that given the confidence interval return the columns names
 
     Parameters
@@ -281,11 +292,11 @@ def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
     Returns
     --------
     List of columns name
-    '''
+    """
 
-    median_index = len(p) // 2 
+    median_index = len(p) // 2
     columns = []
-    
+
     for i, value in enumerate(p):
         if i < median_index:
             columns.append(f"lower_{int((1 - value) * 100)}")
@@ -293,7 +304,7 @@ def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
             columns.append("pred")
         else:
             columns.append(f"upper_{int(value * 100)}")
-    
+
     return columns
 
 
@@ -355,14 +366,24 @@ class Ensemble:
         """
 
         try:
-            df = df[["date", "pred", f"lower_{int(100*conf_level)}", f"upper_{int(100*conf_level)}", "model_id"]]
+            df = df[
+                [
+                    "date",
+                    "pred",
+                    f"lower_{int(100*conf_level)}",
+                    f"upper_{int(100*conf_level)}",
+                    "model_id",
+                ]
+            ]
 
         except:
             raise ValueError(
                 f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100*conf_level)}', 'upper_{int(100*conf_level)}', 'model_id'"
             )
 
-        df = get_df_pars(df.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss)
+        df = get_df_pars(
+            df.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss
+        )
 
         # organize the dataframe:
         df["model_id"] = pd.Categorical(
@@ -376,8 +397,10 @@ class Ensemble:
         self.order_models = order_models
 
     def compute_weights(
-        self, df_obs: pd.DataFrame, metric: str = "crps", bounds:tuple = (-100, 100), 
-
+        self,
+        df_obs: pd.DataFrame,
+        metric: str = "crps",
+        bounds: tuple = (-100, 100),
     ) -> dict:
         """
         Computes the optimal weights for the ensemble based on observed data and a specified metric.
@@ -389,9 +412,9 @@ class Ensemble:
         metric : str, optional
             Scoring metric used for optimization. Options: ['crps', 'log_score']. Default is 'crps'.
         bounds: tuple
-            Tuple where the first element represents the minimum value and the second 
+            Tuple where the first element represents the minimum value and the second
             represents the maximum value for the bounds.
-        
+
         Returns
         -------
         dict
@@ -407,7 +430,7 @@ class Ensemble:
                 self.order_models,
                 dist=self.dist,
                 metric=metric,
-                bounds=bounds
+                bounds=bounds,
             )
 
         if self.mixture == "log":
@@ -417,7 +440,7 @@ class Ensemble:
                 order_models=self.order_models,
                 dist=self.dist,
                 metric=metric,
-                bounds=bounds
+                bounds=bounds,
             )
 
         self.weights = weights
@@ -427,8 +450,9 @@ class Ensemble:
     def apply_ensemble(
         self,
         weights: Union[None, NDArray[np.float64]] = None,
-        p: NDArray[np.float64] = np.array([ 0.025, 0.05, 0.1, 0.25, 
-                                            0.5, 0.75, 0.9, 0.95, 0.975]),
+        p: NDArray[np.float64] = np.array(
+            [0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.975]
+        ),
     ) -> pd.DataFrame:
         """
         Computes the final ensemble distribution using either precomputed or user-provided weights.
@@ -644,7 +668,7 @@ def find_opt_weights_linear(
     order_models: list,
     dist: str,
     metric: str,
-    bounds:tuple = (-100, 100)
+    bounds: tuple = (-100, 100),
 ) -> dict:
     """
     Find the weights of a linear mix distributions that minimizes the metric selected.
@@ -662,7 +686,7 @@ def find_opt_weights_linear(
     metric : str, optional
         Metric used for optimization. Options: `crps`, `log_score`.
     bounds: tuple
-        Tuple where the first element represents the minimum value and the second 
+        Tuple where the first element represents the minimum value and the second
         represents the maximum value for the bounds.
 
     Return
@@ -675,19 +699,23 @@ def find_opt_weights_linear(
 
     if dist == "log_normal":
         weights = find_opt_weights_linear_mix_log(
-            obs, preds, order_models, metric=metric, bounds = bounds
+            obs, preds, order_models, metric=metric, bounds=bounds
         )
 
     if dist == "normal":
         weights = find_opt_weights_linear_mix_norm(
-            obs, preds, order_models, metric=metric, bounds = bounds
+            obs, preds, order_models, metric=metric, bounds=bounds
         )
 
     return weights
 
 
 def find_opt_weights_linear_mix_log(
-    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str, bounds:tuple
+    obs: pd.DataFrame,
+    preds: pd.DataFrame,
+    order_models: list,
+    metric: str,
+    bounds: tuple,
 ) -> dict:
     """
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
@@ -703,7 +731,7 @@ def find_opt_weights_linear_mix_log(
     metric: str ['crps', 'log_score']
         Metric used to optimize the weights
     bounds: tuple
-        Tuple where the first element represents the minimum value and the second 
+        Tuple where the first element represents the minimum value and the second
         represents the maximum value for the bounds.
 
     Return
@@ -757,8 +785,10 @@ def find_opt_weights_linear_mix_log(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    bounds_ = [bounds] * (K-1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds_)
+    bounds_ = [bounds] * (K - 1)
+    opt_result = minimize(
+        loss, initial_guess, method="Nelder-mead", bounds=bounds_
+    )
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -766,9 +796,11 @@ def find_opt_weights_linear_mix_log(
 
 
 def find_opt_weights_linear_mix_norm(
-    obs: pd.DataFrame, preds: pd.DataFrame, order_models: list, metric: str,
-    bounds:tuple
-    
+    obs: pd.DataFrame,
+    preds: pd.DataFrame,
+    order_models: list,
+    metric: str,
+    bounds: tuple,
 ) -> dict:
     """
     Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
@@ -784,7 +816,7 @@ def find_opt_weights_linear_mix_norm(
     metric: str ['crps', 'log_score']
         Metric used to optimize the weights
     bounds: tuple
-        Tuple where the first element represents the minimum value and the second 
+        Tuple where the first element represents the minimum value and the second
         represents the maximum value for the bounds.
 
     Return
@@ -837,8 +869,10 @@ def find_opt_weights_linear_mix_norm(
         return score
 
     initial_guess = np.random.normal(size=K - 1)
-    bounds_ = [bounds] * (K-1)
-    opt_result = minimize(loss, initial_guess, method="Nelder-mead", bounds=bounds_)
+    bounds_ = [bounds] * (K - 1)
+    opt_result = minimize(
+        loss, initial_guess, method="Nelder-mead", bounds=bounds_
+    )
 
     optimal_weights = alpha_01(opt_result.x)
 
@@ -919,7 +953,10 @@ def get_quantiles_linear(
 
     if dist == "log_normal":
         quantiles = compute_ppf(
-            mu=preds["mu"].values, sigma=preds["sigma"].values, weights=weights, p=p
+            mu=preds["mu"].values,
+            sigma=preds["sigma"].values,
+            weights=weights,
+            p=p,
         )
 
     return quantiles

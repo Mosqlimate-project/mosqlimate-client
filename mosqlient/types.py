@@ -56,6 +56,7 @@ class Params(BaseModel, ABC):
     app: APP
     endpoint: str
     id: Optional[int] = None
+
     @abstractmethod
     def params(self) -> dict:
         raise NotImplementedError()

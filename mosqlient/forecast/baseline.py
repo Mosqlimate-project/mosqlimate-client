@@ -37,7 +37,10 @@ def get_next_n_weeks(ini_date: str, next_days: int) -> list:
 
     return next_dates
 
-def get_prediction_dataframe(model, date, boxcox, horizon = None, alphas = [0.05, 0.1, 0.2, 0.5]) -> pd.DataFrame:
+
+def get_prediction_dataframe(
+    model, date, boxcox, horizon=None, alphas=[0.05, 0.1, 0.2, 0.5]
+) -> pd.DataFrame:
     """
     Function to organize the predictions of the ARIMA model in a pandas DataFrame.
 
@@ -51,21 +54,29 @@ def get_prediction_dataframe(model, date, boxcox, horizon = None, alphas = [0.05
         If true the plot of the model out of the sample is returned
     """
 
-    dfs = [] 
-    for alpha in alphas: 
+    dfs = []
+    for alpha in alphas:
         if horizon is None:
-            preds_ = model.predict_in_sample(return_conf_int=True, alpha =alpha)
+            preds_ = model.predict_in_sample(return_conf_int=True, alpha=alpha)
         else:
-            preds_ = model.predict(n_periods=horizon, return_conf_int=True, alpha =alpha)
-        df_ = pd.DataFrame(preds_[1], columns = [f'lower_{int((1-alpha)*100)}', f'upper_{int((1-alpha)*100)}'])
+            preds_ = model.predict(
+                n_periods=horizon, return_conf_int=True, alpha=alpha
+            )
+        df_ = pd.DataFrame(
+            preds_[1],
+            columns=[
+                f"lower_{int((1-alpha)*100)}",
+                f"upper_{int((1-alpha)*100)}",
+            ],
+        )
         dfs.append(df_)
 
-    df_preds = pd.concat(dfs,axis =1)
+    df_preds = pd.concat(dfs, axis=1)
 
     try:
-        df_preds['pred'] = preds_[0].values
+        df_preds["pred"] = preds_[0].values
     except:
-        df_preds['pred'] = preds_[0]
+        df_preds["pred"] = preds_[0]
 
     if df_preds["pred"].values[0] == 0:
         df_preds = df_preds.iloc[1:]
@@ -78,7 +89,10 @@ def get_prediction_dataframe(model, date, boxcox, horizon = None, alphas = [0.05
 
     return df_preds
 
-def plot_predictions(df_preds: pd.DataFrame, title: str = "", alphas = [0.05, 0.1, 0.2, 0.5] ) -> None:
+
+def plot_predictions(
+    df_preds: pd.DataFrame, title: str = "", alphas=[0.05, 0.1, 0.2, 0.5]
+) -> None:
     """
     Function to plot the predictions of the model.
 
@@ -96,12 +110,12 @@ def plot_predictions(df_preds: pd.DataFrame, title: str = "", alphas = [0.05, 0.
 
     ax.plot(df_preds.date, df_preds.pred, color="tab:orange", label="ARIMA")
 
-    for alpha in alphas: 
+    for alpha in alphas:
 
         ax.fill_between(
             df_preds.date,
-            df_preds[f'lower_{int((1-alpha)*100)}'],
-            df_preds[f'upper_{int((1-alpha)*100)}'],
+            df_preds[f"lower_{int((1-alpha)*100)}"],
+            df_preds[f"upper_{int((1-alpha)*100)}"],
             color="tab:orange",
             alpha=0.1,
         )
@@ -120,7 +134,10 @@ def plot_predictions(df_preds: pd.DataFrame, title: str = "", alphas = [0.05, 0.
 
 
 def plot_forecast(
-    df_for: pd.DataFrame, df_train: pd.DataFrame, last_obs: int, alphas = [0.05, 0.1, 0.2, 0.5] 
+    df_for: pd.DataFrame,
+    df_train: pd.DataFrame,
+    last_obs: int,
+    alphas=[0.05, 0.1, 0.2, 0.5],
 ) -> None:
     """
     Function to plot the forecast of the model.
@@ -143,12 +160,12 @@ def plot_forecast(
 
     ax.plot(df_for.date, df_for.pred, color="tab:red", label="Forecast")
 
-    for alpha in alphas: 
+    for alpha in alphas:
 
         ax.fill_between(
             df_for.date,
-            df_for[f'lower_{int((1-alpha)*100)}'],
-            df_for[f'upper_{int((1-alpha)*100)}'],
+            df_for[f"lower_{int((1-alpha)*100)}"],
+            df_for[f"upper_{int((1-alpha)*100)}"],
             color="tab:red",
             alpha=0.1,
         )
@@ -338,14 +355,24 @@ class Arima:
             self.df_train.index[-1].strftime("%Y-%m-%d"), horizon
         )
 
-        df_preds = get_prediction_dataframe(model, date, self.boxcox, horizon=horizon)
+        df_preds = get_prediction_dataframe(
+            model, date, self.boxcox, horizon=horizon
+        )
 
         while pd.Timestamp(date[-1]) < pd.to_datetime(end_date):
 
             date = get_next_n_weeks(date[-1].strftime("%Y-%m-%d"), horizon)
 
             df_preds = pd.concat(
-                [df_preds, get_prediction_dataframe( model.update(df.loc[date[0] : date[-1]]), date, self.boxcox, horizon=horizon)]
+                [
+                    df_preds,
+                    get_prediction_dataframe(
+                        model.update(df.loc[date[0] : date[-1]]),
+                        date,
+                        self.boxcox,
+                        horizon=horizon,
+                    ),
+                ]
             )
 
         df_preds.date = pd.to_datetime(df_preds.date)
@@ -397,7 +424,9 @@ class Arima:
             df_train.index[-1].strftime("%Y-%m-%d"), horizon
         )
 
-        df_preds = get_prediction_dataframe(model, date, self.boxcox, horizon=horizon)
+        df_preds = get_prediction_dataframe(
+            model, date, self.boxcox, horizon=horizon
+        )
 
         if plot:
 

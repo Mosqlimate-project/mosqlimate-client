@@ -121,7 +121,11 @@ def get_lognormal_pars(
 
 
 def get_normal_pars(
-    med: float, lwr: float, upr: float, conf_level: float = 0.90, fn_loss="median"
+    med: float,
+    lwr: float,
+    upr: float,
+    conf_level: float = 0.90,
+    fn_loss="median",
 ) -> tuple:
     """
     Estimate the parameters of a normal (Gaussian) distribution given forecasted median,
@@ -165,7 +169,9 @@ def get_normal_pars(
 
     def loss_lower(theta):
         tent_qs = norm.ppf(
-            [(1 - conf_level) / 2, (1 + conf_level) / 2], loc=theta[0], scale=theta[1]
+            [(1 - conf_level) / 2, (1 + conf_level) / 2],
+            loc=theta[0],
+            scale=theta[1],
         )
         if lwr == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
@@ -228,7 +234,7 @@ def get_df_pars(
     preds_ : pd.DataFrame
         DataFrame with columns: 'date', 'pred', 'lower', 'upper', and 'model_id'.
     conf_level: float, optional, default=0.9
-        Confidence level used for computing the confidence intervals. Valid options are 
+        Confidence level used for computing the confidence intervals. Valid options are
         [0.5, 0.8, 0.9, 0.95]
     dist : {'normal', 'log_normal'}, optional, default='log_normal'
         The type of distribution used for parameter estimation.
@@ -306,5 +312,3 @@ def get_df_pars(
     preds_ = pd.concat([preds_, theo_pred_df], axis=1)
 
     return preds_
-
-
