@@ -64,8 +64,7 @@ jobs:
 
     - name: Pre-commit
       run: |
-        poetry install --no-root
-        pre-commit run --all-files
+        poetry run -- pre-commit run --all-files
 
   tests:
 
