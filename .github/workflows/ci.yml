@@ -40,7 +40,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: "3.10.11"
+        python-version: "3.12.10"
 
     - name: Set up Poetry
       run: pip install poetry
@@ -64,15 +64,14 @@ jobs:
 
     - name: Pre-commit
       run: |
-        poetry install --no-root
-        pre-commit run --all-files
+        poetry run -- pre-commit run --all-files
 
   tests:
 
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10.11"]
+        python-version: ["3.12.10"]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30

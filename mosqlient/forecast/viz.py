@@ -1,6 +1,6 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from mosqlient.scoring.ensemble import validate_df_preds
+from mosqlient.forecast.ensemble import validate_df_preds
 
 # Definir a cor das bordas (spines) como cinza
 mpl.rcParams["axes.edgecolor"] = "gray"
@@ -12,7 +12,12 @@ mpl.rcParams["ytick.labelcolor"] = "black"
 
 
 def plot_preds(
-    data, df_preds, data_col="casprov", color_palette="Set2", linestyle="-"
+    data,
+    df_preds,
+    conf_level=0.9,
+    data_col="casprov",
+    color_palette="Set2",
+    linestyle="-",
 ):
     """
     Plot data against predictions. If `data` is None, only the predictions will be plotted.
@@ -42,7 +47,7 @@ def plot_preds(
 
     """
 
-    validate_df_preds(df_preds)
+    validate_df_preds(df_preds, conf_level=conf_level)
 
     models = df_preds.model_id.unique()
     colors = plt.get_cmap(color_palette).colors[: len(models)]
@@ -67,8 +72,8 @@ def plot_preds(
 
         ax.fill_between(
             preds_.date,
-            preds_.lower,
-            preds_.upper,
+            preds_[f"lower_{int(100*conf_level)}"],
+            preds_[f"upper_{int(100*conf_level)}"],
             color=color_map[model],
             alpha=0.1,
         )
