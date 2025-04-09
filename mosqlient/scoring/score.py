@@ -198,6 +198,10 @@ def plot_score(
         title = "Interval score"
         subtitle = "Lower is better"
 
+    if score == "wis":
+        title = "WIS"
+        subtitle = "Lower is better"
+
     if score == "log":
         title = "Log score"
         subtitle = "Bigger is better"
@@ -378,13 +382,13 @@ class Scorer:
 
     def __init__(
         self,
-        api_key: str,
+        api_key: Optional[str],
         df_true: pd.DataFrame,
         ids: Optional[list[int] | list[str]] = None,
         pred: Optional[pd.DataFrame] = None,
         dist: str = "log_normal",
         fn_loss: str = "median",
-        alpha: float = 0.90,
+        conf_level: float = 0.90,
     ):
         """
         Parameters
@@ -402,7 +406,7 @@ class Scorer:
             Specifies the method for parameter estimation:
             - 'median': Fits the log-normal distribution by minimizing `pred` and `upper` columns.
             - 'lower': Fits the log-normal distribution by minimizing `lower` and `upper` columns.
-        alpha: float.
+        conf_level: float.
             The confidence level of the predictions of the columns upper and lower.
         """
 
@@ -423,14 +427,14 @@ class Scorer:
         dict_df_ids = {}
 
         if pred is not None:
-            cols_preds = ["date", f"lower_{int(100*alpha)}", "pred", f"upper_{int(100*alpha)}"]
+            cols_preds = ["date", f"lower_{int(100*conf_level)}", "pred", f"upper_{int(100*conf_level)}"]
             if not set(cols_preds).issubset(set(list(pred.columns))):
                 raise ValueError(
                     "Missing required keys in the pred:"
                     f"{set(cols_preds).difference(set(list(pred.columns)))}"
                 )
             
-            pred = get_df_pars(pred.copy(), alpha=alpha, dist=dist, fn_loss=fn_loss)
+            pred = get_df_pars(pred.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss)
  
             dict_df_ids["pred"] = pred
             pred.date = pd.to_datetime(pred.date)
@@ -451,9 +455,10 @@ class Scorer:
                     raise ValueError(f"No Prediction found for id: {id_}")
 
                 df_ = prediction.to_dataframe()
+                df_ = df_.dropna(axis=1)
                 df_ = df_.sort_values(by="date")
                 df_.date = pd.to_datetime(df_.date)
-                df_ = get_df_pars(df_.copy(), alpha=alpha, dist=dist, fn_loss=fn_loss)
+                df_ = get_df_pars(df_.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss)
                 dict_df_ids[id_] = df_
                 min_dates.append(min(df_.date))
                 max_dates.append(max(df_.date))
@@ -486,7 +491,7 @@ class Scorer:
         self.min_date = min_date
         self.max_date = max_date
         self.dist = dist
-        self.alpha = alpha
+        self.conf_level = conf_level
 
     def set_date_range(self, start_date: str, end_date: str) -> None:
         """
@@ -679,7 +684,7 @@ class Scorer:
 
     @property
     def interval_score(
-        self, alpha
+        self,
     ):
         """
         tuple of dict: Dict where the keys are the id of the models or `pred`
@@ -694,6 +699,7 @@ class Scorer:
         ids = self.ids
         dict_df_ids = self.filtered_dict_df_ids
         df_true = self.filtered_df_true
+        conf_level = self.conf_level
 
         scores_curve = {}
 
@@ -704,10 +710,10 @@ class Scorer:
             df_id_ = dict_df_ids[id_]
 
             score = compute_interval_score(
-                df_id_.lower.values,
-                df_id_.upper.values,
+                df_id_[f"lower_{int(100*conf_level)}"].values,
+                df_id_[f"lower_{int(100*conf_level)}"].values,
                 df_true.casos.values,
-                alpha=1 - alpha,
+                alpha=1-conf_level,
             )
 
             scores_curve[id_] = pd.Series(score, index=df_true.date)
@@ -754,7 +760,7 @@ class Scorer:
 
             scores_mean[id_] = np.mean(score)
 
-        self.interval_score_curve = scores_curve
+        self.wis_score_curve = scores_curve
 
         return scores_curve, scores_mean
 
@@ -882,6 +888,33 @@ class Scorer:
         df_melted = df_melted.rename(columns={"value": "interval_score"})
 
         return plot_score(self.df_true, df_melted, score="interval")
+    
+    def plot_wis(
+        self,
+    ) -> alt.VConcatChart:
+        """
+        alt.Chart: Function that returns an Altair panel with the time series
+        of cases and the time series of the wis score for each model
+        """
+
+        wis_ = self.wis_score_curve
+
+        df_wis = pd.DataFrame()
+
+        for v in wis_.keys():
+
+            df_wis[str(v)] = wis_[v]
+
+        df_wis.reset_index(inplace=True)
+
+        df_melted = pd.melt(
+            df_wis,
+            id_vars="date",
+            value_vars=list(map(str, wis_.keys())),
+        )
+        df_melted = df_melted.rename(columns={"value": "wis_score"})
+
+        return plot_score(self.df_true, df_melted, score="wis")
 
     def plot_predictions(
         self, show_ci: bool = True, width: int = 400, height: int = 300

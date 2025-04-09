@@ -8,7 +8,7 @@ def get_lognormal_pars(
     med: float,
     lwr: float,
     upr: float,
-    alpha: float = 0.90,
+    conf_level: float = 0.90,
     fn_loss: str = "median",
 ) -> tuple:
     """
@@ -28,7 +28,7 @@ def get_lognormal_pars(
         The lower bound of the forecast (corresponding to `(1 - alpha)/2` quantile).
     upr : float
         The upper bound of the forecast (corresponding to `(1 + alpha)/2` quantile).
-    alpha : float, optional, default=0.90
+    Conf_level : float, optional, default=0.90
         Confidence level used to define the lower and upper bounds.
     fn_loss : {'median', 'lower'}, optional, default='median'
         The optimization criterion for fitting the log-normal distribution:
@@ -61,7 +61,7 @@ def get_lognormal_pars(
 
     def loss_lower(theta):
         tent_qs = lognorm.ppf(
-            [(1 - alpha) / 2, (1 + alpha) / 2],
+            [(1 - conf_level) / 2, (1 + conf_level) / 2],
             s=theta[1],
             scale=np.exp(theta[0]),
         )
@@ -75,7 +75,7 @@ def get_lognormal_pars(
 
     def loss_median(theta):
         tent_qs = lognorm.ppf(
-            [0.5, (1 + alpha) / 2], s=theta[1], scale=np.exp(theta[0])
+            [0.5, (1 + conf_level) / 2], s=theta[1], scale=np.exp(theta[0])
         )
         if med == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
@@ -121,7 +121,7 @@ def get_lognormal_pars(
 
 
 def get_normal_pars(
-    med: float, lwr: float, upr: float, alpha: float = 0.90, fn_loss="median"
+    med: float, lwr: float, upr: float, conf_level: float = 0.90, fn_loss="median"
 ) -> tuple:
     """
     Estimate the parameters of a normal (Gaussian) distribution given forecasted median,
@@ -140,7 +140,7 @@ def get_normal_pars(
         The lower bound of the forecast (corresponding to `(1 - alpha)/2` quantile).
     upr : float
         The upper bound of the forecast (corresponding to `(1 + alpha)/2` quantile).
-    alpha : float, optional, default=0.90
+    conf_level : float, optional, default=0.90
         Confidence level used to define the lower and upper bounds.
         fn_loss : {'median', 'lower'}, optional, default='median'
         The optimization criterion for fitting the log-normal distribution:
@@ -165,7 +165,7 @@ def get_normal_pars(
 
     def loss_lower(theta):
         tent_qs = norm.ppf(
-            [(1 - alpha) / 2, (1 + alpha) / 2], loc=theta[0], scale=theta[1]
+            [(1 - conf_level) / 2, (1 + conf_level) / 2], loc=theta[0], scale=theta[1]
         )
         if lwr == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
@@ -177,7 +177,7 @@ def get_normal_pars(
 
     def loss_median(theta):
         tent_qs = norm.ppf(
-            [0.5, (1 + alpha) / 2], loc=theta[0], scale=theta[1]
+            [0.5, (1 + conf_level) / 2], loc=theta[0], scale=theta[1]
         )
         if lwr == 0:
             attained_loss = abs(upr - tent_qs[1]) / upr
@@ -210,7 +210,7 @@ def get_normal_pars(
 
 def get_df_pars(
     preds_: pd.DataFrame,
-    alpha: float = 0.9,
+    conf_level: float = 0.9,
     dist: str = "log_normal",
     fn_loss: str = "median",
     return_estimations: bool = False,
@@ -227,7 +227,7 @@ def get_df_pars(
     ----------
     preds_ : pd.DataFrame
         DataFrame with columns: 'date', 'pred', 'lower', 'upper', and 'model_id'.
-    alpha : float, optional, default=0.9
+    conf_level: float, optional, default=0.9
         Confidence level used for computing the confidence intervals. Valid options are 
         [0.5, 0.8, 0.9, 0.95]
     dist : {'normal', 'log_normal'}, optional, default='log_normal'
@@ -259,8 +259,8 @@ def get_df_pars(
         preds_[["mu", "sigma"]] = preds_.apply(
             lambda row: get_lognormal_pars(
                 med=row["pred"],
-                lwr=row[f"lower_{int(100*alpha)}"],
-                upr=row[f"upper_{int(100*alpha)}"],
+                lwr=row[f"lower_{int(100*conf_level)}"],
+                upr=row[f"upper_{int(100*conf_level)}"],
                 fn_loss=fn_loss,
             ),
             axis=1,
@@ -270,8 +270,8 @@ def get_df_pars(
         preds_[["mu", "sigma"]] = preds_.apply(
             lambda row: get_normal_pars(
                 med=row["pred"],
-                lwr=row[f"lower_{int(100*alpha)}"],
-                upr=row[f"upper_{int(100*alpha)}"],
+                lwr=row[f"lower_{int(100*conf_level)}"],
+                upr=row[f"upper_{int(100*conf_level)}"],
                 fn_loss=fn_loss,
             ),
             axis=1,
@@ -284,7 +284,7 @@ def get_df_pars(
     if dist == "log_normal":
         theo_pred_df = preds_.apply(
             lambda row: lognorm.ppf(
-                [0.5, (1 - alpha) / 2, (1 + alpha) / 2],
+                [0.5, (1 - conf_level) / 2, (1 + conf_level) / 2],
                 s=row["sigma"],
                 scale=np.exp(row["mu"]),
             ),
@@ -294,7 +294,7 @@ def get_df_pars(
     elif dist == "normal":
         theo_pred_df = preds_.apply(
             lambda row: norm.ppf(
-                [0.5, (1 - alpha) / 2, (1 + alpha) / 2],
+                [0.5, (1 - conf_level) / 2, (1 + conf_level) / 2],
                 loc=row["mu"],
                 scale=row["sigma"],
             ),

@@ -11,7 +11,7 @@ from scipy.integrate import cumulative_trapezoid
 from scoringrules import crps_lognormal, crps_normal
 from mosqlient.prediction_optimize.pred_opt import get_df_pars
 
-def validate_df_preds(df_preds: pd.DataFrame, alpha = 0.9):
+def validate_df_preds(df_preds: pd.DataFrame, conf_level = 0.9):
     '''
     Validade if the predictions dataframe contains the necessary columns 
 
@@ -20,14 +20,14 @@ def validate_df_preds(df_preds: pd.DataFrame, alpha = 0.9):
 
     df_preds: pd.DataFrame
 
-    alpha : float, optional, default=0.90
+    conf_level : float, optional, default=0.90
         Confidence level used to define the lower and upper bounds.
 
     Returns 
     ---------
     Returns an error if df_preds is missing the required columns.
     '''
-    expected_cols = {"date", f"lower_{int(100*alpha)}", "pred", f"upper_{int(100*alpha)}", "model_id"}
+    expected_cols = {"date", f"lower_{int(100*conf_level)}", "pred", f"upper_{int(100*conf_level)}", "model_id"}
 
     if not expected_cols.issubset(df_preds.columns):
         raise ValueError(
@@ -327,7 +327,7 @@ class Ensemble:
         mixture: str = "log",
         dist: str = "log_normal",
         fn_loss: str = "median",
-        alpha: float = 0.9,
+        conf_level: float = 0.9,
     ):
         """
         Initializes the Ensemble class by processing the input DataFrame and defining key attributes.
@@ -345,7 +345,7 @@ class Ensemble:
             The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
         fn_loss : str, optional
             Loss function used for estimation ('median' or 'lower'). Default is 'median'.
-        alpha : float, optional, default=0.9
+        conf_level : float, optional, default=0.9
             Confidence level used for computing the confidence intervals.
 
         Raises
@@ -355,14 +355,14 @@ class Ensemble:
         """
 
         try:
-            df = df[["date", "pred", f"lower_{int(100*alpha)}", f"upper_{int(100*alpha)}", "model_id"]]
+            df = df[["date", "pred", f"lower_{int(100*conf_level)}", f"upper_{int(100*conf_level)}", "model_id"]]
 
         except:
             raise ValueError(
-                f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100*alpha)}', 'upper_{int(100*alpha)}', 'model_id'"
+                f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100*conf_level)}', 'upper_{int(100*conf_level)}', 'model_id'"
             )
 
-        df = get_df_pars(df.copy(), alpha=alpha, dist=dist, fn_loss=fn_loss)
+        df = get_df_pars(df.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss)
 
         # organize the dataframe:
         df["model_id"] = pd.Categorical(
