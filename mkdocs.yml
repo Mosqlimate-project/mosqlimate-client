@@ -11,11 +11,12 @@ nav:
         - Credits: 'credits.md'
         - License: 'license.md'
     - Tutorials:
-        - Simple forecast model: 'tutorials/baseline_model.ipynb'
-        - Datastore: 'tutorials/datastore.ipynb'
-        - models: 'tutorials/models.ipynb'
-        - Model Scoring: 'tutorials/scoring.ipynb'
+        - Datastore: 'tutorials/API/datastore.ipynb'
+        - Registry: 'tutorials/API/registry.ipynb'
         - Using from R: 'tutorials/Using Mosqlient from R.ipynb'
+        - Model Scoring: 'tutorials/scoring.ipynb'
+        - Simple forecast model: 'tutorials/baseline_model.ipynb'
+        - Ensemble predictions: 'tutorials/ensemble.ipynb'
     - Code Reference:
         - cli.py: 'reference/cli.md'
     - Development:
