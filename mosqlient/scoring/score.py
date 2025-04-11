@@ -178,6 +178,8 @@ def plot_score(
         * date: with the date';
             * variable: with the models name;
         * '{score}_score': with the score value
+    score: str
+        Name of the score metric. Available options include: ['CRPS','interval','wis','log']
     """
 
     if score == "CRPS":
@@ -333,20 +335,20 @@ class Scorer:
         The log score computed assumes a normal distribution.
 
 
-    interval_score: tuple of dicts
+    wis: tuple of dicts
         Dict where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the values of the
         dict are the scores computed.
 
-        The first dict contains the interval score computed for every predicted
-        point, and the second one contains the mean values of the interval score
+        The first dict contains the weighted interval score computed for every predicted
+        point, and the second one contains the mean values of the weighted interval score
         for all the points.
 
     summary: pd.DataFrame
         DataFrame where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the columns are
-        the scores: mae, mse, and the mean of crps, log_score, and interval score.
-
+        the scores: mae, mse, and the mean of crps, log_score, interval score 
+        and weighted interval score.
 
     Methods
     -------
@@ -364,6 +366,9 @@ class Scorer:
     plot_interval_score():
         alt.Chart: Method that returns an Altair panel with the time series of
         cases and the time series of the interval score for each model.
+    plot_wis():
+        alt.Chart: Method that returns an Altair panel with the time series of
+        cases and the time series of the weighted interval score for each model.
     plot_mae():
         alt.Chart : Bar chart of the MAE score for each prediction.
     plot_mse():
@@ -737,8 +742,8 @@ class Scorer:
         when a dataframe of predictions is provided by the user,
         and the values of the dict are the scores computed.
 
-        The first dict contains the interval score computed for every predicted
-        point, and the second one contains the mean values of the interval score
+        The first dict contains the weighted interval score computed for every predicted
+        point, and the second one contains the mean values of the weighted interval score
         for all the points.
         """
 
@@ -777,7 +782,7 @@ class Scorer:
         pd.DataFrame: DataFrame where the keys are the id of the models or
         `pred` when a dataframe of predictions is provided by the user, and
         the columns are the scores: mae, mse, and the mean of crps, log_score,
-        and interval_score.
+        interval_score and weighted interval score.
         """
         sum_scores = {}
 
