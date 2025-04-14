@@ -10,7 +10,7 @@ __all__ = [
     "get_models_by_disease",
     "get_models_by_adm_level",
     "get_models_by_time_resolution",
-    ]
+]
 
 from typing import Optional, List
 

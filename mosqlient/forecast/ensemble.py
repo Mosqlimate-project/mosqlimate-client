@@ -306,6 +306,7 @@ def get_ci_columns(p):
 
     return columns
 
+
 class Ensemble:
     """
     A class to compute the weights and apply the ensemble of multiple models.
