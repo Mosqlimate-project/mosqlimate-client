@@ -21,12 +21,12 @@ from .models import Model
 def get_all_models(api_key: str) -> list[dict]:
     """
     Returns a list of all models that are registered and available on the platform.
-    
+
     Parameters
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        
+
     Returns
     -------
     List of Models
@@ -60,19 +60,19 @@ def get_models(
         api_key : str
             API key used to authenticate with the Mosqlimate service.
         id: int, optional
-            Model id. 
+            Model id.
         name: str, optional
             Model name.
         author_name: str, optional
-            Author name. 
+            Author name.
         author_username: str, optional
-            Author username. 
-        author_institution:str, optional 
+            Author username.
+        author_institution:str, optional
             Author institution
         repository: str, optional
             Name of the Github repository where the model's source code is stored.
-        implementation_language: str, optional 
-            Name of the implementation language of the model. 
+        implementation_language: str, optional
+            Name of the implementation language of the model.
         disease: str, optional
             Disease name. Options are: 'dengue', 'chikungunya' and 'zika'
         ADM_level: int, optional
@@ -82,10 +82,10 @@ def get_models(
             Indicates whether the model is temporal.
         spatial: bool, optional
             Indicates whether the model is spatial.
-        categorical: bool, optional 
+        categorical: bool, optional
             Indicates whether the model is categorical.
-        time_resolution: str, optional 
-            Time resolution of the model. Options are: 'day', 'week', 'month' or 'year'       
+        time_resolution: str, optional
+            Time resolution of the model. Options are: 'day', 'week', 'month' or 'year'
         sprint: bool, optional
             Indicates whether the model belong to the sprint.
 
@@ -93,7 +93,7 @@ def get_models(
     -------
     List of Models
     """
-        
+
     return Model.get(
         api_key=api_key,
         id=id,
@@ -122,7 +122,7 @@ def get_model_by_id(api_key: str, id: int) -> Model | None:
         api_key : str
             API key used to authenticate with the Mosqlimate service.
         id: int
-            Model id. 
+            Model id.
     Returns
     -------
     Model
@@ -202,7 +202,7 @@ def get_models_by_repository(api_key: str, repository: str) -> List[Model]:
     -------
     List of Models
     """
-        
+
     return Model.get(api_key=api_key, repository=repository)
 
 
@@ -217,7 +217,7 @@ def get_models_by_implementation_language(
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        implementation_language: str, optional 
+        implementation_language: str, optional
             Name of the implementation language of the model.
     Returns
     -------
@@ -236,7 +236,7 @@ def get_models_by_disease(api_key: str, disease: str) -> List[Model]:
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        disease: str, optional 
+        disease: str, optional
             Disease. Options are: 'dengue', 'chikungunya' and 'zika'.
     Returns
     -------
@@ -274,8 +274,8 @@ def get_models_by_time_resolution(
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        time_resolution: str, optional 
-            Time resolution of the model. Options are: 'day', 'week', 'month' or 'year'       
+        time_resolution: str, optional
+            Time resolution of the model. Options are: 'day', 'week', 'month' or 'year'
     Returns
     -------
     List of Models
