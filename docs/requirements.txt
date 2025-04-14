@@ -3,3 +3,4 @@ mkdocs-jupyter
 mkdocs-coverage
 mkdocs-macros-plugin
 mkdocstrings-python
+toml
