@@ -20,11 +20,11 @@ def upload_prediction(
     adm_2: Optional[int] = None,
     adm_3: Optional[int] = None,
 ) -> requests.Response:
-    '''
+    """
     Upload a prediction to the Mosqlimate API.
 
     Converts a DataFrame or list of dictionaries containing prediction results
-    to the appropriate format and sends it to the API. It must contain the columns or 
+    to the appropriate format and sends it to the API. It must contain the columns or
     keys: "date", "lower_95", "lower_90", "lower_80", "lower_50",
             "pred", "upper_50", "upper_80", "upper_90", "upper_95".
 
@@ -57,7 +57,7 @@ def upload_prediction(
     -------
     requests.Response
         The response object from the Mosqlimate API.
-    '''
+    """
 
     if type(prediction) == pd.DataFrame:
 

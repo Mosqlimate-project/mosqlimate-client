@@ -9,9 +9,9 @@ def delete_prediction(
     api_key: str,
     prediction_id: int,
 ) -> requests.Response:
-    '''
+    """
     Function to delete a prediction registered in the platform.
-    Only the author can remove the prediction. 
+    Only the author can remove the prediction.
 
     Parameters
     ----------
@@ -20,8 +20,8 @@ def delete_prediction(
         prediction_id : int
             Prediction id of the model.
 
-    Returns 
+    Returns
     --------
-    request response 
-    '''
+    request response
+    """
     return Prediction.delete(api_key=api_key, id=prediction_id)

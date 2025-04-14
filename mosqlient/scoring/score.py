@@ -347,7 +347,7 @@ class Scorer:
     summary: pd.DataFrame
         DataFrame where the keys are the id of the models or `pred` when a
         dataframe of predictions is provided by the user, and the columns are
-        the scores: mae, mse, and the mean of crps, log_score, interval score 
+        the scores: mae, mse, and the mean of crps, log_score, interval score
         and weighted interval score.
 
     Methods

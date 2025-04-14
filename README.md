@@ -25,4 +25,4 @@ pip install mosqlient[analyze]
 ## Using from R
 Despite `mosqlient` being a Python library, it can be used from R using the `reticulate` package. Here is an example of how to use `mosqlient` from R:
 
-In the examples folder, you can find an [R jupyter notebook](/examples/Using%20Mosqlient%20from%20R.ipynb) of how to use `mosqlient` from R.
+In the examples folder, you can find an [R jupyter notebook](docs/tutorials/Using%20Mosqlient%20from%20R.ipynb) of how to use `mosqlient` from R.

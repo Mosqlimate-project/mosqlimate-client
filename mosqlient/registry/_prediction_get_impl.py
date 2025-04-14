@@ -141,13 +141,13 @@ def get_prediction_by_id(api_key: str, id: int) -> Prediction | None:
             API key used to authenticate with the Mosqlimate service.
         id : int, optional
             Unique identifier of the prediction.
-        
+
     Returns
     -------
     Prediction
         A single prediction record.
     """
-        
+
     res = Prediction.get(api_key=api_key, id=id)
     return res[0] if len(res) == 1 else None
 
@@ -156,7 +156,7 @@ def get_predictions_by_model_id(
     api_key: str, model_id: int
 ) -> List[Prediction]:
     """
-    Retrieve one or more prediction records from the Mosqlimate API, based on 
+    Retrieve one or more prediction records from the Mosqlimate API, based on
     the model_id parameter.
 
     Parameters
@@ -165,13 +165,13 @@ def get_predictions_by_model_id(
             API key used to authenticate with the Mosqlimate service.
         model_id : int, optional
             Unique identifier of the model used to generate the prediction.
-        
+
     Returns
     -------
     list of Prediction or Prediction
         A list of prediction records (as dictionaries) matching the given filters.
     """
-        
+
     return Prediction.get(api_key=api_key, model_id=model_id)
 
 
@@ -179,7 +179,7 @@ def get_predictions_by_model_name(
     api_key: str, model_name: str
 ) -> List[Prediction]:
     """
-    Retrieve one or more prediction records from the Mosqlimate API, based on 
+    Retrieve one or more prediction records from the Mosqlimate API, based on
     the model_name parameter.
 
     Parameters
@@ -194,7 +194,7 @@ def get_predictions_by_model_name(
     list of Prediction or Prediction
         A list of prediction records (as dictionaries) matching the given filters.
     """
-        
+
     return Prediction.get(api_key=api_key, model_name=model_name)
 
 
@@ -210,13 +210,13 @@ def get_predictions_by_adm_level(
             API key used to authenticate with the Mosqlimate service.
         model_ADM_level : int, optional
             Administrative level of the model (0: national, 1: state, 2: municipality, 3: sub-municipality).
-        
+
     Returns
     -------
     list of Prediction or Prediction
         A list of prediction records (as dictionaries) matching the given filters.
     """
-        
+
     return Prediction.get(api_key=api_key, adm_level=adm_level)
 
 
@@ -234,7 +234,7 @@ def get_predictions_by_time_resolution(
             API key used to authenticate with the Mosqlimate service.
         model_time_resolution : str, optional
             Temporal resolution of the model ('day', 'week', 'month', 'year').
-        
+
     Returns
     -------
     list of Prediction or Prediction
@@ -260,7 +260,7 @@ def get_predictions_by_disease(api_key: str, disease: str) -> List[Prediction]:
         A list of prediction records (as dictionaries) matching the given filters.
 
     """
-        
+
     return Prediction.get(api_key=api_key, model_disease=disease)
 
 
@@ -276,7 +276,7 @@ def get_predictions_by_author_name(
             API key used to authenticate with the Mosqlimate service.
         author_name : str, optional
             Name of the model author.
-        
+
     Returns
     -------
     list of Prediction or Prediction
@@ -304,7 +304,7 @@ def get_predictions_by_author_username(
     list of Prediction or prediction
         A list of prediction records (as dictionaries) matching the given filters.
     """
-        
+
     return Prediction.get(api_key=api_key, author_username=author_username)
 
 
@@ -321,7 +321,7 @@ def get_predictions_by_author_institution(
             API key used to authenticate with the Mosqlimate service.
         author_institution : str, optional
             Author institution.
-    
+
     Returns
     -------
     list of Prediction or Prediction
@@ -361,7 +361,7 @@ def get_predictions_by_implementation_language(
     implementation_language: str,
 ) -> List[Prediction]:
     """
-    Retrieve one or more prediction records from the Mosqlimate API, based on 
+    Retrieve one or more prediction records from the Mosqlimate API, based on
     the implementation language.
 
     Parameters
@@ -377,7 +377,7 @@ def get_predictions_by_implementation_language(
         A list of prediction records (as dictionaries) matching the given filters.
 
     """
-        
+
     return Prediction.get(
         api_key=api_key, implementation_language=implementation_language
     )

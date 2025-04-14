@@ -41,7 +41,7 @@ def get_infodengue(
         DataFrame containing the epidemiological time series data for the specified region and time period.
         Detailed descriptions of each column in the DataFrame can be found in the official API documentation:
         https://api.mosqlimate.org/docs/datastore/GET/infodengue/
-    
+
     Notes
     -----
     Either `uf` or `geocode` must be provided to specify the target geographic area.
