@@ -280,7 +280,7 @@ def get_epiweek(date):
     return (epiweek.year, epiweek.week)
 
 
-def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
+def get_ci_columns(p):
     """
     Function that given the confidence interval return the columns names
 
@@ -294,16 +294,15 @@ def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
     List of columns name
     """
 
-    median_index = len(p) // 2
     columns = []
 
-    for i, value in enumerate(p):
-        if i < median_index:
-            columns.append(f"lower_{int((1 - value) * 100)}")
-        elif i == median_index:
+    for value in p:
+        if value < 0.5:
+            columns.append(f"lower_{int((1 - 2*value) * 100)}")
+        elif value == 0.5:
             columns.append("pred")
         else:
-            columns.append(f"upper_{int(value * 100)}")
+            columns.append(f"upper_{int(2*value * 100)-100}")
 
     return columns
 
