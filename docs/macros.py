@@ -4,7 +4,9 @@ from itertools import chain
 from pathlib import Path
 
 import toml
-from pip._internal.commands.show import search_packages_info  # noqa: WPS436 (no other way?)
+from pip._internal.commands.show import (
+    search_packages_info,
+)  # noqa: WPS436 (no other way?)
 
 
 def get_credits_data() -> dict:
@@ -24,7 +26,9 @@ def get_credits_data() -> dict:
     dev_dependencies = set(metadata["dev-dependencies"].keys())
     poetry_dependencies = set(chain(direct_dependencies, dev_dependencies))
     indirect_dependencies = {
-        pkg["name"].lower() for pkg in lock_data["package"] if pkg["name"].lower() not in poetry_dependencies
+        pkg["name"].lower()
+        for pkg in lock_data["package"]
+        if pkg["name"].lower() not in poetry_dependencies
     }
 
     packages = {}
@@ -34,7 +38,11 @@ def get_credits_data() -> dict:
         # NOTE walrus can be used
         name = pkg.name
         if name:
-            packages[name.lower()] = {key: getattr(pkg, key) for key in dir(pkg) if not key.startswith("_")}
+            packages[name.lower()] = {
+                key: getattr(pkg, key)
+                for key in dir(pkg)
+                if not key.startswith("_")
+            }
 
     # all packages might not be credited,
     # like the ones that are now part of the standard library

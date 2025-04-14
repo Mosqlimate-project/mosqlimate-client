@@ -1,6 +1,23 @@
 Release Notes
 ---
 
+# [1.9.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.8.1...1.9.0) (2025-04-09)
+
+
+### Bug Fixes
+
+* **baseline:** solve baseline model to work properly after refactor ([19e8861](https://github.com/Mosqlimate-project/mosqlimate-client/commit/19e8861cc219343ee4fd2378491893c6da6ae860))
+* **ci:** change pre-commit instruction ([87e7b16](https://github.com/Mosqlimate-project/mosqlimate-client/commit/87e7b16209ed44a64357ce8cfcae3d489f641afe))
+* **ci:** update python version in the ci ([de2eda4](https://github.com/Mosqlimate-project/mosqlimate-client/commit/de2eda4f9dab26060e975d13a7ce56b0d9a434f5))
+* **mosqlient:** solve type-checking issues ([a28537c](https://github.com/Mosqlimate-project/mosqlimate-client/commit/a28537c08f85d94807e79b5cad4a326f021d9af1))
+* **registry:** solve error in delete ([90aa4a2](https://github.com/Mosqlimate-project/mosqlimate-client/commit/90aa4a2c68d28b065ef7377152bd114f93bb3019))
+
+
+### Features
+
+* **scoring:** add wis in Scorer class ([915104e](https://github.com/Mosqlimate-project/mosqlimate-client/commit/915104e8cda957cf0a68585e2f193a198efa98d3))
+* **scoring:** add wis score and create compability of the scores with the new pred elements ([d02e35f](https://github.com/Mosqlimate-project/mosqlimate-client/commit/d02e35fba96e276429f41f07c4e943797a360d75))
+
 ## [1.8.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.8.0...1.8.1) (2025-03-26)
 
 
