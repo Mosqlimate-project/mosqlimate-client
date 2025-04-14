@@ -1,6 +1,14 @@
 Release Notes
 ---
 
+## [1.9.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.0...1.9.1) (2025-04-14)
+
+
+### Bug Fixes
+
+* **mosqlient:** minor issue with apply ensemble ([3f4e730](https://github.com/Mosqlimate-project/mosqlimate-client/commit/3f4e730d44519c8aa58a738f633d8b5d22e0aa0c))
+* **mosqlient:** type-checks ([83f2667](https://github.com/Mosqlimate-project/mosqlimate-client/commit/83f26674d26d0b31b67686c500fe20ddc2027fb2))
+
 # [1.9.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.8.1...1.9.0) (2025-04-09)
 
 
