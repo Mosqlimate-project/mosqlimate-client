@@ -15,6 +15,10 @@ class ClimateWeeklySchema(types.Schema):
     pass
 
 
+class EpiscannerSchema(types.Schema):
+    pass
+
+
 class InfodengueGETParams(types.Params):
     method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
     app: types.APP = "datastore"
@@ -87,5 +91,23 @@ class ClimateWeeklyGETParams(types.Params):
             "macro_health_code": self.macro_health_code,
             "page": self.page,
             "per_page": self.per_page,
+        }
+        return {k: v for k, v in p.items() if v is not None}
+
+
+class EpiscannerGETParams(types.Params):
+    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
+    app: types.APP = "datastore"
+    endpoint: str = "episcanner"
+    #
+    disease: types.Disease
+    uf: types.UF
+    year: Optional[int] = None
+
+    def params(self) -> dict:
+        p = {
+            "disease": self.disease,
+            "uf": self.uf,
+            "year": self.year,
         }
         return {k: v for k, v in p.items() if v is not None}
