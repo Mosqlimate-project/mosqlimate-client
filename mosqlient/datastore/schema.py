@@ -11,6 +11,10 @@ class ClimateSchema(types.Schema):
     pass
 
 
+class ClimateWeeklySchema(types.Schema):
+    pass
+
+
 class InfodengueGETParams(types.Params):
     method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
     app: types.APP = "datastore"
@@ -55,6 +59,32 @@ class ClimateGETParams(types.Params):
             "end": self.end,
             "geocode": self.geocode,
             "uf": self.uf,
+            "page": self.page,
+            "per_page": self.per_page,
+        }
+        return {k: v for k, v in p.items() if v is not None}
+
+
+class ClimateWeeklyGETParams(types.Params):
+    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
+    app: types.APP = "datastore"
+    endpoint: str = "climate/weekly"
+    page: Optional[int] = None
+    per_page: Optional[int] = None
+    #
+    start: Optional[types.Date] = None
+    end: Optional[types.Date] = None
+    uf: Optional[types.UF] = None
+    geocode: Optional[types.Geocode] = None
+    macro_health_code: Optional[types.MacroHealthGeocode] = None
+
+    def params(self) -> dict:
+        p = {
+            "start": self.start,
+            "end": self.end,
+            "uf": self.uf,
+            "geocode": self.geocode,
+            "macro_health_code": self.macro_health_code,
             "page": self.page,
             "per_page": self.per_page,
         }

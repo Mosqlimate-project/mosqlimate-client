@@ -40,6 +40,9 @@ PredictionData = Annotated[
 
 UF = Annotated[str, AfterValidator(v.validate_uf)]
 Geocode = Annotated[int, AfterValidator(v.validate_geocode)]
+MacroHealthGeocode = Annotated[
+    int, AfterValidator(v.validate_macro_health_geocode)
+]
 
 
 class Schema(BaseModel, ABC):
