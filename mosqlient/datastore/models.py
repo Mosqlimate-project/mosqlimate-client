@@ -103,3 +103,30 @@ class Episcanner(types.Model):
         client = Mosqlient(x_uid_key=api_key)
         params = schema.EpiscannerGETParams(disease=disease, uf=uf, year=year)
         return client.get(params=params)
+
+
+class Mosquito(types.Model):
+    _schema: schema.MosquitoSchema
+
+    @classmethod
+    def get(
+        cls,
+        api_key: str,
+        date_start: Optional[types.Date] = None,
+        date_end: Optional[types.Date] = None,
+        state: Optional[types.UF] = None,
+        municipality: Optional[str] = None,
+        page: Optional[int] = None,
+    ):
+        """
+        datastore.schema.MosquitoGETParams
+        """
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.MosquitoGETParams(
+            date_start=date_start,
+            date_end=date_end,
+            state=state,
+            municipality=municipality,
+            page_=page,
+        )
+        return client.get(params=params)

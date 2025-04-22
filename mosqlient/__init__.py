@@ -18,6 +18,7 @@ from mosqlient.registry._prediction_delete_impl import *
 from mosqlient.datastore._climate_get_impl import *
 from mosqlient.datastore._infodengue_get_impl import *
 from mosqlient.datastore._episcanner_get_impl import *
+from mosqlient.datastore._mosquito_get_impl import *
 
 
 def get_version() -> str:
