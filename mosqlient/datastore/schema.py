@@ -72,8 +72,8 @@ class ClimateWeeklyGETParams(types.Params):
     page: Optional[int] = None
     per_page: Optional[int] = None
     #
-    start: Optional[types.Date] = None
-    end: Optional[types.Date] = None
+    start: str
+    end: str
     uf: Optional[types.UF] = None
     geocode: Optional[types.Geocode] = None
     macro_health_code: Optional[types.MacroHealthGeocode] = None

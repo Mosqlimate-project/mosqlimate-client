@@ -64,15 +64,15 @@ class ClimateWeekly(types.Model):
     def get(
         cls,
         api_key: str,
-        start: str | date,
-        end: str | date,
+        start: str,
+        end: str,
         uf: Optional[str] = None,
         geocode: Optional[int] = None,
         macro_health_code: Optional[int] = None,
         page: Optional[int] = None,
     ):
         """
-        datastore.schema.ClimateGETParams
+        datastore.schema.ClimateWeeklyGETParams
         """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ClimateWeeklyGETParams(
@@ -81,6 +81,6 @@ class ClimateWeekly(types.Model):
             uf=uf,
             geocode=geocode,
             macro_health_code=macro_health_code,
-            page=page
+            page=page,
         )
         return client.get(params=params)
