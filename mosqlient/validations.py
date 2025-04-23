@@ -191,3 +191,9 @@ def validate_geocode(geocode: int) -> int:
     assert len(str(geocode)) == 7, err % geocode
     assert int(str(geocode)[:2]) in UF_CODES.values(), err % geocode
     return geocode
+
+
+def validate_macro_health_geocode(geocode: int) -> int:
+    err = "Invalid macro health geocode %s. Example: 1101"
+    assert len(str(geocode)) == 4, err % geocode
+    return geocode

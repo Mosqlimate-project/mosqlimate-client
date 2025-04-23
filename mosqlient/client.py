@@ -56,10 +56,17 @@ class Mosqlient:
         if not hasattr(params, "page"):
             res = requests.get(
                 url=url,
+                params=parse_params(**params.params()),
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
-            res.raise_for_status()
+            if res.status_code == 422:
+                raise ValueError(res.text)
+            try:
+                res.raise_for_status()
+            except requests.HTTPError as err:
+                logger.error(res.text)
+                raise err
             return res.json()
 
         _params = params.params()
@@ -78,7 +85,13 @@ class Mosqlient:
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
-            res.raise_for_status()
+            if res.status_code == 422:
+                raise ValueError(res.text)
+            try:
+                res.raise_for_status()
+            except requests.HTTPError as err:
+                logger.error(res.text)
+                raise err
             data = res.json()
             if "message" in data:
                 logger.warning(data["message"])
