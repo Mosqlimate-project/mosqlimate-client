@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.9.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.1...1.9.2) (2025-04-23)
+
+
+### Bug Fixes
+
+* **climate:** include climate/weekly endpoint ([#70](https://github.com/Mosqlimate-project/mosqlimate-client/issues/70)) ([d1020f2](https://github.com/Mosqlimate-project/mosqlimate-client/commit/d1020f2fbee85f9acd605122a7ea197f419afb12))
+
 ## [1.9.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.0...1.9.1) (2025-04-14)
 
 
