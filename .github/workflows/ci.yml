@@ -116,7 +116,7 @@ jobs:
             any::reticulate
 
     - name: Register IRkernel with Jupyter
-      run: Rscript -e 'IRkernel::installspec(user = FALSE)'
+      run: Rscript -e 'IRkernel::installspec(user = TRUE)'
 
     - name: Run the test suite
       env:
