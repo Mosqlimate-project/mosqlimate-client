@@ -100,6 +100,16 @@ jobs:
     - name: Set up the project
       run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
 
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+
+    - name: Install packages
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+          packages: |
+            any::IRkernel 
+            any::reticulate
+
     - name: Run the test suite
       env:
         API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
