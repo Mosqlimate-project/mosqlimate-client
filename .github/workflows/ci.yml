@@ -100,6 +100,24 @@ jobs:
     - name: Set up the project
       run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
 
+    - name: Install Jupyter
+      run: |
+        python -m pip install --upgrade pip
+        pip install notebook
+
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
+
+    - name: Install packages
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+          packages: |
+            any::IRkernel
+            any::reticulate
+
+    - name: Register IRkernel with Jupyter
+      run: Rscript -e 'IRkernel::installspec(user = TRUE)'
+
     - name: Run the test suite
       env:
         API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
