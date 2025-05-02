@@ -107,9 +107,9 @@ jobs:
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
           packages: |
-            any::IRkernel 
+            any::IRkernel
             any::reticulate
-            
+
     - name: Register IRkernel with Jupyter
       run: Rscript -e 'IRkernel::installspec(user = FALSE)'
 
