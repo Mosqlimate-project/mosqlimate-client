@@ -98,12 +98,14 @@ jobs:
         key: tests-poetry-cache-${{ matrix.os }}-py${{ matrix.python-version }}
 
     - name: Set up the project
-      run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
+      run: |
+        poetry config virtualenvs.create false
+        poetry install -vv
 
     - name: Install Jupyter
       run: |
         python -m pip install --upgrade pip
-        pip install notebook
+        pip install notebook jupyterlab jupyter-client
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
@@ -116,7 +118,13 @@ jobs:
             any::reticulate
 
     - name: Register IRkernel with Jupyter
-      run: Rscript -e 'IRkernel::installspec(user = TRUE)'
+      run: |
+        export PATH="$(poetry env info -p)/bin:$PATH"
+        Rscript -e 'IRkernel::installspec(user = FALSE)'
+
+    - name: Setup tmate session
+      if: "${{ failure() }}"
+      uses: mxschmitt/action-tmate@v3
 
     - name: Run the test suite
       env:
