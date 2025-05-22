@@ -27,7 +27,7 @@ def get_predictions(
     id: Optional[int] = None,
     model_id: Optional[int] = None,
     model_name: Optional[str] = None,
-    model_ADM_level: Optional[int] = None,
+    model_adm_level: Optional[int] = None,
     model_time_resolution: Optional[str] = None,
     model_disease: Optional[str] = None,
     author_name: Optional[str] = None,
@@ -59,7 +59,7 @@ def get_predictions(
             Unique identifier of the model used to generate the prediction.
         model_name : str, optional
             Name of the model used to generate the prediction.
-        model_ADM_level : int, optional
+        model_adm_level : int, optional
             Administrative level of the model (0: national, 1: state, 2: municipality, 3: sub-municipality).
         model_time_resolution : str, optional
             Temporal resolution of the model ('day', 'week', 'month', 'year').
@@ -107,7 +107,7 @@ def get_predictions(
         "id": id,
         "model_id": model_id,
         "model_name": model_name,
-        "model_ADM_level": model_ADM_level,
+        "model_adm_level": model_adm_level,
         "model_time_resolution": model_time_resolution,
         "model_disease": model_disease,
         "author_name": author_name,
@@ -208,7 +208,7 @@ def get_predictions_by_adm_level(
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        model_ADM_level : int, optional
+        model_adm_level : int, optional
             Administrative level of the model (0: national, 1: state, 2: municipality, 3: sub-municipality).
 
     Returns

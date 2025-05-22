@@ -35,7 +35,7 @@ class ModelSchema(types.Schema):
     categorical: types.Categorical
     spatial: types.Spatial
     temporal: types.Temporal
-    ADM_level: types.ADMLevel
+    adm_level: types.ADMLevel
     time_resolution: types.TimeResolution
     sprint: bool
 
@@ -111,7 +111,7 @@ class ModelGETParams(types.Params):
     repository: Optional[types.Repository] = None
     implementation_language: Optional[types.ImplementationLanguage] = None
     disease: Optional[types.Disease] = None
-    ADM_level: Optional[types.ADMLevel] = None
+    adm_level: Optional[types.ADMLevel] = None
     temporal: Optional[types.Temporal] = None
     spatial: Optional[types.Spatial] = None
     categorical: Optional[types.Categorical] = None
@@ -128,7 +128,7 @@ class ModelGETParams(types.Params):
             "repository": self.repository,
             "implementation_language": self.implementation_language,
             "disease": self.disease,
-            "ADM_level": self.ADM_level,
+            "adm_level": self.adm_level,
             "temporal": self.temporal,
             "spatial": self.spatial,
             "categorical": self.categorical,
@@ -151,7 +151,7 @@ class ModelPOSTParams(types.Params):
     repository: types.Repository
     implementation_language: types.ImplementationLanguage
     disease: types.Disease
-    ADM_level: types.ADMLevel
+    adm_level: types.ADMLevel
     temporal: types.Temporal
     spatial: types.Spatial
     categorical: types.Categorical
@@ -165,7 +165,7 @@ class ModelPOSTParams(types.Params):
             "repository": self.repository,
             "implementation_language": self.implementation_language,
             "disease": self.disease,
-            "ADM_level": self.ADM_level,
+            "adm_level": self.adm_level,
             "temporal": self.temporal,
             "spatial": self.spatial,
             "categorical": self.categorical,
@@ -185,7 +185,7 @@ class ModelPUTParams(types.Params):
     repository: Optional[types.Repository] = None
     implementation_language: Optional[types.ImplementationLanguage] = None
     disease: Optional[types.Disease] = None
-    ADM_level: Optional[types.ADMLevel] = None
+    adm_level: Optional[types.ADMLevel] = None
     temporal: Optional[types.Temporal] = None
     spatial: Optional[types.Spatial] = None
     categorical: Optional[types.Categorical] = None
@@ -217,7 +217,7 @@ class PredictionGETParams(types.Params):
     id: Optional[types.ID] = None
     model_id: Optional[types.ID] = None
     model_name: Optional[types.Name] = None
-    model_ADM_level: Optional[types.ADMLevel] = None
+    model_adm_level: Optional[types.ADMLevel] = None
     model_time_resolution: Optional[types.TimeResolution] = None
     model_disease: Optional[types.Disease] = None
     author_name: Optional[types.AuthorName] = None
@@ -241,7 +241,7 @@ class PredictionGETParams(types.Params):
             "id": self.id,
             "model_id": self.model_id,
             "model_name": self.model_name,
-            "model_ADM_level": self.model_ADM_level,
+            "model_adm_level": self.model_adm_level,
             "model_time_resolution": self.model_time_resolution,
             "model_disease": self.model_disease,
             "author_name": self.author_name,

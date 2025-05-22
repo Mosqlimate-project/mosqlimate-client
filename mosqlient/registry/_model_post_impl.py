@@ -71,7 +71,7 @@ def upload_model(
         disease=disease,
         repository=repository,
         implementation_language=implementation_language,
-        ADM_level=adm_level,
+        adm_level=adm_level,
         time_resolution=time_resolution,
         sprint=sprint,
     )

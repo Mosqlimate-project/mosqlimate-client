@@ -117,7 +117,7 @@ class Model(types.Model):
         categorical: types.Categorical,
         spatial: types.Spatial,
         temporal: types.Temporal,
-        ADM_level: types.ADMLevel,
+        adm_level: types.ADMLevel,
         time_resolution: types.TimeResolution,
         sprint: bool,
         id: Optional[types.ID] = None,
@@ -148,7 +148,7 @@ class Model(types.Model):
             categorical=categorical,
             spatial=spatial,
             temporal=temporal,
-            ADM_level=ADM_level,
+            adm_level=adm_level,
             time_resolution=time_resolution,
             sprint=sprint,
         )
@@ -227,8 +227,8 @@ class Model(types.Model):
         return self._schema.temporal
 
     @property
-    def ADM_level(self) -> types.ADMLevel:
-        return self._schema.ADM_level
+    def adm_level(self) -> types.ADMLevel:
+        return self._schema.adm_level
 
     @property
     def time_resolution(self) -> types.TimeResolution:
