@@ -43,7 +43,7 @@ def get_models(
     repository: Optional[str] = None,
     implementation_language: Optional[str] = None,
     disease: Optional[str] = None,
-    ADM_level: Optional[int] = None,
+    adm_level: Optional[int] = None,
     temporal: Optional[bool] = None,
     spatial: Optional[bool] = None,
     categorical: Optional[bool] = None,
@@ -74,7 +74,7 @@ def get_models(
             Name of the implementation language of the model.
         disease: str, optional
             Disease name. Options are: 'dengue', 'chikungunya' and 'zika'
-        ADM_level: int, optional
+        adm_level: int, optional
             ADM level of the model. Options:
             0, 1, 2, 3 (National, State, Municipality, Sub Municipality)
         temporal: bool, optional
@@ -103,7 +103,7 @@ def get_models(
         repository=repository,
         implementation_language=implementation_language,
         disease=disease,
-        ADM_level=ADM_level,
+        adm_level=adm_level,
         temporal=temporal,
         spatial=spatial,
         categorical=categorical,
@@ -252,7 +252,7 @@ def get_models_by_adm_level(api_key: str, adm_level: int) -> List[Model]:
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        ADM_level: int, optional
+        adm_level: int, optional
             ADM level of the model. Options:
             0, 1, 2, 3 (National, State, Municipality, Sub Municipality).
     Returns
