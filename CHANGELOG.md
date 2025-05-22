@@ -1,6 +1,19 @@
 Release Notes
 ---
 
+## [1.9.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.2...1.9.3) (2025-05-22)
+
+
+### Bug Fixes
+
+* **bug:** add jupyter kernel creation ([0210c64](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0210c64732d9d808c83e785650664675ba5e7079))
+* **bug:** install R in the runner ([8d50939](https://github.com/Mosqlimate-project/mosqlimate-client/commit/8d50939fb16183a39840b8eaca7f54db4313c24b))
+* **bug:** register IR kernel ([c2d1b18](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c2d1b1878b061691f5f6be8daa539166c0d8ac8d))
+* **bug:** run R demo ([22c9d20](https://github.com/Mosqlimate-project/mosqlimate-client/commit/22c9d206062432212a4457a8657608beceab99ef))
+* **bugs:** docs/tutorials/Using Mosqlient from R.ipynb ([1650594](https://github.com/Mosqlimate-project/mosqlimate-client/commit/16505940f3a2bd0ec262ae6b6596a0e7816cdc86))
+* **bug:** solve ci.yml ([9afca98](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9afca9860514ca9697500d9df3e353ba42ecd5e4))
+* **registry:** replace ADM_level by adm_level ([#76](https://github.com/Mosqlimate-project/mosqlimate-client/issues/76)) ([1053c26](https://github.com/Mosqlimate-project/mosqlimate-client/commit/1053c26abb10fae40456d3aef241d10df22e9dab))
+
 ## [1.9.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.1...1.9.2) (2025-04-23)
 
 
