@@ -120,8 +120,8 @@ def compute_wis(
     for alpha, weight in zip(alphas, w_k):
         level = int((1 - alpha) * 100)
         interval_scores += weight * compute_interval_score(
-            lower_bound=df[f"lower_{level}"].values,
-            upper_bound=df[f"upper_{level}"].values,
+            lower_bound=df[f"lower_{level}"].fillna(0).values,
+            upper_bound=df[f"upper_{level}"].fillna(0).values,
             observed_value=observed_value,
             alpha=alpha,
         )

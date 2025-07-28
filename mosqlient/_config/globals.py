@@ -1,4 +1,5 @@
 # Constants
+API_URL = "http://0.0.0.0:8042/api/"
 DJANGO_APPS = ["registry", "datastore", "vis"]
 DISEASES = ["chikungunya", "chik", "dengue", "zika"]
 ADM_LEVELS = [0, 1, 2, 3]

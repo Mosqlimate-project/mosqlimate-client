@@ -11,6 +11,7 @@ from typing import Literal, List
 from aiohttp import (
     ClientSession,
     ClientTimeout,
+    ClientError,
     ClientConnectionError,
     ServerTimeoutError,
 )
@@ -22,6 +23,7 @@ from loguru import logger
 
 from mosqlient.types import Params
 from mosqlient._utils import parse_params
+from mosqlient._config import globals
 from mosqlient import errors
 
 
@@ -31,7 +33,7 @@ class Mosqlient:
         x_uid_key: str,
         timeout: int = 300,
         max_items_per_page: int = 300,
-        _api_url: str = "https://api.mosqlimate.org/api/",
+        _api_url: str = globals.API_URL,
     ):
         self.username, self.uid_key = x_uid_key.split(":")
         self.timeout = timeout
@@ -147,18 +149,14 @@ class Mosqlient:
     ) -> dict:
         headers = {"X-UID-Key": self.X_UID_KEY}
         try:
-            if retries < 0:
-                raise ClientConnectionError("Too many attempts")
             async with session.get(url, params=params, headers=headers) as res:
-                if res.status == 200:
-                    return await res.json()
                 res.raise_for_status()
-                await asyncio.sleep(10 / (retries + 1))
+                return await res.json()
+        except (asyncio.TimeoutError, ServerTimeoutError, ClientError) as e:
+            if retries > 0:
+                await asyncio.sleep(2)
                 return await self.__aget(session, url, params, retries - 1)
-        except ServerTimeoutError:
-            await asyncio.sleep(8 / (retries + 1))
-            return await self.__aget(session, url, params, retries - 1)
-        raise ClientConnectionError("Invalid request")
+            raise ClientConnectionError(f"Request failed after retries: {e}")
 
     async def __get_all(self, url: str, params: dict) -> List[dict]:
         async with ClientSession(
