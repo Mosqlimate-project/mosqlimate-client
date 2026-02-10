@@ -17,9 +17,9 @@ from mosqlient._utils.brasil import UF_CODES
 
 
 def validate_django_app(app: str) -> str:
-    assert (
-        app in DJANGO_APPS
-    ), f"Unknown Mosqlimate app '{app}'. Options: {DJANGO_APPS}"
+    assert app in DJANGO_APPS, (
+        f"Unknown Mosqlimate app '{app}'. Options: {DJANGO_APPS}"
+    )
     return app
 
 
@@ -65,8 +65,7 @@ def validate_author_institution(
 
 
 def validate_repository(repository: str) -> str:
-    assert len(repository) <= 100, "repository too long"
-    assert len(repository) > 0, "empty repository"
+    assert "/" in repository, "malformed repository"
     return repository
 
 
@@ -90,23 +89,39 @@ def validate_implementation_language(implementation_language: str) -> str:
         "c++",
         "python",
     ]
-    assert (
-        implementation_language.lower() in languages
-    ), f"Unknown implementation_language {implementation_language}"
+    assert implementation_language.lower() in languages, (
+        f"Unknown implementation_language {implementation_language}"
+    )
     return implementation_language
 
 
-def validate_disease(disease: Literal["dengue", "zika", "chikungunya"]) -> str:
-    assert (
-        disease.lower() in DISEASES
-    ), f"Unknown disease '{disease}'. Options: {DISEASES}"
+def validate_disease(disease: Literal["A90", "A92.0", "A92.5"]) -> str:
+    assert disease.lower() in DISEASES, (
+        f"Unknown disease '{disease}'. Options: {DISEASES}"
+    )
+    return disease
+
+
+def validate_category(
+    disease: Literal[
+        "quantitative",
+        "categorical",
+        "spatial_quantitative",
+        "spatial_categorical",
+        "spatio_temporal_quantitative",
+        "spatio_temporal_categorical",
+    ],
+) -> str:
+    assert disease.lower() in DISEASES, (
+        f"Unknown disease '{disease}'. Options: {DISEASES}"
+    )
     return disease
 
 
 def validate_adm_level(adm_level: int) -> int:
-    assert (
-        adm_level in ADM_LEVELS
-    ), f"Unknown adm_level {adm_level}. Options {ADM_LEVELS}"
+    assert adm_level in ADM_LEVELS, (
+        f"Unknown adm_level {adm_level}. Options {ADM_LEVELS}"
+    )
     return adm_level
 
 

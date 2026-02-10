@@ -1,4 +1,5 @@
-from typing import Literal, Optional, Any, Dict, AnyStr, List
+from datetime import date
+from typing import Optional, Any, Dict, AnyStr, List
 
 import json
 import nest_asyncio
@@ -12,233 +13,107 @@ from mosqlient.registry import schema
 nest_asyncio.apply()
 
 
-class User(types.Model):
-    _schema: schema.UserSchema
-
-    def __init__(
-        self, name: types.AuthorName, username: types.AuthorUserName, **kwargs
-    ):
-        super().__init__(**kwargs)
-        self._schema = schema.UserSchema(name=name, username=username)
-
-    @property
-    def name(self) -> types.AuthorName:
-        return self._schema.name
-
-    @property
-    def username(self) -> types.AuthorUserName:
-        return self._schema.username
-
-
-class Author(types.Model):
-    user: User
-    _schema: schema.AuthorSchema
-
-    def __init__(
-        self, user: User | dict, institution: types.AuthorInstitution, **kwargs
-    ):
-
-        if isinstance(user, dict):
-            user = User(**user)
-
-        kwargs["user"] = user
-
-        super().__init__(**kwargs)
-        self.user = user
-
-        self._schema = schema.AuthorSchema(
-            user=user._schema, institution=institution
-        )
-
-    def __str__(self) -> str:
-        return self._schema.user.username
-
-    def __repr__(self) -> str:
-        return self._schema.user.username
-
-    @property
-    def institution(self) -> types.AuthorInstitution:
-        return self._schema.institution
-
-    @classmethod
-    def get(cls, api_key: str, **kwargs):
-        """
-        registry.schema.AuthorGETParams
-        """
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.AuthorGETParams(**kwargs)
-        return list(cls(**item) for item in client.get(params=params))
-
-
-class ImplementationLanguage(types.Model):
-    _schema: schema.ImplementationLanguageSchema
-
-    def __init__(self, language: types.ImplementationLanguage, **kwargs):
-        super().__init__(**kwargs)
-        if isinstance(language, dict):
-            self._schema = schema.ImplementationLanguageSchema(
-                language=language["language"]
-            )
-        elif isinstance(language, str):
-            self._schema = schema.ImplementationLanguageSchema(
-                language=language
-            )
-        else:
-            raise ValueError(
-                "`language` must be a str or a dict"
-                " with {'language': `language`}"
-            )
-
-    def __repr__(self) -> str:
-        return self._schema.language
-
-    def __str__(self) -> str:
-        return self._schema.language
-
-    @property
-    def language(self):
-        return self._schema.language
-
-
 class Model(types.Model):
     client: Optional[Client] = None
-    author: Author
-    implementation_language: ImplementationLanguage
-    _schema: schema.ModelSchema
+    _schema: schema.Model
 
     def __init__(
         self,
-        name: types.Name,
-        description: types.Description,
-        author: Author | dict,
-        repository: types.Repository,
-        implementation_language: types.ImplementationLanguage,
-        disease: types.Disease,
-        categorical: types.Categorical,
-        spatial: types.Spatial,
-        temporal: types.Temporal,
-        adm_level: types.ADMLevel,
-        time_resolution: types.TimeResolution,
-        sprint: bool,
-        id: Optional[types.ID] = None,
+        id: int,
+        repository: str,
+        disease: str,
+        category: str,
+        adm_level: int,
+        time_resolution: str,
+        predictions_count: int,
+        active: bool,
+        created_at: date,
+        last_update: date,
+        description: Optional[str] = "",
+        sprint: Optional[int] = None,
         **kwargs,
     ):
-        if isinstance(author, dict):
-            author = Author(
-                user=author["user"], institution=author["institution"]
-            )
-        kwargs["author"] = author
-
-        language = ImplementationLanguage(language=implementation_language)
-        kwargs["implementation_language"] = language
-
         super().__init__(**kwargs)
-
-        self.author = author
-        self.implementation_language = language
-
-        self._schema = schema.ModelSchema(
+        self._schema = schema.Model(
             id=id,
-            name=name,
-            description=description,
-            author=author._schema,
             repository=repository,
-            implementation_language=language._schema,
+            description=description,
             disease=disease,
-            categorical=categorical,
-            spatial=spatial,
-            temporal=temporal,
+            category=category,
             adm_level=adm_level,
             time_resolution=time_resolution,
             sprint=sprint,
+            predictions_count=predictions_count,
+            active=active,
+            created_at=created_at,
+            last_update=last_update,
         )
 
     def __repr__(self) -> str:
-        return self.name
+        return self.repository
 
     @classmethod
     def get(cls, api_key: str, **kwargs):
-        """
-        mosqlient.schema.ModelGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ModelGETParams(**kwargs)
         return list(cls(**item) for item in client.get(params))
 
-    @classmethod
-    def post(cls, api_key: str, **kwargs):
-        """
-        mosqlient.schema.ModelPOSTParams
-        """
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.ModelPOSTParams(**kwargs)
-        res = client.post(params)
-        return cls(**json.loads(res.text))
-
-    @classmethod
-    def update(cls, api_key: str, **kwargs):
-        """
-        mosqlient.schema.ModelPUTParams
-        """
-        raise NotImplementedError()
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.ModelPUTParams(**kwargs)
-        return client.put(params)
-
-    @classmethod
-    def delete(self, api_key: str, id: int):
-        """
-        registry.schema.ModelDELETEParams
-        """
-        client = Mosqlient(x_uid_key=api_key)
-        params = schema.ModelDELETEParams(id=id)
-        return client.delete(params)
+    def predictions(self, api_key: str, **kwargs):
+        return Prediction.get(api_key=api_key, model_id=self.id, **kwargs)
 
     @property
-    def id(self) -> types.ID | None:
+    def id(self) -> int:
         return self._schema.id
 
     @property
-    def name(self) -> types.Name:
-        return self._schema.name
-
-    @property
-    def description(self) -> types.Description:
-        return self._schema.description
-
-    @property
-    def repository(self) -> types.Repository:
+    def repository(self) -> str:
         return self._schema.repository
 
     @property
-    def disease(self) -> types.Disease:
+    def description(self) -> str:
+        return self._schema.description
+
+    @property
+    def disease(self) -> str:
         return self._schema.disease
 
     @property
-    def categorical(self) -> types.Categorical:
-        return self._schema.categorical
+    def category(self) -> str:
+        return self._schema.category
 
     @property
-    def spatial(self) -> types.Spatial:
-        return self._schema.spatial
-
-    @property
-    def temporal(self) -> types.Temporal:
-        return self._schema.temporal
-
-    @property
-    def adm_level(self) -> types.ADMLevel:
+    def adm_level(self) -> int:
         return self._schema.adm_level
 
     @property
-    def time_resolution(self) -> types.TimeResolution:
+    def time_resolution(self) -> str:
         return self._schema.time_resolution
+
+    @property
+    def sprint(self) -> int | None:
+        return self._schema.sprint
+
+    @property
+    def predictions_count(self) -> int:
+        return self._schema.predictions_count
+
+    @property
+    def active(self) -> bool:
+        return self._schema.active
+
+    @property
+    def created_at(self) -> date:
+        return self._schema.created_at
+
+    @property
+    def last_update(self) -> date:
+        return self._schema.last_update
 
 
 class Prediction(types.Model):
     client: Optional[Client] = None
     model: Model
-    _schema: schema.PredictionSchema
+    _schema: schema.Prediction
 
     def __init__(
         self,
@@ -246,10 +121,15 @@ class Prediction(types.Model):
         description: types.Description,
         commit: types.Commit,
         predict_date: types.Date,
-        data: types.PredictionData,
+        data: types.PredictionData = None,
         id: Optional[types.ID] = None,
+        case_definition: Optional[str] = None,
+        published: bool = False,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        scores: Optional[Dict[str, float]] = None,
         adm_0: str = "BRA",
-        adm_1: Optional[str] = None,
+        adm_1: Optional[int] = None,
         adm_2: Optional[int] = None,
         adm_3: Optional[int] = None,
         **kwargs,
@@ -258,35 +138,41 @@ class Prediction(types.Model):
             model = Model(**model)
 
         kwargs["model"] = model
-
         super().__init__(**kwargs)
 
-        if isinstance(data, str):
-            try:
-                _data = json.loads(data)
-            except json.decoder.JSONDecodeError:
-                raise ValueError("str `data` must be JSON serializable")
-            _data = [schema.PredictionDataRowSchema(**d) for d in _data]
-        elif isinstance(data, pd.DataFrame):
-            _data = [
-                schema.PredictionDataRowSchema(**d)
-                for d in data.to_dict(orient="records")
-            ]
-        elif isinstance(data, list):
-            _data = [schema.PredictionDataRowSchema(**d) for d in data]
-        else:
-            raise ValueError(
-                "`data` must be rather a DataFrame, a JSON str or a list of"
-                + " dictionaries"
-            )
+        _data = []
+        if data:
+            if isinstance(data, str):
+                try:
+                    loaded = json.loads(data)
+                    _data = [schema.PredictionDataRow(**d) for d in loaded]
+                except json.decoder.JSONDecodeError:
+                    raise ValueError("str `data` must be JSON serializable")
+            elif isinstance(data, pd.DataFrame):
+                _data = [
+                    schema.PredictionDataRow(**d)
+                    for d in data.to_dict(orient="records")
+                ]
+            elif isinstance(data, list):
+                _data = [schema.PredictionDataRow(**d) for d in data]
+            else:
+                raise ValueError(
+                    "`data` must be a DataFrame, "
+                    "a JSON str or a list of dictionaries"
+                )
 
         self.model = model
-        self._schema = schema.PredictionSchema(
+        self._schema = schema.Prediction(
             id=id,
             model=model._schema,
             description=description,
             commit=commit,
             predict_date=predict_date,
+            case_definition=case_definition,
+            published=published,
+            start_date=start_date,
+            end_date=end_date,
+            scores=scores,
             adm_0=adm_0,
             adm_1=adm_1,
             adm_2=adm_2,
@@ -299,18 +185,12 @@ class Prediction(types.Model):
 
     @classmethod
     def get(cls, api_key: str, **kwargs):
-        """
-        registry.schema.PredictionGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionGETParams(**kwargs)
         return list(cls(**item) for item in client.get(params))
 
     @classmethod
     def post(cls, api_key: str, **kwargs):
-        """
-        registry.schema.PredictionPOSTParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionPOSTParams(**kwargs)
         res = client.post(params)
@@ -318,9 +198,6 @@ class Prediction(types.Model):
 
     @classmethod
     def delete(self, api_key: str, id: int):
-        """
-        registry.schema.PredictionDELETEParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionDELETEParams(id=id)
         return client.delete(params)
@@ -347,3 +224,23 @@ class Prediction(types.Model):
 
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.data)
+
+    @property
+    def case_definition(self) -> str | None:
+        return self._schema.case_definition
+
+    @property
+    def published(self) -> bool:
+        return self._schema.published
+
+    @property
+    def start_date(self) -> date | None:
+        return self._schema.start_date
+
+    @property
+    def end_date(self) -> date | None:
+        return self._schema.end_date
+
+    @property
+    def scores(self) -> Dict[str, float]:
+        return self._schema.scores or {}
