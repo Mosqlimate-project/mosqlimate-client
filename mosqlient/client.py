@@ -31,6 +31,7 @@ class Mosqlient:
         x_uid_key: str,
         timeout: int = 300,
         max_items_per_page: int = 300,
+        # _api_url: str = "http://0.0.0.0:8042/api/",
         _api_url: str = "https://api.mosqlimate.org/api/",
     ):
         self.username, self.uid_key = x_uid_key.split(":")

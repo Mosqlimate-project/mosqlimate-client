@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict
 
 from mosqlient import validations as v
 
-
 APP = Annotated[str, AfterValidator(v.validate_django_app)]
 ID = Annotated[int, AfterValidator(v.validate_id)]
 Description = Annotated[str, AfterValidator(v.validate_description)]

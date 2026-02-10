@@ -9,7 +9,6 @@ from mosqlient import types
 from mosqlient.client import Mosqlient, Client
 from mosqlient.registry import schema
 
-
 nest_asyncio.apply()
 
 
@@ -117,28 +116,33 @@ class Prediction(types.Model):
 
     def __init__(
         self,
+        id: int,
         model: Model | dict,
-        description: types.Description,
-        commit: types.Commit,
         predict_date: types.Date,
-        data: types.PredictionData = None,
-        id: Optional[types.ID] = None,
-        case_definition: Optional[str] = None,
-        published: bool = False,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        commit: types.Commit,
+        case_definition: str,
+        published: bool,
+        created_at: date,
+        description: types.Description = "",
+        start: Optional[date] = None,
+        end: Optional[date] = None,
         scores: Optional[Dict[str, float]] = None,
-        adm_0: str = "BRA",
+        adm_0: Optional[str] = None,
         adm_1: Optional[int] = None,
         adm_2: Optional[int] = None,
         adm_3: Optional[int] = None,
+        data: types.PredictionData = None,
+        client: Optional[Client] = None,
         **kwargs,
     ):
         if isinstance(model, dict):
             model = Model(**model)
 
         kwargs["model"] = model
+        kwargs["client"] = client
         super().__init__(**kwargs)
+
+        self.client = client
 
         _data = []
         if data:
@@ -155,24 +159,20 @@ class Prediction(types.Model):
                 ]
             elif isinstance(data, list):
                 _data = [schema.PredictionDataRow(**d) for d in data]
-            else:
-                raise ValueError(
-                    "`data` must be a DataFrame, "
-                    "a JSON str or a list of dictionaries"
-                )
 
         self.model = model
         self._schema = schema.Prediction(
             id=id,
             model=model._schema,
-            description=description,
-            commit=commit,
             predict_date=predict_date,
+            commit=commit,
+            description=description,
             case_definition=case_definition,
             published=published,
-            start_date=start_date,
-            end_date=end_date,
-            scores=scores,
+            created_at=created_at,
+            start=start,
+            end=end,
+            scores=scores or {},
             adm_0=adm_0,
             adm_1=adm_1,
             adm_2=adm_2,
@@ -187,17 +187,22 @@ class Prediction(types.Model):
     def get(cls, api_key: str, **kwargs):
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionGETParams(**kwargs)
-        return list(cls(**item) for item in client.get(params))
+        return list(cls(**item, client=client) for item in client.get(params))
 
     @classmethod
     def post(cls, api_key: str, **kwargs):
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionPOSTParams(**kwargs)
         res = client.post(params)
-        return cls(**json.loads(res.text))
+        return cls(**json.loads(res.text), client=client)
+
+    def delete(self, api_key: str):
+        if not self.id:
+            raise ValueError("Cannot delete a prediction that has no ID.")
+        return self.delete_by_id(api_key=api_key, id=self.id)
 
     @classmethod
-    def delete(self, api_key: str, id: int):
+    def delete_by_id(cls, api_key: str, id: int):
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionDELETEParams(id=id)
         return client.delete(params)
@@ -220,6 +225,13 @@ class Prediction(types.Model):
 
     @property
     def data(self) -> List[Dict[AnyStr, Any]]:
+        if not self._schema.data and self.client and self.id:
+            params = schema.PredictionDataGETParams(id=self.id)
+            raw_data = self.client.get(params)
+            self._schema.data = [
+                schema.PredictionDataRow(**d) for d in raw_data
+            ]
+
         return [row.dict() for row in self._schema.data]
 
     def to_dataframe(self) -> pd.DataFrame:
@@ -234,13 +246,29 @@ class Prediction(types.Model):
         return self._schema.published
 
     @property
-    def start_date(self) -> date | None:
-        return self._schema.start_date
+    def start(self) -> date | None:
+        return self._schema.start
 
     @property
-    def end_date(self) -> date | None:
-        return self._schema.end_date
+    def end(self) -> date | None:
+        return self._schema.end
 
     @property
     def scores(self) -> Dict[str, float]:
         return self._schema.scores or {}
+
+    @property
+    def created_at(self) -> date:
+        return self._schema.created_at
+
+    @property
+    def adm_0(self) -> str | None:
+        return self._schema.adm_0
+
+    @property
+    def adm_1(self) -> int | None:
+        return self._schema.adm_1
+
+    @property
+    def adm_2(self) -> int | None:
+        return self._schema.adm_2
