@@ -1,3 +1,22 @@
+# [2.0.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.3...2.0.0) (2026-02-10)
+
+
+### Code Refactoring
+
+* **registry:** restructure model endpoints and update client SDK ([#80](https://github.com/Mosqlimate-project/mosqlimate-client/issues/80)) ([a15fa44](https://github.com/Mosqlimate-project/mosqlimate-client/commit/a15fa44a4ebac8d9b07693c14885ebce2a0714a9))
+
+
+### BREAKING CHANGES
+
+* **registry:** - The API endpoint for retrieving a specific model now uses path
+  parameters instead of relying solely on ID or query params.
+- Client SDK: functions have been renamed or removed to match the new
+  filter schema.
+- Client SDK: objects have new required fields and modified signatures.
+
+* refactor: refactor Prediction & PredictionData
+* **registry:** v2
+
 Release Notes
 ---
 
