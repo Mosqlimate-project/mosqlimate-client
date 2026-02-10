@@ -1,39 +1,34 @@
 __all__ = ["upload_prediction"]
 
-from typing import Optional
+from typing import Optional, Union, List, Dict
 from datetime import date
-import json
-import requests
 import pandas as pd
 from .models import Prediction
 
 
 def upload_prediction(
     api_key: str,
-    model_id: int,
+    repository: str,
     description: str,
     commit: str,
-    predict_date: str | date,
-    prediction: list[dict] | pd.DataFrame,
+    predict_date: Union[str, date],
+    prediction: Union[List[Dict], pd.DataFrame],
+    case_definition: str = "probable",
+    published: bool = False,
     adm_0: str = "BRA",
-    adm_1: Optional[str] = None,
+    adm_1: Optional[int] = None,
     adm_2: Optional[int] = None,
     adm_3: Optional[int] = None,
-) -> requests.Response:
+) -> Prediction:
     """
     Upload a prediction to the Mosqlimate API.
-
-    Converts a DataFrame or list of dictionaries containing prediction results
-    to the appropriate format and sends it to the API. It must contain the columns or
-    keys: "date", "lower_95", "lower_90", "lower_80", "lower_50",
-            "pred", "upper_50", "upper_80", "upper_90", "upper_95".
 
     Parameters
     ----------
     api_key : str
         API key used to authenticate with the Mosqlimate service.
-    model_id : int
-        Unique identifier of the model used to generate the prediction.
+    repository : str
+        The repository identifier in the format "owner/repo_name".
     description : str
         Textual description of the prediction run.
     commit : str
@@ -41,72 +36,71 @@ def upload_prediction(
     predict_date : str or datetime.date
         Date the prediction corresponds to (usually the forecast publication date).
     prediction : list of dict or pandas.DataFrame
-        Forecast data. If a DataFrame is provided, it must contain the following columns:
-        ['date', 'lower_95', 'lower_90', 'lower_80', 'lower_50', 'pred',
-         'upper_50', 'upper_80', 'upper_90', 'upper_95'].
+        Forecast data. If a DataFrame is provided, it must contain columns matching
+        the prediction schema (date, pred, lower_95, etc.).
+    case_definition : str, default="probable"
+        The case definition used (e.g., "probable" or "reported").
+    published : bool, default=False
+        Whether the prediction should be visible to the public.
     adm_0 : str, default="BRA"
-        ISO 3166-1 alpha-3 country code (e.g., 'BRA' for Brazil).
-    adm_1 : str, optional
-        State-level administrative division (ADM1), e.g., state abbreviation.
+        ISO 3166-1 alpha-3 country code.
+    adm_1 : int, optional
+        State-level administrative division geocode.
     adm_2 : int, optional
-        Municipality-level geocode (ADM2), typically IBGE code.
+        Municipality-level geocode.
     adm_3 : int, optional
-        Sub-municipality-level geocode (ADM3), if applicable.
+        Sub-municipality-level geocode.
 
     Returns
     -------
-    requests.Response
-        The response object from the Mosqlimate API.
+    Prediction
+        The created Prediction object.
     """
 
-    if type(prediction) == pd.DataFrame:
+    prediction_data = []
 
-        required_columns = [
-            "date",
-            "lower_95",
-            "lower_90",
-            "lower_80",
-            "lower_50",
-            "pred",
-            "upper_50",
-            "upper_80",
-            "upper_90",
-            "upper_95",
-        ]
+    if isinstance(prediction, pd.DataFrame):
+        df = prediction.copy()
+        if "date" in df.columns:
+            df["date"] = df["date"].astype(str)
 
-        assert all(
-            col in prediction.columns for col in required_columns
-        ), f"Missing required columns: {[col for col in required_columns if col not in prediction.columns]}"
+        prediction_data = df.to_dict(orient="records")
+    else:
+        prediction_data = prediction
 
-        json_prediction = prediction.to_json(
-            orient="records", date_format="iso"
-        )
+    float_fields = [
+        "lower_95",
+        "lower_90",
+        "lower_80",
+        "lower_50",
+        "pred",
+        "upper_50",
+        "upper_80",
+        "upper_90",
+        "upper_95",
+    ]
 
-        prediction = [
-            {
-                "date": str(item["date"]),
-                "lower_95": float(item["lower_95"]),
-                "lower_90": float(item["lower_90"]),
-                "lower_80": float(item["lower_80"]),
-                "lower_50": float(item["lower_50"]),
-                "pred": float(item["pred"]),
-                "upper_95": float(item["upper_95"]),
-                "upper_90": float(item["upper_90"]),
-                "upper_80": float(item["upper_80"]),
-                "upper_50": float(item["upper_50"]),
-            }
-            for item in json.loads(json_prediction)  # Parse once, then iterate
-        ]
+    clean_prediction = []
+    for item in prediction_data:
+        clean_item = {"date": str(item["date"])}
+        for field in float_fields:
+            if field in item and item[field] is not None:
+                clean_item[field] = float(item[field])
+            else:
+                clean_item[field] = None
+        clean_prediction.append(clean_item)
 
     return Prediction.post(
         api_key=api_key,
-        model=model_id,
+        repository=repository,
         description=description,
         commit=commit,
         predict_date=predict_date,
+        case_definition=case_definition,
+        published=published,
         adm_0=adm_0,
         adm_1=adm_1,
         adm_2=adm_2,
         adm_3=adm_3,
-        prediction=prediction,
+        prediction=clean_prediction,
     )

@@ -182,9 +182,7 @@ def check_dependencies(ctx):
         else:
 
             def safety_not_available():  # noqa: WPS430
-                print(
-                    inspect.cleandoc(  # noqa: WPS462
-                        """
+                print(inspect.cleandoc("""
                         Please install safety or pipx to run this task:
 
                         pip install --user safety
@@ -194,9 +192,7 @@ def check_dependencies(ctx):
                         pipx install safety
 
                         See https://github.com/advisories/GHSA-7q25-qrjw-6fg2
-                        """
-                    )  # noqa: WPS355
-                )
+                        """))  # noqa: WPS462  # noqa: WPS355
                 return 1
 
             ctx.run(

@@ -1,55 +1,34 @@
 from datetime import date
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Dict, Any
 
 from mosqlient import types
 
 
-class UserSchema(types.Schema):
-    name: Optional[str] = None
-    username: str
-
-
-class ImplementationLanguageSchema(types.Schema):
-    language: str
-
-
-class AuthorSchema(types.Schema):
-    user: UserSchema
-    institution: Optional[str] = None
-
-
-class TagSchema(types.Schema):
-    id: Optional[int]
-    name: str
-    color: str
-
-
-class ModelSchema(types.Schema):
-    id: Optional[types.ID]
-    name: types.Name
+class Model(types.Schema):
+    id: int
+    repository: str
     description: str
-    author: AuthorSchema
-    repository: types.Repository
-    implementation_language: ImplementationLanguageSchema
-    disease: types.Disease
-    categorical: types.Categorical
-    spatial: types.Spatial
-    temporal: types.Temporal
-    adm_level: types.ADMLevel
-    time_resolution: types.TimeResolution
-    sprint: bool
+    disease: str
+    category: str
+    adm_level: int
+    time_resolution: str
+    sprint: Optional[int] = None
+    predictions_count: int
+    active: bool
+    created_at: date
+    last_update: date
 
 
-class PredictionDataRowSchema(types.Schema):
+class PredictionDataRow(types.Schema):
     date: date
     lower_95: Optional[float] = None
-    lower_90: float
+    lower_90: Optional[float] = None
     lower_80: Optional[float] = None
     lower_50: Optional[float] = None
     pred: float
     upper_50: Optional[float] = None
     upper_80: Optional[float] = None
-    upper_90: float
+    upper_90: Optional[float] = None
     upper_95: Optional[float] = None
 
     class Config:
@@ -57,207 +36,108 @@ class PredictionDataRowSchema(types.Schema):
 
     def dict(self, **kwargs):
         _d = super().dict(**kwargs)
-        _d["date"] = _d["date"].strftime("%Y-%m-%d")
+        if _d.get("date"):
+            _d["date"] = _d["date"].strftime("%Y-%m-%d")
         return _d
 
 
-class PredictionSchema(types.Schema):
+class Prediction(types.Schema):
     id: Optional[types.ID] = None
-    model: ModelSchema
-    description: types.Description
-    commit: types.Commit
+    model: Model
     predict_date: types.Date
-    adm_0: str = "BRA"
-    adm_1: Optional[str] = None
+    commit: types.Commit
+    description: types.Description
+    case_definition: Optional[str] = None
+    published: bool
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    scores: Optional[Dict[str, float]] = None
+    adm_0: Optional[str] = None
+    adm_1: Optional[int] = None
     adm_2: Optional[int] = None
     adm_3: Optional[int] = None
-    data: List[PredictionDataRowSchema]
-
-
-class AuthorGETParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
-    app: types.APP = "registry"
-    endpoint: str = "authors"
-    page: Optional[int] = None
-    per_page: Optional[int] = None
-    #
-    name: Optional[types.AuthorName] = None
-    institution: Optional[types.AuthorInstitution] = None
-    username: Optional[types.AuthorUserName] = None
-
-    def params(self) -> dict:
-        p = {
-            "name": self.name,
-            "institution": self.institution,
-            "username": self.username,
-            "page": self.page,
-            "per_page": self.per_page,
-        }
-        return {k: v for k, v in p.items() if v is not None}
+    data: Optional[List[PredictionDataRow]] = []
 
 
 class ModelGETParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
-    app: types.APP = "registry"
+    method: Literal["GET"] = "GET"
+    app: str = "registry"
     endpoint: str = "models"
     page: Optional[int] = None
     per_page: Optional[int] = None
     #
-    id: Optional[types.ID] = None
-    name: Optional[types.Name] = None
-    author_name: Optional[types.AuthorName] = None
-    author_username: Optional[types.AuthorUserName] = None
-    author_institution: Optional[types.AuthorInstitution] = None
-    repository: Optional[types.Repository] = None
-    implementation_language: Optional[types.ImplementationLanguage] = None
-    disease: Optional[types.Disease] = None
-    adm_level: Optional[types.ADMLevel] = None
-    temporal: Optional[types.Temporal] = None
-    spatial: Optional[types.Spatial] = None
-    categorical: Optional[types.Categorical] = None
-    time_resolution: Optional[types.TimeResolution] = None
-    tags: Optional[types.Tags] = None
-    sprint: Optional[bool] = None
+    id: Optional[int] = None
+    repository: Optional[str] = None
+    description: Optional[str] = None
+    disease: Optional[str] = None
+    category: Optional[str] = None
+    adm_level: Optional[int] = None
+    time_resolution: Optional[str] = None
+    sprint: Optional[int] = None
+    predictions_count: Optional[int] = None
+    active: Optional[bool] = None
+    created_at: Optional[date] = None
+    last_update: Optional[date] = None
 
     def params(self) -> dict:
         p = {
             "id": self.id,
-            "name": self.name,
-            "author_name": self.author_name,
-            "author_username": self.author_username,
             "repository": self.repository,
-            "implementation_language": self.implementation_language,
+            "description": self.description,
             "disease": self.disease,
+            "category": self.category,
             "adm_level": self.adm_level,
-            "temporal": self.temporal,
-            "spatial": self.spatial,
-            "categorical": self.categorical,
             "time_resolution": self.time_resolution,
-            "tags": self.tags,
             "sprint": self.sprint,
+            "predictions_count": self.predictions_count,
+            "active": self.active,
+            "created_at": self.created_at,
+            "last_update": self.last_update,
             "page": self.page,
             "per_page": self.per_page,
         }
         return {k: v for k, v in p.items() if v is not None}
 
 
-class ModelPOSTParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "POST"
-    app: types.APP = "registry"
-    endpoint: str = "models"
-    #
-    name: types.Name
-    description: types.Description
-    repository: types.Repository
-    implementation_language: types.ImplementationLanguage
-    disease: types.Disease
-    adm_level: types.ADMLevel
-    temporal: types.Temporal
-    spatial: types.Spatial
-    categorical: types.Categorical
-    time_resolution: types.TimeResolution
-    sprint: bool = False
-
-    def params(self):
-        return {
-            "name": self.name,
-            "description": self.description,
-            "repository": self.repository,
-            "implementation_language": self.implementation_language,
-            "disease": self.disease,
-            "adm_level": self.adm_level,
-            "temporal": self.temporal,
-            "spatial": self.spatial,
-            "categorical": self.categorical,
-            "time_resolution": self.time_resolution,
-            "sprint": self.sprint,
-        }
-
-
-class ModelPUTParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "PUT"
-    app: types.APP = "registry"
-    endpoint: str = "models/{model_id}"
-    #
-    id: types.ID
-    name: Optional[types.Name] = None
-    description: Optional[types.Description] = None
-    repository: Optional[types.Repository] = None
-    implementation_language: Optional[types.ImplementationLanguage] = None
-    disease: Optional[types.Disease] = None
-    adm_level: Optional[types.ADMLevel] = None
-    temporal: Optional[types.Temporal] = None
-    spatial: Optional[types.Spatial] = None
-    categorical: Optional[types.Categorical] = None
-    time_resolution: Optional[types.TimeResolution] = None
-
-
-class ModelDELETEParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "DELETE"
-    app: types.APP = "registry"
-    endpoint: str = "models/{model_id}"
-    #
-    id: types.ID
-
-    def __init__(self, id: types.ID, **kwargs):
-        super().__init__(id=id, **kwargs)
-        self.endpoint = self.endpoint.replace("{model_id}", str(id))
-
-    def params(self):
-        return
-
-
 class PredictionGETParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
-    app: types.APP = "registry"
+    method: Literal["GET"] = "GET"
+    app: str = "registry"
     endpoint: str = "predictions"
     page: Optional[int] = None
     per_page: Optional[int] = None
-    #
-    id: Optional[types.ID] = None
-    model_id: Optional[types.ID] = None
-    model_name: Optional[types.Name] = None
-    model_adm_level: Optional[types.ADMLevel] = None
-    model_time_resolution: Optional[types.TimeResolution] = None
-    model_disease: Optional[types.Disease] = None
-    author_name: Optional[types.AuthorName] = None
-    author_username: Optional[types.AuthorUserName] = None
-    author_institution: Optional[types.AuthorInstitution] = None
-    repository: Optional[types.Repository] = None
-    implementation_language: Optional[types.ImplementationLanguage] = None
-    temporal: Optional[types.Temporal] = None
-    spatial: Optional[types.Spatial] = None
-    categorical: Optional[types.Categorical] = None
-    commit: Optional[types.Commit] = None
-    predict_date: Optional[types.Date] = None
-    start: Optional[types.Date] = None
-    end: Optional[types.Date] = None
-    adm_1_geocode: Optional[int] = None
-    adm_2_geocode: Optional[types.Geocode] = None
-    sprint: Optional[bool] = None
+
+    id: Optional[int] = None
+    model_id: Optional[int] = None
+    model_repository: Optional[str] = None
+    model_disease: Optional[str] = None
+    commit: Optional[str] = None
+    case_definition: Optional[str] = None
+    predict_date: Optional[date] = None
+    start: Optional[date] = None
+    end: Optional[date] = None
+    created_at: Optional[date] = None
+    adm_0: Optional[str] = None
+    adm_1: Optional[int] = None
+    adm_2: Optional[int] = None
+    adm_3: Optional[int] = None
+    sprint: Optional[int] = None
 
     def params(self) -> dict:
         p = {
             "id": self.id,
             "model_id": self.model_id,
-            "model_name": self.model_name,
-            "model_adm_level": self.model_adm_level,
-            "model_time_resolution": self.model_time_resolution,
+            "model_repository": self.model_repository,
             "model_disease": self.model_disease,
-            "author_name": self.author_name,
-            "author_username": self.author_username,
-            "author_institution": self.author_institution,
-            "repository": self.repository,
-            "implementation_language": self.implementation_language,
-            "temporal": self.temporal,
-            "spatial": self.spatial,
-            "categorical": self.categorical,
             "commit": self.commit,
+            "case_definition": self.case_definition,
             "predict_date": self.predict_date,
             "start": self.start,
             "end": self.end,
-            "adm_1_geocode": self.adm_1_geocode,
-            "adm_2_geocode": self.adm_2_geocode,
+            "created_at": self.created_at,
+            "adm_0": self.adm_0,
+            "adm_1": self.adm_1,
+            "adm_2": self.adm_2,
+            "adm_3": self.adm_3,
             "sprint": self.sprint,
             "page": self.page,
             "per_page": self.per_page,
@@ -266,26 +146,30 @@ class PredictionGETParams(types.Params):
 
 
 class PredictionPOSTParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
-    app: types.APP = "registry"
+    method: Literal["POST"] = "POST"
+    app: str = "registry"
     endpoint: str = "predictions"
-    #
-    model: types.ID
-    description: types.Description
-    commit: types.Commit
-    predict_date: types.Date
-    adm_0: str = "BRA"
-    adm_1: Optional[str] = None
+
+    repository: str
+    description: str
+    commit: str
+    predict_date: date
+    case_definition: str
+    published: bool
+    prediction: List[Dict[str, Any]]
+    adm_0: Optional[str] = "BRA"
+    adm_1: Optional[int] = None
     adm_2: Optional[int] = None
     adm_3: Optional[int] = None
-    prediction: types.PredictionData
 
     def params(self) -> dict:
         return {
-            "model": self.model,
+            "repository": self.repository,
             "description": self.description,
             "commit": self.commit,
             "predict_date": self.predict_date,
+            "case_definition": self.case_definition,
+            "published": self.published,
             "adm_0": self.adm_0,
             "adm_1": self.adm_1,
             "adm_2": self.adm_2,
@@ -294,20 +178,8 @@ class PredictionPOSTParams(types.Params):
         }
 
 
-class PredictionPUTParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "PUT"
-    app: types.APP = "registry"
-    endpoint: str = "predictions"
-    #
-    model: types.ID
-    description: Optional[types.Description] = None
-    commit: Optional[types.Commit] = None
-    predict_date: Optional[types.Date] = None
-    prediction: Optional[types.PredictionData] = None
-
-
 class PredictionDELETEParams(types.Params):
-    method: Literal["GET", "POST", "PUT", "DELETE"] = "DELETE"
+    method: Literal["DELETE"] = "DELETE"
     app: types.APP = "registry"
     endpoint: str = "predictions/{predict_id}"
     #
@@ -319,3 +191,17 @@ class PredictionDELETEParams(types.Params):
 
     def params(self):
         return
+
+
+class PredictionDataGETParams(types.Params):
+    method: Literal["GET"] = "GET"
+    app: str = "registry"
+    endpoint: str = "predictions/{predict_id}/data"
+    id: int
+
+    def __init__(self, id: int, **kwargs):
+        super().__init__(id=id, **kwargs)
+        self.endpoint = self.endpoint.replace("{predict_id}", str(id))
+
+    def params(self) -> dict:
+        return {}

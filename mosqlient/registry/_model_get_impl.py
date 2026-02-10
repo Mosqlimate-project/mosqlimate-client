@@ -2,22 +2,22 @@ __all__ = [
     "get_all_models",
     "get_models",
     "get_model_by_id",
-    "get_models_by_author_name",
-    "get_models_by_author_username",
-    "get_models_by_author_institution",
-    "get_models_by_repository",
-    "get_models_by_implementation_language",
+    "get_models_by_repository_owner",
+    "get_models_by_repository_organization",
+    "get_models_by_repository_name",
     "get_models_by_disease",
+    "get_models_by_category",
     "get_models_by_adm_level",
     "get_models_by_time_resolution",
+    "get_models_by_sprint",
 ]
 
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from .models import Model
 
 
-def get_all_models(api_key: str) -> list[dict]:
+def get_all_models(api_key: str) -> List[Model]:
     """
     Returns a list of all models that are registered and available on the platform.
 
@@ -36,19 +36,23 @@ def get_all_models(api_key: str) -> list[dict]:
 def get_models(
     api_key: str,
     id: Optional[int] = None,
-    name: Optional[str] = None,
-    author_name: Optional[str] = None,
-    author_username: Optional[str] = None,
-    author_institution: Optional[str] = None,
-    repository: Optional[str] = None,
-    implementation_language: Optional[str] = None,
-    disease: Optional[str] = None,
-    adm_level: Optional[int] = None,
-    temporal: Optional[bool] = None,
-    spatial: Optional[bool] = None,
-    categorical: Optional[bool] = None,
-    time_resolution: Optional[str] = None,
-    sprint: Optional[bool] = None,
+    repository_owner: Optional[str] = None,
+    repository_organization: Optional[str] = None,
+    repository_name: Optional[str] = None,
+    disease: Optional[Literal["A90", "A92.0", "A92.5"]] = None,
+    category: Optional[
+        Literal[
+            "quantitative",
+            "categorical",
+            "spatial_quantitative",
+            "spatial_categorical",
+            "spatio_temporal_quantitative",
+            "spatio_temporal_categorical",
+        ]
+    ] = None,
+    adm_level: Optional[Literal[0, 1, 2, 3]] = None,
+    time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
+    sprint: Optional[int] = None,
 ) -> List[Model]:
     """
     Returns a list of all models registered on the platform that match the
@@ -60,33 +64,22 @@ def get_models(
             API key used to authenticate with the Mosqlimate service.
         id: int, optional
             Model id.
-        name: str, optional
-            Model name.
-        author_name: str, optional
-            Author name.
-        author_username: str, optional
-            Author username.
-        author_institution:str, optional
-            Author institution
-        repository: str, optional
-            Name of the Github repository where the model's source code is stored.
-        implementation_language: str, optional
-            Name of the implementation language of the model.
+        repository_owner: str, optional
+            Username of the repository owner.
+        repository_organization: str, optional
+            Name of the repository organization.
+        repository_name: str, optional
+            Name of the repository.
         disease: str, optional
-            Disease name. Options are: 'dengue', 'chikungunya' and 'zika'
+            Disease code. Options: 'A90' (Dengue), 'A92.0' (Chikungunya), 'A92.5' (Zika).
+        category: str, optional
+            Model category. Options: 'quantitative', 'categorical', 'spatial_quantitative', etc.
         adm_level: int, optional
-            ADM level of the model. Options:
-            0, 1, 2, 3 (National, State, Municipality, Sub Municipality)
-        temporal: bool, optional
-            Indicates whether the model is temporal.
-        spatial: bool, optional
-            Indicates whether the model is spatial.
-        categorical: bool, optional
-            Indicates whether the model is categorical.
+            ADM level. Options: 0 (National), 1 (State), 2 (Municipality), 3 (Sub-Municipality).
         time_resolution: str, optional
-            Time resolution of the model. Options are: 'day', 'week', 'month' or 'year'
-        sprint: bool, optional
-            Indicates whether the model belong to the sprint.
+            Time resolution. Options: 'day', 'week', 'month', 'year'.
+        sprint: int, optional
+            The year of the sprint the model belongs to (e.g., 2024).
 
     Returns
     -------
@@ -96,17 +89,12 @@ def get_models(
     return Model.get(
         api_key=api_key,
         id=id,
-        name=name,
-        author_name=author_name,
-        author_username=author_username,
-        author_institution=author_institution,
-        repository=repository,
-        implementation_language=implementation_language,
+        repository_owner=repository_owner,
+        repository_organization=repository_organization,
+        repository_name=repository_name,
         disease=disease,
+        category=category,
         adm_level=adm_level,
-        temporal=temporal,
-        spatial=spatial,
-        categorical=categorical,
         time_resolution=time_resolution,
         sprint=sprint,
     )
@@ -130,118 +118,99 @@ def get_model_by_id(api_key: str, id: int) -> Model | None:
     return res[0] if len(res) == 1 else None
 
 
-def get_models_by_author_name(api_key: str, author_name: str) -> List[Model]:
-    """
-    Returns a list of models based on the author name.
-
-    Parameters
-    ----------
-        api_key : str
-            API key used to authenticate with the Mosqlimate service.
-        author_name: str, optional
-            Author name.
-    Returns
-    -------
-    List of Models
-    """
-    return Model.get(api_key=api_key, author_name=author_name)
-
-
-def get_models_by_author_username(
+def get_models_by_repository_owner(
     api_key: str,
-    author_username: str,
+    repository_owner: str,
 ) -> List[Model]:
     """
-    Returns a list of models based on the author username.
+    Returns a list of models based on the repository owner (username).
 
     Parameters
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        author_username: str, optional
-            Author username.
+        repository_owner: str
+            Username of the owner.
     Returns
     -------
     List of Models
     """
-    return Model.get(api_key=api_key, author_username=author_username)
+    return Model.get(api_key=api_key, repository_owner=repository_owner)
 
 
-def get_models_by_author_institution(
+def get_models_by_repository_organization(
     api_key: str,
-    author_institution: str,
+    repository_organization: str,
 ) -> List[Model]:
     """
-    Returns a list of models based on the author institution.
+    Returns a list of models based on the repository organization.
 
     Parameters
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        author_institution: str, optional
-            Author institution.
-    Returns
-    -------
-    List of Models
-    """
-    return Model.get(api_key=api_key, author_institution=author_institution)
-
-
-def get_models_by_repository(api_key: str, repository: str) -> List[Model]:
-    """
-    Returns a list of models based on the author institution.
-
-    Parameters
-    ----------
-        api_key : str
-            API key used to authenticate with the Mosqlimate service.
-        author_institution: str, optional
-            Author institution.
-    Returns
-    -------
-    List of Models
-    """
-
-    return Model.get(api_key=api_key, repository=repository)
-
-
-def get_models_by_implementation_language(
-    api_key: str,
-    implementation_language: str,
-) -> List[Model]:
-    """
-    Returns a list of models based on the author institution.
-
-    Parameters
-    ----------
-        api_key : str
-            API key used to authenticate with the Mosqlimate service.
-        implementation_language: str, optional
-            Name of the implementation language of the model.
+        repository_organization: str
+            Name of the organization.
     Returns
     -------
     List of Models
     """
     return Model.get(
-        api_key=api_key, implementation_language=implementation_language
+        api_key=api_key, repository_organization=repository_organization
     )
 
 
-def get_models_by_disease(api_key: str, disease: str) -> List[Model]:
+def get_models_by_repository_name(
+    api_key: str, repository_name: str
+) -> List[Model]:
     """
-    Returns a list of models based on the disease.
+    Returns a list of models based on the repository name.
 
     Parameters
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        disease: str, optional
-            Disease. Options are: 'dengue', 'chikungunya' and 'zika'.
+        repository_name: str
+            Name of the repository.
+    Returns
+    -------
+    List of Models
+    """
+    return Model.get(api_key=api_key, repository_name=repository_name)
+
+
+def get_models_by_disease(api_key: str, disease: str) -> List[Model]:
+    """
+    Returns a list of models based on the disease code.
+
+    Parameters
+    ----------
+        api_key : str
+            API key used to authenticate with the Mosqlimate service.
+        disease: str
+            Disease code (e.g., 'A90', 'A92.0').
     Returns
     -------
     List of Models
     """
     return Model.get(api_key=api_key, disease=disease)
+
+
+def get_models_by_category(api_key: str, category: str) -> List[Model]:
+    """
+    Returns a list of models based on the category.
+
+    Parameters
+    ----------
+        api_key : str
+            API key used to authenticate with the Mosqlimate service.
+        category: str
+            Model category (e.g., 'spatial_quantitative').
+    Returns
+    -------
+    List of Models
+    """
+    return Model.get(api_key=api_key, category=category)
 
 
 def get_models_by_adm_level(api_key: str, adm_level: int) -> List[Model]:
@@ -252,9 +221,8 @@ def get_models_by_adm_level(api_key: str, adm_level: int) -> List[Model]:
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        adm_level: int, optional
-            ADM level of the model. Options:
-            0, 1, 2, 3 (National, State, Municipality, Sub Municipality).
+        adm_level: int
+            ADM level (0, 1, 2, or 3).
     Returns
     -------
     List of Models
@@ -264,7 +232,7 @@ def get_models_by_adm_level(api_key: str, adm_level: int) -> List[Model]:
 
 def get_models_by_time_resolution(
     api_key: str,
-    time_resolution: int,
+    time_resolution: str,
 ) -> List[Model]:
     """
     Returns a list of models based on the time resolution.
@@ -273,10 +241,27 @@ def get_models_by_time_resolution(
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        time_resolution: str, optional
-            Time resolution of the model. Options are: 'day', 'week', 'month' or 'year'
+        time_resolution: str
+            Time resolution ('day', 'week', 'month', 'year').
     Returns
     -------
     List of Models
     """
     return Model.get(api_key=api_key, time_resolution=time_resolution)
+
+
+def get_models_by_sprint(api_key: str, sprint: int) -> List[Model]:
+    """
+    Returns a list of models based on the sprint year.
+
+    Parameters
+    ----------
+        api_key : str
+            API key used to authenticate with the Mosqlimate service.
+        sprint: int
+            Year of the sprint.
+    Returns
+    -------
+    List of Models
+    """
+    return Model.get(api_key=api_key, sprint=sprint)
