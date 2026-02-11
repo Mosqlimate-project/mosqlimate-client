@@ -7,7 +7,7 @@ from mosqlient import types
 class Model(types.Schema):
     id: int
     repository: str
-    description: str
+    description: Optional[str] = ""
     disease: str
     category: str
     adm_level: int
@@ -108,37 +108,33 @@ class PredictionGETParams(types.Params):
 
     id: Optional[int] = None
     model_id: Optional[int] = None
-    model_repository: Optional[str] = None
+    model_owner: Optional[str] = None
+    model_organization: Optional[str] = None
+    model_name: Optional[str] = None
+    model_adm_level: Optional[int] = None
+    model_time_resolution: Optional[
+        Literal["day", "week", "month", "year"]
+    ] = None
     model_disease: Optional[str] = None
-    commit: Optional[str] = None
-    case_definition: Optional[str] = None
-    predict_date: Optional[date] = None
+    model_category: Optional[str] = None
+    model_sprint: Optional[int] = None
     start: Optional[date] = None
     end: Optional[date] = None
-    created_at: Optional[date] = None
-    adm_0: Optional[str] = None
-    adm_1: Optional[int] = None
-    adm_2: Optional[int] = None
-    adm_3: Optional[int] = None
-    sprint: Optional[int] = None
 
     def params(self) -> dict:
         p = {
             "id": self.id,
             "model_id": self.model_id,
-            "model_repository": self.model_repository,
+            "model_owner": self.model_owner,
+            "model_organization": self.model_organization,
+            "model_name": self.model_name,
+            "model_adm_level": self.model_adm_level,
+            "model_time_resolution": self.model_time_resolution,
             "model_disease": self.model_disease,
-            "commit": self.commit,
-            "case_definition": self.case_definition,
-            "predict_date": self.predict_date,
+            "model_category": self.model_category,
+            "model_sprint": self.model_sprint,
             "start": self.start,
             "end": self.end,
-            "created_at": self.created_at,
-            "adm_0": self.adm_0,
-            "adm_1": self.adm_1,
-            "adm_2": self.adm_2,
-            "adm_3": self.adm_3,
-            "sprint": self.sprint,
             "page": self.page,
             "per_page": self.per_page,
         }
@@ -167,7 +163,9 @@ class PredictionPOSTParams(types.Params):
             "repository": self.repository,
             "description": self.description,
             "commit": self.commit,
-            "predict_date": self.predict_date,
+            "predict_date": (
+                str(self.predict_date) if self.predict_date else None
+            ),
             "case_definition": self.case_definition,
             "published": self.published,
             "adm_0": self.adm_0,
