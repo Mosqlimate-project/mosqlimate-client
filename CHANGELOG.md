@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.0...2.0.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* **docs:** fix errors on API notebooks ([#81](https://github.com/Mosqlimate-project/mosqlimate-client/issues/81)) ([2e0d9ec](https://github.com/Mosqlimate-project/mosqlimate-client/commit/2e0d9ec96a66bd43517d1c2fc90005fbf393aba6))
+
 # [2.0.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.3...2.0.0) (2026-02-10)
 
 
