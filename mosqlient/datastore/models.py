@@ -93,7 +93,7 @@ class Episcanner(types.Model):
     def get(
         cls,
         api_key: str,
-        disease: str,
+        disease: Literal["dengue", "zika", "chikungunya"],
         uf: str,
         year: Optional[int] = date.today().year,
     ):

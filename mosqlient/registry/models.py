@@ -69,7 +69,7 @@ class Model(types.Model):
         return self._schema.repository
 
     @property
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         return self._schema.description
 
     @property
@@ -118,7 +118,6 @@ class Prediction(types.Model):
         self,
         id: int,
         model: Model | dict,
-        predict_date: types.Date,
         commit: types.Commit,
         case_definition: str,
         published: bool,
@@ -131,7 +130,7 @@ class Prediction(types.Model):
         adm_1: Optional[int] = None,
         adm_2: Optional[int] = None,
         adm_3: Optional[int] = None,
-        data: types.PredictionData = None,
+        data: Optional[types.PredictionData] = None,
         client: Optional[Client] = None,
         **kwargs,
     ):
@@ -164,14 +163,13 @@ class Prediction(types.Model):
         self._schema = schema.Prediction(
             id=id,
             model=model._schema,
-            predict_date=predict_date,
             commit=commit,
             description=description,
             case_definition=case_definition,
             published=published,
-            created_at=created_at,
-            start=start,
-            end=end,
+            created_at=created_at,  # type: ignore
+            start=start,  # type: ignore
+            end=end,  # type: ignore
             scores=scores or {},
             adm_0=adm_0,
             adm_1=adm_1,
@@ -227,10 +225,6 @@ class Prediction(types.Model):
         return self._schema.commit
 
     @property
-    def predict_date(self) -> types.Date:
-        return self._schema.predict_date
-
-    @property
     def data(self) -> List[Dict[AnyStr, Any]]:
         if not self._schema.data and self.client and self.id:
             params = schema.PredictionDataGETParams(id=self.id)
@@ -239,7 +233,7 @@ class Prediction(types.Model):
                 schema.PredictionDataRow(**d) for d in raw_data
             ]
 
-        return [row.dict() for row in self._schema.data]
+        return [row.dict() for row in (self._schema.data or [])]
 
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.data)
@@ -254,11 +248,11 @@ class Prediction(types.Model):
 
     @property
     def start(self) -> date | None:
-        return self._schema.start
+        return self._schema.start  # type: ignore
 
     @property
     def end(self) -> date | None:
-        return self._schema.end
+        return self._schema.end  # type: ignore
 
     @property
     def scores(self) -> Dict[str, float]:
@@ -266,7 +260,7 @@ class Prediction(types.Model):
 
     @property
     def created_at(self) -> date:
-        return self._schema.created_at
+        return self._schema.created_at  # type: ignore
 
     @property
     def adm_0(self) -> str | None:

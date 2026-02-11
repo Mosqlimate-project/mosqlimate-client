@@ -1,7 +1,6 @@
 __all__ = ["upload_prediction"]
 
-from typing import Optional, Union, List, Dict
-from datetime import date
+from typing import Optional, Union, List, Dict, Any
 import pandas as pd
 from .models import Prediction
 
@@ -11,7 +10,6 @@ def upload_prediction(
     repository: str,
     description: str,
     commit: str,
-    predict_date: Union[str, date],
     prediction: Union[List[Dict], pd.DataFrame],
     case_definition: str = "probable",
     published: bool = False,
@@ -33,8 +31,6 @@ def upload_prediction(
         Textual description of the prediction run.
     commit : str
         Git commit hash associated with the model version.
-    predict_date : str or datetime.date
-        Date the prediction corresponds to (usually the forecast publication date).
     prediction : list of dict or pandas.DataFrame
         Forecast data. If a DataFrame is provided, it must contain columns matching
         the prediction schema (date, pred, lower_95, etc.).
@@ -82,20 +78,19 @@ def upload_prediction(
 
     clean_prediction = []
     for item in prediction_data:
-        clean_item = {"date": str(item["date"])}
+        i: Dict[str, Any] = {"date": str(item["date"])}
         for field in float_fields:
             if field in item and item[field] is not None:
-                clean_item[field] = float(item[field])
+                i[field] = float(item[field])
             else:
-                clean_item[field] = None
-        clean_prediction.append(clean_item)
+                i[field] = None
+        clean_prediction.append(i)
 
     return Prediction.post(
         api_key=api_key,
         repository=repository,
         description=description,
         commit=commit,
-        predict_date=predict_date,
         case_definition=case_definition,
         published=published,
         adm_0=adm_0,
