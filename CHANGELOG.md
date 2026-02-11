@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.1...2.0.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* **predictions:** remove predict_date field ([#82](https://github.com/Mosqlimate-project/mosqlimate-client/issues/82)) ([9c870cb](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9c870cb83a4f71c7d4ea83d6bf455151ce8f1bf6))
+
 ## [2.0.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.0...2.0.1) (2026-02-11)
 
 
