@@ -194,7 +194,14 @@ class Prediction(types.Model):
         client = Mosqlient(x_uid_key=api_key)
         params = schema.PredictionPOSTParams(**kwargs)
         res = client.post(params)
-        return cls(**json.loads(res.text), client=client)
+        data = json.loads(res.text)
+
+        if "id" in data:
+            predictions = cls.get(api_key=api_key, id=data["id"])
+            if predictions:
+                return predictions[0]
+
+        return cls(**data, client=client)
 
     def delete(self, api_key: str):
         if not self.id:

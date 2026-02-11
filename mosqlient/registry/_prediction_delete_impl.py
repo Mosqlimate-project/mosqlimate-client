@@ -24,4 +24,4 @@ def delete_prediction(
     --------
     request response
     """
-    return Prediction.delete(api_key=api_key, id=prediction_id)
+    return Prediction.delete_by_id(api_key=api_key, id=prediction_id)

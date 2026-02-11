@@ -32,7 +32,7 @@ class InfodengueGETParams(types.Params):
     #
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
-    disease: Optional[types.Disease] = None
+    disease: Optional[Literal["dengue", "zika", "chikungunya"]] = None
     uf: Optional[types.UF] = None
     geocode: Optional[types.Geocode] = None
 
@@ -104,7 +104,7 @@ class EpiscannerGETParams(types.Params):
     app: types.APP = "datastore"
     endpoint: str = "episcanner"
     #
-    disease: types.Disease
+    disease: Literal["dengue", "zika", "chikungunya"]
     uf: types.UF
     year: Optional[int] = None
 
