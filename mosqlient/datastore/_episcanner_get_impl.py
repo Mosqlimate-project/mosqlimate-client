@@ -1,7 +1,7 @@
 __all__ = ["get_episcanner"]
 
 
-from typing import Optional
+from typing import Optional, Literal
 from datetime import date
 
 import pandas as pd
@@ -13,7 +13,7 @@ from .models import Episcanner
 def get_episcanner(
     api_key: str,
     uf: types.UF,
-    disease: types.Disease = "dengue",
+    disease: Literal["dengue", "zika", "chikungunya"] = "dengue",
     year: Optional[int] = date.today().year,
 ) -> pd.DataFrame:
     """

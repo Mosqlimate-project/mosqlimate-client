@@ -44,7 +44,6 @@ class PredictionDataRow(types.Schema):
 class Prediction(types.Schema):
     id: Optional[types.ID] = None
     model: Model
-    predict_date: types.Date
     commit: types.Commit
     description: types.Description
     case_definition: Optional[str] = None
@@ -149,7 +148,6 @@ class PredictionPOSTParams(types.Params):
     repository: str
     description: str
     commit: str
-    predict_date: date
     case_definition: str
     published: bool
     prediction: List[Dict[str, Any]]
@@ -163,9 +161,6 @@ class PredictionPOSTParams(types.Params):
             "repository": self.repository,
             "description": self.description,
             "commit": self.commit,
-            "predict_date": (
-                str(self.predict_date) if self.predict_date else None
-            ),
             "case_definition": self.case_definition,
             "published": self.published,
             "adm_0": self.adm_0,
