@@ -121,6 +121,33 @@ class Mosqlient:
             raise err
         return res
 
+    def patch(self, params: Params) -> requests.models.Response:
+        self.__validate_request(params)
+        headers = {
+            "X-UID-Key": self.X_UID_KEY,
+            "Content-Type": "application/json",
+        }
+        res = requests.patch(
+            url=(
+                self.api_url
+                + params.app
+                + "/"
+                + params.endpoint.strip("/")
+                + "/"
+            ),
+            data=json.dumps(params.params()),
+            timeout=self.timeout,
+            headers=headers,
+        )
+        if res.status_code == 422:
+            raise ValueError(res.text)
+        try:
+            res.raise_for_status()
+        except requests.HTTPError as err:
+            logger.error(res.text)
+            raise err
+        return res
+
     def put(self, params: Params) -> requests.models.Response:
         self.__validate_request(params)
         raise NotImplementedError()
@@ -224,7 +251,7 @@ class Mosqlient:
 
     def __validate_endpoint(
         self,
-        method: Literal["GET", "POST", "PUT", "DELETE"],
+        method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"],
         app: str,
         endpoint: str,
     ) -> None:

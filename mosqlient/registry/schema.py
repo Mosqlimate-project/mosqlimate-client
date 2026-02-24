@@ -186,6 +186,22 @@ class PredictionDELETEParams(types.Params):
         return
 
 
+class PredictionPublishPATCHParams(types.Params):
+    method: Literal["PATCH"] = "PATCH"
+    app: str = "registry"
+    endpoint: str = "prediction/{prediction_id}/publish"
+
+    id: int
+    published: bool
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.endpoint = self.endpoint.replace("{prediction_id}", str(self.id))
+
+    def params(self) -> dict:
+        return {"published": self.published}
+
+
 class PredictionDataGETParams(types.Params):
     method: Literal["GET"] = "GET"
     app: str = "registry"

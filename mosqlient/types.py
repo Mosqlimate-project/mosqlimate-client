@@ -38,7 +38,7 @@ class Params(BaseModel, ABC):
     model_config = ConfigDict(
         arbitrary_types_allowed=True, protected_namespaces=()
     )
-    method: Literal["GET", "POST", "PUT", "DELETE"]
+    method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"]
     app: APP
     endpoint: str
     id: Optional[int] = None

@@ -55,7 +55,8 @@ jobs:
         key: quality-poetry-cache
 
     - name: Set up the project
-      run: poetry install -vv
+      run: |
+        poetry install -vv --all-groups
 
     - name: Check if the code is correctly typed
       run: poetry run duty check-types

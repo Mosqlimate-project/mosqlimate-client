@@ -12,7 +12,7 @@ def upload_prediction(
     commit: str,
     prediction: Union[List[Dict], pd.DataFrame],
     case_definition: str = "probable",
-    published: bool = False,
+    published: bool = True,
     adm_0: str = "BRA",
     adm_1: Optional[int] = None,
     adm_2: Optional[int] = None,
