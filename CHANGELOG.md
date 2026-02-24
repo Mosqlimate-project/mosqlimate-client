@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.2...2.0.3) (2026-02-24)
+
+
+### Bug Fixes
+
+* **predictions:** include a PATCH to update prediction's published status ([#83](https://github.com/Mosqlimate-project/mosqlimate-client/issues/83)) ([ab635df](https://github.com/Mosqlimate-project/mosqlimate-client/commit/ab635df608ccb84e6593f5f2928b33259017fd95))
+
 ## [2.0.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.1...2.0.2) (2026-02-11)
 
 
