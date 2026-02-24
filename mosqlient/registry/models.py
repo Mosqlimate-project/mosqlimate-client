@@ -181,6 +181,24 @@ class Prediction(types.Model):
     def __repr__(self) -> str:
         return f"Prediction <{self.id}>"
 
+    def update_published(self, status: bool):
+        if not self.id:
+            raise ValueError("Cannot update a prediction that has no ID.")
+
+        if not self.client:
+            raise ValueError("Prediction instance has no client.")
+
+        params = schema.PredictionPublishPATCHParams(
+            id=self.id, published=status
+        )
+
+        res = self.client.patch(params)
+
+        if res.status_code == 201:
+            self._schema.published = status
+
+        return res
+
     @classmethod
     def get(cls, api_key: str, **kwargs):
         client = Mosqlient(x_uid_key=api_key)
