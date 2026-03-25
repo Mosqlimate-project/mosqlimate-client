@@ -99,7 +99,7 @@ jobs:
         key: tests-poetry-cache-${{ matrix.os }}-py${{ matrix.python-version }}
 
     - name: Set up the project
-      run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
+      run: poetry install --with-all -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
 
     - name: Install Jupyter
       run: |

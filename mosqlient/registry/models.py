@@ -1,5 +1,5 @@
-from datetime import date
-from typing import Optional, Any, Dict, AnyStr, List
+from datetime import date, datetime
+from typing import Optional, Any, Dict, AnyStr, List, Union
 
 import json
 import nest_asyncio
@@ -199,6 +199,80 @@ class Prediction(types.Model):
 
         return res
 
+    @staticmethod
+    def validate_prediction(
+        api_key: str,
+        repository: str,
+        description: str,
+        commit: str,
+        prediction: Union[List[Dict], pd.DataFrame],
+        case_definition: str = "probable",
+        published: bool = True,
+        adm_0: str = "BRA",
+        adm_1: Optional[int] = None,
+        adm_2: Optional[int] = None,
+        adm_3: Optional[int] = None,
+    ) -> None:
+        owner, repo_name = repository.split("/")
+        model = Model.get(
+            api_key=api_key,
+            repository_onwer=owner,
+            repository_name=repo_name,
+        )
+        if not model:
+            model = Model.get(
+                api_key=api_key,
+                repository_organization=owner,
+                repository_name=repo_name,
+            )
+        if not model:
+            raise ValueError(f"Model '{repository}' not found")
+
+        model = model[0]
+        prediction_data = []
+
+        if isinstance(prediction, pd.DataFrame):
+            df = prediction.copy()
+            if "date" in df.columns:
+                df["date"] = df["date"].astype(str)
+
+            prediction_data = df.to_dict(orient="records")
+        else:
+            prediction_data = prediction
+
+        float_fields = [
+            "lower_95",
+            "lower_90",
+            "lower_80",
+            "lower_50",
+            "pred",
+            "upper_50",
+            "upper_80",
+            "upper_90",
+            "upper_95",
+        ]
+
+        rows = []
+        for item in prediction_data:
+            i: Dict[str, Any] = {"date": str(item["date"])}
+            for field in float_fields:
+                i[field] = float(item[field])
+            rows.append(schema.PredictionDataRow(**i))
+
+        schema.Prediction(
+            id=None,
+            model=model._schema,
+            commit=commit,
+            case_definition=case_definition,
+            published=published,
+            description=description,
+            adm_0=adm_0,
+            adm_1=adm_1,
+            adm_2=adm_2,
+            adm_3=adm_3,
+            data=rows,
+        )
+
     @classmethod
     def get(cls, api_key: str, **kwargs):
         client = Mosqlient(x_uid_key=api_key)
@@ -243,7 +317,7 @@ class Prediction(types.Model):
         return self._schema.commit
 
     @property
-    def data(self) -> List[Dict[AnyStr, Any]]:
+    def data(self) -> List[schema.PredictionDataRow]:
         if not self._schema.data and self.client and self.id:
             params = schema.PredictionDataGETParams(id=self.id)
             raw_data = self.client.get(params)
@@ -251,10 +325,10 @@ class Prediction(types.Model):
                 schema.PredictionDataRow(**d) for d in raw_data
             ]
 
-        return [row.dict() for row in (self._schema.data or [])]
+        return self._schema.data or []
 
     def to_dataframe(self) -> pd.DataFrame:
-        return pd.DataFrame(self.data)
+        return pd.DataFrame([dict(d) for d in self.data])
 
     @property
     def case_definition(self) -> str | None:

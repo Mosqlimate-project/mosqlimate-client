@@ -2,9 +2,7 @@ __all__ = [
     "get_all_models",
     "get_models",
     "get_model_by_id",
-    "get_models_by_repository_owner",
-    "get_models_by_repository_organization",
-    "get_models_by_repository_name",
+    "get_model_by_repository",
     "get_models_by_disease",
     "get_models_by_category",
     "get_models_by_adm_level",
@@ -118,51 +116,12 @@ def get_model_by_id(api_key: str, id: int) -> Model | None:
     return res[0] if len(res) == 1 else None
 
 
-def get_models_by_repository_owner(
+def get_model_by_repository(
     api_key: str,
-    repository_owner: str,
-) -> List[Model]:
-    """
-    Returns a list of models based on the repository owner (username).
-
-    Parameters
-    ----------
-        api_key : str
-            API key used to authenticate with the Mosqlimate service.
-        repository_owner: str
-            Username of the owner.
-    Returns
-    -------
-    List of Models
-    """
-    return Model.get(api_key=api_key, repository_owner=repository_owner)
-
-
-def get_models_by_repository_organization(
-    api_key: str,
-    repository_organization: str,
-) -> List[Model]:
-    """
-    Returns a list of models based on the repository organization.
-
-    Parameters
-    ----------
-        api_key : str
-            API key used to authenticate with the Mosqlimate service.
-        repository_organization: str
-            Name of the organization.
-    Returns
-    -------
-    List of Models
-    """
-    return Model.get(
-        api_key=api_key, repository_organization=repository_organization
-    )
-
-
-def get_models_by_repository_name(
-    api_key: str, repository_name: str
-) -> List[Model]:
+    name: str,
+    owner: str | None = None,
+    organization: str | None = None,
+) -> Model | None:
     """
     Returns a list of models based on the repository name.
 
@@ -170,13 +129,26 @@ def get_models_by_repository_name(
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        repository_name: str
-            Name of the repository.
+        owner: str | None
+            Repository owner if not org.
+        owner: str | None
+            Repository owner if not org.
     Returns
     -------
-    List of Models
+    Model or None
     """
-    return Model.get(api_key=api_key, repository_name=repository_name)
+    res = []
+    if owner:
+        res = Model.get(
+            api_key=api_key, repository_owner=owner, repository_name=name
+        )
+    if organization:
+        res = Model.get(
+            api_key=api_key,
+            repository_organization=organization,
+            repository_name=name,
+        )
+    return res[0] if len(res) == 1 else None
 
 
 def get_models_by_disease(api_key: str, disease: str) -> List[Model]:
