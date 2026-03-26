@@ -4,6 +4,7 @@ import re
 import uuid
 import asyncio
 import json
+import os
 from collections import defaultdict
 from itertools import chain
 from typing import Literal, List
@@ -15,14 +16,18 @@ from aiohttp import (
     ServerTimeoutError,
 )
 import requests
+from dotenv import load_dotenv
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
+from pydantic_core import to_jsonable_python
 from tqdm.asyncio import tqdm_asyncio
 from loguru import logger
 
 from mosqlient.types import Params
 from mosqlient._utils import parse_params
 from mosqlient import errors
+
+load_dotenv()
 
 
 class Mosqlient:
@@ -31,8 +36,10 @@ class Mosqlient:
         x_uid_key: str,
         timeout: int = 300,
         max_items_per_page: int = 300,
-        # _api_url: str = "http://0.0.0.0:8042/api/",
-        _api_url: str = "https://api.mosqlimate.org/api/",
+        _api_url: str = os.getenv(
+            "MOSQLIENT_API_URL",
+            "https://api.mosqlimate.org/api/",
+        ),
     ):
         self.username, self.uid_key = x_uid_key.split(":")
         self.timeout = timeout
@@ -108,7 +115,7 @@ class Mosqlient:
         }
         res = requests.post(
             url=self.api_url + params.app + "/" + params.endpoint + "/",
-            data=json.dumps(params.params()),
+            data=json.dumps(to_jsonable_python(params.params())),
             timeout=self.timeout,
             headers=headers,
         )

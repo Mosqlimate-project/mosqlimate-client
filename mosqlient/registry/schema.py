@@ -1,7 +1,11 @@
-from datetime import date
-from typing import Optional, List, Literal, Dict, Any
+from datetime import timedelta
+from datetime import date as dt
+from typing import Optional, List, Literal, Dict
 
+import pandas as pd
 from mosqlient import types
+from pydantic import model_validator, field_serializer
+from epiweeks import Week
 
 
 class Model(types.Schema):
@@ -15,30 +19,71 @@ class Model(types.Schema):
     sprint: Optional[int] = None
     predictions_count: int
     active: bool
-    created_at: date
-    last_update: date
+    created_at: dt
+    last_update: dt
 
 
 class PredictionDataRow(types.Schema):
-    date: date
+    date: dt
     lower_95: Optional[float] = None
-    lower_90: Optional[float] = None
+    lower_90: float
     lower_80: Optional[float] = None
     lower_50: Optional[float] = None
     pred: float
     upper_50: Optional[float] = None
     upper_80: Optional[float] = None
-    upper_90: Optional[float] = None
+    upper_90: float
     upper_95: Optional[float] = None
 
     class Config:
-        json_encoders = {date: lambda v: v.strftime("%Y-%m-%d")}
+        json_encoders = {dt: lambda v: v.strftime("%Y-%m-%d")}
 
     def dict(self, **kwargs):
         _d = super().dict(**kwargs)
-        if _d.get("date"):
+        if _d.get("date") and type(_d["date"]) is dt:
             _d["date"] = _d["date"].strftime("%Y-%m-%d")
         return _d
+
+    @field_serializer("date")
+    def serialize_date(self, v: Optional[dt], _info):
+        if v is None:
+            return None
+        return v.strftime("%Y-%m-%d")
+
+    def model_dump(self, **kwargs):
+        return super().model_dump(**kwargs)
+
+    @model_validator(mode="after")
+    def validate_bounds(cls, values):
+
+        if values.lower_80:
+            if not (
+                0
+                <= values.lower_95
+                <= values.lower_90
+                <= values.lower_80
+                <= values.lower_50
+                <= values.pred
+                <= values.upper_50
+                <= values.upper_80
+                <= values.upper_90
+                <= values.upper_95
+            ):
+                raise ValueError(
+                    (
+                        "Prediction bounds are not in the correct order or "
+                        "contain negative values"
+                    ),
+                )
+        else:
+            if not (0 <= values.lower_90 <= values.pred <= values.upper_90):
+                raise ValueError(
+                    (
+                        "Prediction bounds are not in the correct order or "
+                        "contain negative values"
+                    ),
+                )
+        return values
 
 
 class Prediction(types.Schema):
@@ -48,14 +93,70 @@ class Prediction(types.Schema):
     description: types.Description
     case_definition: Optional[str] = None
     published: bool
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    start_date: Optional[dt] = None
+    end_date: Optional[dt] = None
     scores: Optional[Dict[str, float]] = None
     adm_0: Optional[str] = None
     adm_1: Optional[int] = None
     adm_2: Optional[int] = None
     adm_3: Optional[int] = None
     data: Optional[List[PredictionDataRow]] = []
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "Prediction":
+        if not self.data:
+            return self
+
+        self.data.sort(key=lambda x: x.date)
+
+        time_res = self.model.time_resolution
+        dates = [p.date for p in self.data]
+        is_sprint = bool(self.model.sprint)
+
+        if len(dates) != len(set(dates)):
+            raise ValueError("duplicate dates found in predictions.")
+
+        if is_sprint:
+            df_dates = pd.to_datetime(dates)
+            year = df_dates.year.max()
+
+            expected_range = pd.date_range(
+                start=Week(year - 1, 41).startdate(),
+                end=Week(year, 40).startdate(),
+                freq="W-SUN",
+            )
+
+            missing_dates = expected_range.difference(df_dates)
+
+            if not missing_dates.empty:
+                missing_str = ", ".join(missing_dates.strftime("%Y-%m-%d"))
+                raise ValueError(
+                    "the following dates are missing from your"
+                    f" predictions: {missing_str}."
+                )
+
+        for i in range(len(dates) - 1):
+            diff = dates[i + 1] - dates[i]
+            if time_res == "week" and diff != timedelta(weeks=1):
+                raise ValueError(
+                    "gap detected: missing week "
+                    f"between {dates[i]} and {dates[i+1]}."
+                )
+            elif time_res == "day" and diff != timedelta(days=1):
+                raise ValueError(
+                    f"gap detected: missing day between "
+                    f"{dates[i]} and {dates[i+1]}."
+                )
+
+        for p in self.data:
+            ew = Week.fromdate(p.date)
+            if time_res == "week" and ew.startdate() != p.date:
+                raise ValueError(
+                    f"date {p.date} is not the start of CDC "
+                    f"week {ew.week} (Sunday)."
+                )
+
+        return self
 
 
 class ModelGETParams(types.Params):
@@ -66,7 +167,9 @@ class ModelGETParams(types.Params):
     per_page: Optional[int] = None
     #
     id: Optional[int] = None
-    repository: Optional[str] = None
+    repository_owner: Optional[str] = None
+    repository_organization: Optional[str] = None
+    repository_name: Optional[str] = None
     description: Optional[str] = None
     disease: Optional[str] = None
     category: Optional[str] = None
@@ -75,13 +178,15 @@ class ModelGETParams(types.Params):
     sprint: Optional[int] = None
     predictions_count: Optional[int] = None
     active: Optional[bool] = None
-    created_at: Optional[date] = None
-    last_update: Optional[date] = None
+    created_at: Optional[dt] = None
+    last_update: Optional[dt] = None
 
     def params(self) -> dict:
         p = {
             "id": self.id,
-            "repository": self.repository,
+            "repository_owner": self.repository_owner,
+            "repository_organization": self.repository_organization,
+            "repository_name": self.repository_name,
             "description": self.description,
             "disease": self.disease,
             "category": self.category,
@@ -117,8 +222,8 @@ class PredictionGETParams(types.Params):
     model_disease: Optional[str] = None
     model_category: Optional[str] = None
     model_sprint: Optional[int] = None
-    start: Optional[date] = None
-    end: Optional[date] = None
+    start: Optional[dt] = None
+    end: Optional[dt] = None
 
     def params(self) -> dict:
         p = {
@@ -150,7 +255,7 @@ class PredictionPOSTParams(types.Params):
     commit: str
     case_definition: str
     published: bool
-    prediction: List[Dict[str, Any]]
+    prediction: List[PredictionDataRow]
     adm_0: Optional[str] = "BRA"
     adm_1: Optional[int] = None
     adm_2: Optional[int] = None
