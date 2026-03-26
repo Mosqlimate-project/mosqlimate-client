@@ -1,3 +1,10 @@
+## [2.0.4](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.3...2.0.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* **predictions:** implement validate_prediction method and some minor fixes on the package ([#86](https://github.com/Mosqlimate-project/mosqlimate-client/issues/86)) ([67f8112](https://github.com/Mosqlimate-project/mosqlimate-client/commit/67f8112b55e235c078822bf94d5f71eaa543bb75))
+
 ## [2.0.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.2...2.0.3) (2026-02-24)
 
 
