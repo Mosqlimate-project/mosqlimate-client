@@ -97,7 +97,7 @@ def validate_implementation_language(implementation_language: str) -> str:
 
 def validate_disease(disease: Literal["A90", "A92.0", "A92.5"]) -> str:
     assert (
-        disease.lower() in DISEASES
+        disease in DISEASES
     ), f"Unknown disease '{disease}'. Options: {DISEASES}"
     return disease
 
