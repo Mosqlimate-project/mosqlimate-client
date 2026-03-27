@@ -12,9 +12,7 @@ class Model(types.Schema):
     id: int
     repository: str
     description: Optional[str] = ""
-    disease: str
     category: str
-    adm_level: int
     time_resolution: str
     sprint: Optional[int] = None
     predictions_count: int
@@ -89,6 +87,7 @@ class PredictionDataRow(types.Schema):
 class Prediction(types.Schema):
     id: Optional[types.ID] = None
     model: Model
+    disease: types.Disease
     commit: types.Commit
     description: types.Description
     case_definition: Optional[str] = None
@@ -96,11 +95,34 @@ class Prediction(types.Schema):
     start_date: Optional[dt] = None
     end_date: Optional[dt] = None
     scores: Optional[Dict[str, float]] = None
+    adm_level: int
     adm_0: Optional[str] = None
     adm_1: Optional[int] = None
     adm_2: Optional[int] = None
     adm_3: Optional[int] = None
     data: Optional[List[PredictionDataRow]] = []
+
+    @model_validator(mode="after")
+    def validate_adm_hierarchy(self) -> "Prediction":
+        if self.adm_level >= 0 and not self.adm_0:
+            raise ValueError(
+                "adm_0 is required for all administrative levels."
+            )
+
+        if self.adm_level >= 1 and self.adm_1 is None:
+            raise ValueError(
+                "adm_1 is required when adm_level is 1 or higher."
+            )
+
+        if self.adm_level >= 2 and self.adm_2 is None:
+            raise ValueError(
+                "adm_2 is required when adm_level is 2 or higher."
+            )
+
+        if self.adm_level >= 3 and self.adm_3 is None:
+            raise ValueError("adm_3 is required when adm_level is 3.")
+
+        return self
 
     @model_validator(mode="after")
     def validate_dates(self) -> "Prediction":
@@ -140,12 +162,12 @@ class Prediction(types.Schema):
             if time_res == "week" and diff != timedelta(weeks=1):
                 raise ValueError(
                     "gap detected: missing week "
-                    f"between {dates[i]} and {dates[i+1]}."
+                    f"between {dates[i]} and {dates[i + 1]}."
                 )
             elif time_res == "day" and diff != timedelta(days=1):
                 raise ValueError(
                     f"gap detected: missing day between "
-                    f"{dates[i]} and {dates[i+1]}."
+                    f"{dates[i]} and {dates[i + 1]}."
                 )
 
         for p in self.data:
@@ -215,11 +237,11 @@ class PredictionGETParams(types.Params):
     model_owner: Optional[str] = None
     model_organization: Optional[str] = None
     model_name: Optional[str] = None
-    model_adm_level: Optional[int] = None
+    adm_level: Optional[int] = None
     model_time_resolution: Optional[
         Literal["day", "week", "month", "year"]
     ] = None
-    model_disease: Optional[str] = None
+    disease: Optional[str] = None
     model_category: Optional[str] = None
     model_sprint: Optional[int] = None
     start: Optional[dt] = None
@@ -232,9 +254,9 @@ class PredictionGETParams(types.Params):
             "model_owner": self.model_owner,
             "model_organization": self.model_organization,
             "model_name": self.model_name,
-            "model_adm_level": self.model_adm_level,
+            "adm_level": self.adm_level,
             "model_time_resolution": self.model_time_resolution,
-            "model_disease": self.model_disease,
+            "disease": self.disease,
             "model_category": self.model_category,
             "model_sprint": self.model_sprint,
             "start": self.start,
@@ -252,10 +274,12 @@ class PredictionPOSTParams(types.Params):
 
     repository: str
     description: str
+    disease: str
     commit: str
     case_definition: str
     published: bool
     prediction: List[PredictionDataRow]
+    adm_level: int
     adm_0: Optional[str] = "BRA"
     adm_1: Optional[int] = None
     adm_2: Optional[int] = None
@@ -265,9 +289,11 @@ class PredictionPOSTParams(types.Params):
         return {
             "repository": self.repository,
             "description": self.description,
+            "disease": self.disease,
             "commit": self.commit,
             "case_definition": self.case_definition,
             "published": self.published,
+            "adm_level": self.adm_level,
             "adm_0": self.adm_0,
             "adm_1": self.adm_1,
             "adm_2": self.adm_2,

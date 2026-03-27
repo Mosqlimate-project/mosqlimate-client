@@ -8,9 +8,11 @@ from .models import Prediction
 def validate_prediction(
     api_key: str,
     repository: str,
+    disease: str,
     description: str,
     commit: str,
     prediction: Union[List[Dict], pd.DataFrame],
+    adm_level: int,
     case_definition: str = "probable",
     published: bool = True,
     adm_0: str = "BRA",
@@ -27,6 +29,8 @@ def validate_prediction(
         API key used to authenticate with the Mosqlimate service.
     repository : str
         The repository identifier in the format "owner/repo_name".
+    disease: str
+        Disease code. Options: 'A90' (Dengue), 'A92.0' (Chikungunya), 'A92.5' (Zika).
     description : str
         Textual description of the prediction run.
     commit : str
@@ -34,6 +38,8 @@ def validate_prediction(
     prediction : list of dict or pandas.DataFrame
         Forecast data. If a DataFrame is provided, it must contain columns matching
         the prediction schema (date, pred, lower_95, etc.).
+    adm_level: int, optional
+        ADM level. Options: 0 (National), 1 (State), 2 (Municipality), 3 (Sub-Municipality).
     case_definition : str, default="probable"
         The case definition used (e.g., "probable" or "reported").
     published : bool, default=False
@@ -54,10 +60,12 @@ def validate_prediction(
     Prediction.validate_prediction(
         api_key=api_key,
         repository=repository,
+        disease=disease,
         description=description,
         commit=commit,
         case_definition=case_definition,
         published=published,
+        adm_level=adm_level,
         adm_0=adm_0,
         adm_1=adm_1,
         adm_2=adm_2,

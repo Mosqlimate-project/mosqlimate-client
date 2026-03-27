@@ -24,11 +24,11 @@ def get_predictions(
     model_name: Optional[str] = None,
     model_owner: Optional[str] = None,
     model_organization: Optional[str] = None,
-    model_adm_level: Optional[int] = None,
+    adm_level: Optional[int] = None,
     model_time_resolution: Optional[
         Literal["day", "week", "month", "year"]
     ] = None,
-    model_disease: Optional[Literal["A90", "A92.0", "A92.5"]] = None,
+    disease: Optional[str] = None,
     model_category: Optional[
         Literal[
             "quantitative",
@@ -60,11 +60,11 @@ def get_predictions(
         Username of the model owner (e.g. GitHub username).
     model_organization : str, optional
         Name of the organization that owns the model.
-    model_adm_level : int, optional
+    adm_level : int, optional
         Administrative level (0: national, 1: state, 2: municipality, 3: sub-municipality).
     model_time_resolution : str, optional
         Temporal resolution ('day', 'week', 'month', 'year').
-    model_disease : str, optional
+    disease : str, optional
         Disease code (e.g., 'A90' for Dengue, 'A92.0' for Chikungunya, 'A92.5' for Zika).
     model_category : str, optional
         Category of the model (e.g., 'quantitative', 'spatio_temporal_quantitative').
@@ -86,9 +86,9 @@ def get_predictions(
         "model_name": model_name,
         "model_owner": model_owner,
         "model_organization": model_organization,
-        "model_adm_level": model_adm_level,
+        "adm_level": adm_level,
         "model_time_resolution": model_time_resolution,
-        "model_disease": model_disease,
+        "disease": disease,
         "model_category": model_category,
         "model_sprint": model_sprint,
         "start": str(start) if start else None,
@@ -137,7 +137,7 @@ def get_predictions_by_adm_level(
     api_key: str, adm_level: int
 ) -> List[Prediction]:
     """Retrieve predictions by administrative level."""
-    return Prediction.get(api_key=api_key, model_adm_level=adm_level)
+    return Prediction.get(api_key=api_key, adm_level=adm_level)
 
 
 def get_predictions_by_time_resolution(
@@ -151,7 +151,7 @@ def get_predictions_by_time_resolution(
 
 def get_predictions_by_disease(api_key: str, disease: str) -> List[Prediction]:
     """Retrieve predictions by disease code (e.g. A90)."""
-    return Prediction.get(api_key=api_key, model_disease=disease)
+    return Prediction.get(api_key=api_key, disease=disease)
 
 
 def get_predictions_between(

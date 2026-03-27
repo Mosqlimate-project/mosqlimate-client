@@ -1,5 +1,5 @@
-from datetime import date, datetime
-from typing import Optional, Any, Dict, AnyStr, List, Union
+from datetime import date
+from typing import Optional, Any, Dict, Literal, List, Union
 
 import json
 import nest_asyncio
@@ -20,9 +20,7 @@ class Model(types.Model):
         self,
         id: int,
         repository: str,
-        disease: str,
         category: str,
-        adm_level: int,
         time_resolution: str,
         predictions_count: int,
         active: bool,
@@ -37,9 +35,7 @@ class Model(types.Model):
             id=id,
             repository=repository,
             description=description,
-            disease=disease,
             category=category,
-            adm_level=adm_level,
             time_resolution=time_resolution,
             sprint=sprint,
             predictions_count=predictions_count,
@@ -73,16 +69,8 @@ class Model(types.Model):
         return self._schema.description
 
     @property
-    def disease(self) -> str:
-        return self._schema.disease
-
-    @property
     def category(self) -> str:
         return self._schema.category
-
-    @property
-    def adm_level(self) -> int:
-        return self._schema.adm_level
 
     @property
     def time_resolution(self) -> str:
@@ -118,10 +106,12 @@ class Prediction(types.Model):
         self,
         id: int,
         model: Model | dict,
+        disease: types.Disease,
         commit: types.Commit,
-        case_definition: str,
+        case_definition: Literal["probable", "reported"],
         published: bool,
         created_at: date,
+        adm_level: types.ADMLevel,
         description: types.Description = "",
         start: Optional[date] = None,
         end: Optional[date] = None,
@@ -163,6 +153,7 @@ class Prediction(types.Model):
         self._schema = schema.Prediction(
             id=id,
             model=model._schema,
+            disease=disease,
             commit=commit,
             description=description,
             case_definition=case_definition,
@@ -171,6 +162,7 @@ class Prediction(types.Model):
             start=start,  # type: ignore
             end=end,  # type: ignore
             scores=scores or {},
+            adm_level=adm_level,
             adm_0=adm_0,
             adm_1=adm_1,
             adm_2=adm_2,
@@ -203,9 +195,11 @@ class Prediction(types.Model):
     def validate_prediction(
         api_key: str,
         repository: str,
+        disease: str,
         description: str,
         commit: str,
         prediction: Union[List[Dict], pd.DataFrame],
+        adm_level: int,
         case_definition: str = "probable",
         published: bool = True,
         adm_0: str = "BRA",
@@ -262,10 +256,12 @@ class Prediction(types.Model):
         schema.Prediction(
             id=None,
             model=model._schema,
+            disease=disease,
             commit=commit,
             case_definition=case_definition,
             published=published,
             description=description,
+            adm_level=adm_level,
             adm_0=adm_0,
             adm_1=adm_1,
             adm_2=adm_2,

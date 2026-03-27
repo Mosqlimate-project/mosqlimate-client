@@ -27,15 +27,6 @@ jobs:
         fetch-depth: 0
         submodules: recursive
 
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniforge-version: latest
-        environment-file: conda/base.yaml
-        channels: conda-forge,nodefaults
-        activate-environment: mosqlient
-        auto-update-conda: true
-        conda-solver: libmamba
-
     - uses: actions/setup-node@v3
       with:
         node-version: 22
