@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.4...2.1.0) (2026-03-27)
+
+
+### Features
+
+* **predictions:** move adm_level and disease fields from Model to Prediction ([#87](https://github.com/Mosqlimate-project/mosqlimate-client/issues/87)) ([64ecdb5](https://github.com/Mosqlimate-project/mosqlimate-client/commit/64ecdb5f89e1787b0057657effe241eedf7cccb6))
+
 ## [2.0.4](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.3...2.0.4) (2026-03-26)
 
 
