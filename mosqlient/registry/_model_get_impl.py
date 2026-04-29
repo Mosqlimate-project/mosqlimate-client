@@ -1,7 +1,6 @@
 __all__ = [
     "get_all_models",
     "get_models",
-    "get_model_by_id",
     "get_model_by_repository",
     "get_models_by_disease",
     "get_models_by_category",
@@ -96,24 +95,6 @@ def get_models(
         time_resolution=time_resolution,
         imdc_year=imdc_year,
     )
-
-
-def get_model_by_id(api_key: str, id: int) -> Model | None:
-    """
-    Returns a model based on the id.
-
-    Parameters
-    ----------
-        api_key : str
-            API key used to authenticate with the Mosqlimate service.
-        id: int
-            Model id.
-    Returns
-    -------
-    Model
-    """
-    res = Model.get(api_key=api_key, id=id)
-    return res[0] if len(res) == 1 else None
 
 
 def get_model_by_repository(

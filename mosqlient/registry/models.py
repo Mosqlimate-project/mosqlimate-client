@@ -305,6 +305,10 @@ class Prediction(types.Model):
         return self._schema.id
 
     @property
+    def disease(self) -> types.Disease:
+        return self._schema.disease
+
+    @property
     def description(self) -> types.Description:
         return self._schema.description
 
