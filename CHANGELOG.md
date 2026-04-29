@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.0...2.1.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* replace sprint param by imdc_year ([#90](https://github.com/Mosqlimate-project/mosqlimate-client/issues/90)) ([5e41826](https://github.com/Mosqlimate-project/mosqlimate-client/commit/5e41826a875cfc6f5c775054bcdc671fe537b9cc))
+
 # [2.1.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.4...2.1.0) (2026-03-27)
 
 
