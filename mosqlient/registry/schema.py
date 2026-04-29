@@ -14,7 +14,7 @@ class Model(types.Schema):
     description: Optional[str] = ""
     category: str
     time_resolution: str
-    sprint: Optional[int] = None
+    imdc_year: Optional[int] = None
     predictions_count: int
     active: bool
     created_at: dt
@@ -133,7 +133,7 @@ class Prediction(types.Schema):
 
         time_res = self.model.time_resolution
         dates = [p.date for p in self.data]
-        is_sprint = bool(self.model.sprint)
+        is_sprint = bool(self.model.imdc_year)
 
         if len(dates) != len(set(dates)):
             raise ValueError("duplicate dates found in predictions.")
@@ -197,7 +197,7 @@ class ModelGETParams(types.Params):
     category: Optional[str] = None
     adm_level: Optional[int] = None
     time_resolution: Optional[str] = None
-    sprint: Optional[int] = None
+    imdc_year: Optional[int] = None
     predictions_count: Optional[int] = None
     active: Optional[bool] = None
     created_at: Optional[dt] = None
@@ -214,7 +214,7 @@ class ModelGETParams(types.Params):
             "category": self.category,
             "adm_level": self.adm_level,
             "time_resolution": self.time_resolution,
-            "sprint": self.sprint,
+            "imdc_year": self.imdc_year,
             "predictions_count": self.predictions_count,
             "active": self.active,
             "created_at": self.created_at,
@@ -243,7 +243,7 @@ class PredictionGETParams(types.Params):
     ] = None
     disease: Optional[str] = None
     model_category: Optional[str] = None
-    model_sprint: Optional[int] = None
+    imdc_year: Optional[int] = None
     start: Optional[dt] = None
     end: Optional[dt] = None
 
@@ -258,7 +258,7 @@ class PredictionGETParams(types.Params):
             "model_time_resolution": self.model_time_resolution,
             "disease": self.disease,
             "model_category": self.model_category,
-            "model_sprint": self.model_sprint,
+            "imdc_year": self.imdc_year,
             "start": self.start,
             "end": self.end,
             "page": self.page,

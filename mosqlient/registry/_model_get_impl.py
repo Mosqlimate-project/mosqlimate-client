@@ -7,7 +7,7 @@ __all__ = [
     "get_models_by_category",
     "get_models_by_adm_level",
     "get_models_by_time_resolution",
-    "get_models_by_sprint",
+    "get_models_by_imdc_year",
 ]
 
 from typing import Optional, List, Literal
@@ -50,7 +50,7 @@ def get_models(
     ] = None,
     adm_level: Optional[Literal[0, 1, 2, 3]] = None,
     time_resolution: Optional[Literal["day", "week", "month", "year"]] = None,
-    sprint: Optional[int] = None,
+    imdc_year: Optional[int] = None,
 ) -> List[Model]:
     """
     Returns a list of all models registered on the platform that match the
@@ -76,8 +76,8 @@ def get_models(
             ADM level. Options: 0 (National), 1 (State), 2 (Municipality), 3 (Sub-Municipality).
         time_resolution: str, optional
             Time resolution. Options: 'day', 'week', 'month', 'year'.
-        sprint: int, optional
-            The year of the sprint the model belongs to (e.g., 2024).
+        imdc_year: int, optional
+            The year of the IMDC the model belongs to (e.g., 2024).
 
     Returns
     -------
@@ -94,7 +94,7 @@ def get_models(
         category=category,
         adm_level=adm_level,
         time_resolution=time_resolution,
-        sprint=sprint,
+        imdc_year=imdc_year,
     )
 
 
@@ -222,18 +222,18 @@ def get_models_by_time_resolution(
     return Model.get(api_key=api_key, time_resolution=time_resolution)
 
 
-def get_models_by_sprint(api_key: str, sprint: int) -> List[Model]:
+def get_models_by_imdc_year(api_key: str, year: int) -> List[Model]:
     """
-    Returns a list of models based on the sprint year.
+    Returns a list of models based on the IMDC year.
 
     Parameters
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        sprint: int
-            Year of the sprint.
+        year: int
+            Year of the IMDC.
     Returns
     -------
     List of Models
     """
-    return Model.get(api_key=api_key, sprint=sprint)
+    return Model.get(api_key=api_key, imdc_year=year)

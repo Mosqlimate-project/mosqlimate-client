@@ -27,7 +27,7 @@ class Model(types.Model):
         created_at: date,
         last_update: date,
         description: Optional[str] = "",
-        sprint: Optional[int] = None,
+        imdc_year: Optional[int] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -37,7 +37,7 @@ class Model(types.Model):
             description=description,
             category=category,
             time_resolution=time_resolution,
-            sprint=sprint,
+            imdc_year=imdc_year,
             predictions_count=predictions_count,
             active=active,
             created_at=created_at,
@@ -77,8 +77,8 @@ class Model(types.Model):
         return self._schema.time_resolution
 
     @property
-    def sprint(self) -> int | None:
-        return self._schema.sprint
+    def imdc_year(self) -> int | None:
+        return self._schema.imdc_year
 
     @property
     def predictions_count(self) -> int:
