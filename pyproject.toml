@@ -43,10 +43,9 @@ analyze = [
   "matplotlib",
   "scipy",
   "pmdarima",
-  "epiweeks"
 ]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 # formatting, quality, tests
 mkdocs-jupyter = "^0.24.8"
 nbmake = "^1.5.5"
@@ -99,8 +98,6 @@ mkdocstrings-python = ">=0.18"
 
 [tool.poetry.scripts]
 mosqbench = "mosqlimate.cli:main"
-
-[tool.poetry.group.dev.dependencies]
 
 
 [tool.poetry.group.models.dependencies]

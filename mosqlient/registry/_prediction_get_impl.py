@@ -39,7 +39,7 @@ def get_predictions(
             "spatio_temporal_categorical",
         ]
     ] = None,
-    model_sprint: Optional[int] = None,
+    imdc_year: Optional[int] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
 ) -> List[Prediction]:
@@ -68,8 +68,8 @@ def get_predictions(
         Disease code (e.g., 'A90' for Dengue, 'A92.0' for Chikungunya, 'A92.5' for Zika).
     model_category : str, optional
         Category of the model (e.g., 'quantitative', 'spatio_temporal_quantitative').
-    model_sprint : int, optional
-        The year of the sprint if the model was part of a competition (e.g., 2024).
+    imdc_year : int, optional
+        The year of the IMDC if the model was part of a competition (e.g., 2024).
     start : date, optional
         Filter predictions with data starting on or after this date.
     end : date, optional
@@ -90,7 +90,7 @@ def get_predictions(
         "model_time_resolution": model_time_resolution,
         "disease": disease,
         "model_category": model_category,
-        "model_sprint": model_sprint,
+        "imdc_year": imdc_year,
         "start": str(start) if start else None,
         "end": str(end) if end else None,
     }
