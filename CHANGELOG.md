@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.1...2.1.2) (2026-05-06)
+
+
+### Bug Fixes
+
+* update numpy dep ([#91](https://github.com/Mosqlimate-project/mosqlimate-client/issues/91)) ([4c53f63](https://github.com/Mosqlimate-project/mosqlimate-client/commit/4c53f6317d48410f9013e5eaf55d92df01313ef7))
+
 ## [2.1.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.0...2.1.1) (2026-04-29)
 
 
