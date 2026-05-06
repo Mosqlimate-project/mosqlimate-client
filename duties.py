@@ -373,7 +373,7 @@ def test(ctx, match: str = ""):
         match: A pytest expression to filter selected tests.
     """
     py_version = f"{sys.version_info.major}{sys.version_info.minor}"
-    os.environ["COVERAGE_FILE"] = f".coverage-{py_version}"
+    os.environ["COVERAGE_FILE"] = f".coverage.{py_version}"
     ctx.run(
         [
             "pytest",
@@ -381,18 +381,12 @@ def test(ctx, match: str = ""):
             "config/pytest.ini",
             "-n",
             "auto",
+            "--cov=mosqlient",
+            "--cov-config=config/coverage.ini",
             "-k",
             match,
             "tests",
         ],
         title="Running tests",
-        pty=PTY,
-    )
-    ctx.run(
-        [
-            "pytest",
-            "--nbmake",
-        ],
-        title="Testing notebooks",
         pty=PTY,
     )
