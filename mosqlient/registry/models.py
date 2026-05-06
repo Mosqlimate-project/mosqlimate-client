@@ -134,7 +134,7 @@ class Prediction(types.Model):
         self.client = client
 
         _data = []
-        if data:
+        if data is not None:
             if isinstance(data, str):
                 try:
                     loaded = json.loads(data)
@@ -159,8 +159,8 @@ class Prediction(types.Model):
             case_definition=case_definition,
             published=published,
             created_at=created_at,  # type: ignore
-            start=start,  # type: ignore
-            end=end,  # type: ignore
+            start_date=start,  # type: ignore
+            end_date=end,  # type: ignore
             scores=scores or {},
             adm_level=adm_level,
             adm_0=adm_0,
@@ -340,11 +340,11 @@ class Prediction(types.Model):
 
     @property
     def start(self) -> date | None:
-        return self._schema.start  # type: ignore
+        return self._schema.start_date  # type: ignore
 
     @property
     def end(self) -> date | None:
-        return self._schema.end  # type: ignore
+        return self._schema.end_date  # type: ignore
 
     @property
     def scores(self) -> Dict[str, float]:

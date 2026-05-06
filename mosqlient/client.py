@@ -75,7 +75,10 @@ class Mosqlient:
             except requests.HTTPError as err:
                 logger.error(res.text)
                 raise err
-            return res.json()
+            data = res.json()
+            if isinstance(data, dict):
+                return data.get("items", data)
+            return data
 
         _params = params.params()
 
