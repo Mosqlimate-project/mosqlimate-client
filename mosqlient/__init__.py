@@ -8,22 +8,23 @@ from importlib import metadata as importlib_metadata
 from typing import List
 
 from mosqlient.client import *
-from mosqlient.registry._author_get_impl import *
 from mosqlient.registry._model_get_impl import *
-from mosqlient.registry._model_post_impl import *
-from mosqlient.registry._model_delete_impl import *
 from mosqlient.registry._prediction_get_impl import *
 from mosqlient.registry._prediction_post_impl import *
 from mosqlient.registry._prediction_delete_impl import *
+from mosqlient.registry._prediction_patch_impl import *
+from mosqlient.registry._prediction_validate_impl import *
 from mosqlient.datastore._climate_get_impl import *
 from mosqlient.datastore._infodengue_get_impl import *
+from mosqlient.datastore._episcanner_get_impl import *
+from mosqlient.datastore._mosquito_get_impl import *
 
 
 def get_version() -> str:
     try:
         return importlib_metadata.version(__name__)
     except importlib_metadata.PackageNotFoundError:  # pragma: no cover
-        return "0.1.0"  # changed by semantic-release
+        return "2.1.2"  # changed by semantic-release
 
 
 version: str = get_version()

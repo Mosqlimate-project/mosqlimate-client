@@ -30,9 +30,9 @@ def validate_df_preds(df_preds: pd.DataFrame, conf_level=0.9):
     """
     expected_cols = {
         "date",
-        f"lower_{int(100*conf_level)}",
+        f"lower_{int(100 * conf_level)}",
         "pred",
-        f"upper_{int(100*conf_level)}",
+        f"upper_{int(100 * conf_level)}",
         "model_id",
     }
 
@@ -185,7 +185,7 @@ def get_score(
 
     if metric == "crps":
         if dist == "log_normal":
-            return crps_lognormal(observation=obs, mulog=mu, sigmalog=sd)
+            return crps_lognormal(obs, mu, sd)
 
         elif dist == "normal":
             return crps_normal(obs, mu, sd)
@@ -280,7 +280,7 @@ def get_epiweek(date):
     return (epiweek.year, epiweek.week)
 
 
-def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
+def get_ci_columns(p):
     """
     Function that given the confidence interval return the columns names
 
@@ -294,16 +294,15 @@ def get_ci_columns(p: NDArray[np.float64]) -> List[str]:
     List of columns name
     """
 
-    median_index = len(p) // 2
     columns = []
 
-    for i, value in enumerate(p):
-        if i < median_index:
-            columns.append(f"lower_{int((1 - value) * 100)}")
-        elif i == median_index:
+    for value in p:
+        if value < 0.5:
+            columns.append(f"lower_{int((1 - 2 * value) * 100)}")
+        elif value == 0.5:
             columns.append("pred")
         else:
-            columns.append(f"upper_{int(value * 100)}")
+            columns.append(f"upper_{int(2 * value * 100) - 100}")
 
     return columns
 
@@ -370,15 +369,15 @@ class Ensemble:
                 [
                     "date",
                     "pred",
-                    f"lower_{int(100*conf_level)}",
-                    f"upper_{int(100*conf_level)}",
+                    f"lower_{int(100 * conf_level)}",
+                    f"upper_{int(100 * conf_level)}",
                     "model_id",
                 ]
             ]
 
         except:
             raise ValueError(
-                f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100*conf_level)}', 'upper_{int(100*conf_level)}', 'model_id'"
+                f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100 * conf_level)}', 'upper_{int(100 * conf_level)}', 'model_id'"
             )
 
         df = get_df_pars(
@@ -595,7 +594,7 @@ def compute_ppf(
         np.array
         The x-values corresponding to the 5th, 50th, and 95th percentiles.
     """
-    x = np.linspace(1e-6, 10**5, 10**5)
+    x = np.linspace(1e-6, 10**5, 10**5).astype(np.float64)
 
     pdf_values = dlnorm_mix(x, mu, sigma, weights, log=False)
 
@@ -649,15 +648,12 @@ def crps_lognormal_mix(
     K = len(mu)
 
     if len(sigma) != K:
-        print("mu and sigma should be the same lenght")
+        raise ValueError("mu and sigma should be the same length")
 
     crpsdens = list(np.zeros(K))
 
     for i in np.arange(K):
-
-        crpsdens[i] = crps_lognormal(
-            observation=obs, mulog=mu[i], sigmalog=sigma[i]
-        )
+        crpsdens[i] = crps_lognormal(obs, mu[i], sigma[i])
 
     return np.dot(np.array(weights), np.array(crpsdens))  # , crpsdens
 

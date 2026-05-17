@@ -18,7 +18,17 @@ nav:
         - Simple forecast model: 'tutorials/baseline_model.ipynb'
         - Ensemble predictions: 'tutorials/ensemble.ipynb'
     - Code Reference:
-        - cli.py: 'reference/cli.md'
+        - Infodengue data: 'reference/infodengue.md'
+        - Climate data: 'reference/climate.md'
+        - Get authors: 'reference/authors.md'
+        - Get, post and delete models: 'reference/models.md'
+        - Get, post and delete predictions: 'reference/predictions.md'
+        - Score: 'reference/score.md'
+        - Baseline Arima: 'reference/baseline.md'
+        - Ensemble: 'reference/ensemble.md'
+        - Prediction optimize: 'reference/pred_opt.md'
+
+
     - Development:
         - Contributing: 'contributing.md'
         - Code of Conduct: 'code_of_conduct.md'
@@ -51,8 +61,10 @@ markdown_extensions:
 plugins:
     - search
     - mkdocs-jupyter:
-        include: ["tutorials/*.ipynb"]
+        include: ["tutorials/**/*.ipynb", "tutorials/*.ipynb"]
         include_requirejs: true
+        custom_mathjax_url: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS_CHTML-full,Safe"
+
     - coverage:
         html_report_dir: build/coverage
     - mkdocstrings:

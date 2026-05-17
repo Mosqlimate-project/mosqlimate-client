@@ -1,5 +1,101 @@
+## [2.1.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.1...2.1.2) (2026-05-06)
+
+
+### Bug Fixes
+
+* update numpy dep ([#91](https://github.com/Mosqlimate-project/mosqlimate-client/issues/91)) ([4c53f63](https://github.com/Mosqlimate-project/mosqlimate-client/commit/4c53f6317d48410f9013e5eaf55d92df01313ef7))
+
+## [2.1.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.0...2.1.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* replace sprint param by imdc_year ([#90](https://github.com/Mosqlimate-project/mosqlimate-client/issues/90)) ([5e41826](https://github.com/Mosqlimate-project/mosqlimate-client/commit/5e41826a875cfc6f5c775054bcdc671fe537b9cc))
+
+# [2.1.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.4...2.1.0) (2026-03-27)
+
+
+### Features
+
+* **predictions:** move adm_level and disease fields from Model to Prediction ([#87](https://github.com/Mosqlimate-project/mosqlimate-client/issues/87)) ([64ecdb5](https://github.com/Mosqlimate-project/mosqlimate-client/commit/64ecdb5f89e1787b0057657effe241eedf7cccb6))
+
+## [2.0.4](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.3...2.0.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* **predictions:** implement validate_prediction method and some minor fixes on the package ([#86](https://github.com/Mosqlimate-project/mosqlimate-client/issues/86)) ([67f8112](https://github.com/Mosqlimate-project/mosqlimate-client/commit/67f8112b55e235c078822bf94d5f71eaa543bb75))
+
+## [2.0.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.2...2.0.3) (2026-02-24)
+
+
+### Bug Fixes
+
+* **predictions:** include a PATCH to update prediction's published status ([#83](https://github.com/Mosqlimate-project/mosqlimate-client/issues/83)) ([ab635df](https://github.com/Mosqlimate-project/mosqlimate-client/commit/ab635df608ccb84e6593f5f2928b33259017fd95))
+
+## [2.0.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.1...2.0.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* **predictions:** remove predict_date field ([#82](https://github.com/Mosqlimate-project/mosqlimate-client/issues/82)) ([9c870cb](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9c870cb83a4f71c7d4ea83d6bf455151ce8f1bf6))
+
+## [2.0.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.0.0...2.0.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* **docs:** fix errors on API notebooks ([#81](https://github.com/Mosqlimate-project/mosqlimate-client/issues/81)) ([2e0d9ec](https://github.com/Mosqlimate-project/mosqlimate-client/commit/2e0d9ec96a66bd43517d1c2fc90005fbf393aba6))
+
+# [2.0.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.3...2.0.0) (2026-02-10)
+
+
+### Code Refactoring
+
+* **registry:** restructure model endpoints and update client SDK ([#80](https://github.com/Mosqlimate-project/mosqlimate-client/issues/80)) ([a15fa44](https://github.com/Mosqlimate-project/mosqlimate-client/commit/a15fa44a4ebac8d9b07693c14885ebce2a0714a9))
+
+
+### BREAKING CHANGES
+
+* **registry:** - The API endpoint for retrieving a specific model now uses path
+  parameters instead of relying solely on ID or query params.
+- Client SDK: functions have been renamed or removed to match the new
+  filter schema.
+- Client SDK: objects have new required fields and modified signatures.
+
+* refactor: refactor Prediction & PredictionData
+* **registry:** v2
+
 Release Notes
 ---
+
+## [1.9.3](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.2...1.9.3) (2025-05-22)
+
+
+### Bug Fixes
+
+* **bug:** add jupyter kernel creation ([0210c64](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0210c64732d9d808c83e785650664675ba5e7079))
+* **bug:** install R in the runner ([8d50939](https://github.com/Mosqlimate-project/mosqlimate-client/commit/8d50939fb16183a39840b8eaca7f54db4313c24b))
+* **bug:** register IR kernel ([c2d1b18](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c2d1b1878b061691f5f6be8daa539166c0d8ac8d))
+* **bug:** run R demo ([22c9d20](https://github.com/Mosqlimate-project/mosqlimate-client/commit/22c9d206062432212a4457a8657608beceab99ef))
+* **bugs:** docs/tutorials/Using Mosqlient from R.ipynb ([1650594](https://github.com/Mosqlimate-project/mosqlimate-client/commit/16505940f3a2bd0ec262ae6b6596a0e7816cdc86))
+* **bug:** solve ci.yml ([9afca98](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9afca9860514ca9697500d9df3e353ba42ecd5e4))
+* **registry:** replace ADM_level by adm_level ([#76](https://github.com/Mosqlimate-project/mosqlimate-client/issues/76)) ([1053c26](https://github.com/Mosqlimate-project/mosqlimate-client/commit/1053c26abb10fae40456d3aef241d10df22e9dab))
+
+## [1.9.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.1...1.9.2) (2025-04-23)
+
+
+### Bug Fixes
+
+* **climate:** include climate/weekly endpoint ([#70](https://github.com/Mosqlimate-project/mosqlimate-client/issues/70)) ([d1020f2](https://github.com/Mosqlimate-project/mosqlimate-client/commit/d1020f2fbee85f9acd605122a7ea197f419afb12))
+
+## [1.9.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.9.0...1.9.1) (2025-04-14)
+
+
+### Bug Fixes
+
+* **mosqlient:** minor issue with apply ensemble ([3f4e730](https://github.com/Mosqlimate-project/mosqlimate-client/commit/3f4e730d44519c8aa58a738f633d8b5d22e0aa0c))
+* **mosqlient:** type-checks ([83f2667](https://github.com/Mosqlimate-project/mosqlimate-client/commit/83f26674d26d0b31b67686c500fe20ddc2027fb2))
 
 # [1.9.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/1.8.1...1.9.0) (2025-04-09)
 

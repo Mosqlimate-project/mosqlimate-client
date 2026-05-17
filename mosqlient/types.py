@@ -8,38 +8,24 @@ from pydantic import BaseModel, ConfigDict
 
 from mosqlient import validations as v
 
-
 APP = Annotated[str, AfterValidator(v.validate_django_app)]
-
 ID = Annotated[int, AfterValidator(v.validate_id)]
-Name = Annotated[str, AfterValidator(v.validate_name)]
 Description = Annotated[str, AfterValidator(v.validate_description)]
-AuthorName = Annotated[Optional[str], AfterValidator(v.validate_author_name)]
-AuthorUserName = Annotated[str, AfterValidator(v.validate_author_username)]
-AuthorInstitution = Annotated[
-    Optional[str], AfterValidator(v.validate_author_institution)
-]
-Repository = Annotated[str, AfterValidator(v.validate_repository)]
-ImplementationLanguage = Annotated[
-    str | dict[Literal["language"], str],
-    AfterValidator(v.validate_implementation_language),
-]
 Disease = Annotated[str, AfterValidator(v.validate_disease)]
+Category = Annotated[str, AfterValidator(v.validate_category)]
+Repository = Annotated[str, AfterValidator(v.validate_repository)]
 ADMLevel = Annotated[int, AfterValidator(v.validate_adm_level)]
-Temporal = Annotated[bool, AfterValidator(v.validate_temporal)]
-Spatial = Annotated[bool, AfterValidator(v.validate_spatial)]
-Categorical = Annotated[bool, AfterValidator(v.validate_categorical)]
 TimeResolution = Annotated[str, AfterValidator(v.validate_time_resolution)]
-Tags = Annotated[list, AfterValidator(v.validate_tags)]  # TODO:
-
 Commit = Annotated[str, AfterValidator(v.validate_commit)]
 Date = Annotated[Union[str, date], AfterValidator(v.validate_date)]
 PredictionData = Annotated[
     List[Dict], AfterValidator(v.validate_prediction_data)
 ]
-
 UF = Annotated[str, AfterValidator(v.validate_uf)]
 Geocode = Annotated[int, AfterValidator(v.validate_geocode)]
+MacroHealthGeocode = Annotated[
+    int, AfterValidator(v.validate_macro_health_geocode)
+]
 
 
 class Schema(BaseModel, ABC):
@@ -52,7 +38,7 @@ class Params(BaseModel, ABC):
     model_config = ConfigDict(
         arbitrary_types_allowed=True, protected_namespaces=()
     )
-    method: Literal["GET", "POST", "PUT", "DELETE"]
+    method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"]
     app: APP
     endpoint: str
     id: Optional[int] = None

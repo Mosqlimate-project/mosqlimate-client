@@ -65,8 +65,7 @@ def validate_author_institution(
 
 
 def validate_repository(repository: str) -> str:
-    assert len(repository) <= 100, "repository too long"
-    assert len(repository) > 0, "empty repository"
+    assert "/" in repository, "malformed repository"
     return repository
 
 
@@ -96,7 +95,23 @@ def validate_implementation_language(implementation_language: str) -> str:
     return implementation_language
 
 
-def validate_disease(disease: Literal["dengue", "zika", "chikungunya"]) -> str:
+def validate_disease(disease: Literal["A90", "A92.0", "A92.5"]) -> str:
+    assert (
+        disease in DISEASES
+    ), f"Unknown disease '{disease}'. Options: {DISEASES}"
+    return disease
+
+
+def validate_category(
+    disease: Literal[
+        "quantitative",
+        "categorical",
+        "spatial_quantitative",
+        "spatial_categorical",
+        "spatio_temporal_quantitative",
+        "spatio_temporal_categorical",
+    ],
+) -> str:
     assert (
         disease.lower() in DISEASES
     ), f"Unknown disease '{disease}'. Options: {DISEASES}"
@@ -190,4 +205,10 @@ def validate_geocode(geocode: int) -> int:
     err = "Invalid municipality geocode %s. Example: 3304557"
     assert len(str(geocode)) == 7, err % geocode
     assert int(str(geocode)[:2]) in UF_CODES.values(), err % geocode
+    return geocode
+
+
+def validate_macro_health_geocode(geocode: int) -> int:
+    err = "Invalid macro health geocode %s. Example: 1101"
+    assert len(str(geocode)) == 4, err % geocode
     return geocode

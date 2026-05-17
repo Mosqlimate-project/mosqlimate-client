@@ -3,6 +3,8 @@
   "tagFormat": "${version}",
   "plugins": [
     "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
     [
       "semantic-release-replace-plugin",
       {
@@ -20,16 +22,22 @@
               }
             ],
             "countMatches": true
+          },
+          {
+            "files": ["mosqlient/__init__.py"],
+            "from": "return \".*\"  # changed by semantic-release",
+            "to": "return \"${nextRelease.version}\"  # changed by semantic-release",
+            "results": [
+              {
+                "file": "mosqlient/__init__.py",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
           }
         ]
-      }
-    ],
-    "@semantic-release/release-notes-generator",
-    [
-      "@semantic-release/changelog",
-      {
-        "changelogTitle": "Release Notes\n---",
-        "changelogFile": "CHANGELOG.md"
       }
     ],
     [
@@ -40,12 +48,6 @@
       }
     ],
     [
-      "@semantic-release/github",
-      {
-        "assets": ["dist/*.whl", "dist/*.tar.gz"]
-      }
-    ],
-    [
       "@semantic-release/git",
       {
         "assets": [
@@ -53,7 +55,13 @@
           "CHANGELOG.md",
           "mosqlient/__init__.py"
         ],
-        "message": "chore(release): ${nextRelease.version}"
+        "message": "chore(release): ${nextRelease.version} [skip ci]"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": ["dist/*.whl", "dist/*.tar.gz"]
       }
     ]
   ]

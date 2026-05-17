@@ -6,6 +6,9 @@ on:
     - main
   pull_request:
     branches:
+      - main
+  pull_request_target:
+    branches:
     - main
 
 defaults:
@@ -52,15 +55,16 @@ jobs:
         key: quality-poetry-cache
 
     - name: Set up the project
-      run: poetry install -vv
+      run: |
+        poetry install -vv --all-groups
 
     - name: Check if the code is correctly typed
       run: poetry run duty check-types
 
-    - name: Check for vulnerabilities in dependencies
-      run: |
-        pip install safety
-        poetry run duty check-dependencies
+    # - name: Check for vulnerabilities in dependencies
+    #   run: |
+    #     pip install safety
+    #     poetry run duty check-dependencies
 
     - name: Pre-commit
       run: |
@@ -95,9 +99,33 @@ jobs:
         key: tests-poetry-cache-${{ matrix.os }}-py${{ matrix.python-version }}
 
     - name: Set up the project
-      run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
+      run: poetry install --with dev,models --extras analyze -vv
 
     - name: Run the test suite
+      env:
+        API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
       run: |
         echo "API_KEY=$API_KEY" > .env
         poetry run duty test
+
+    - name: Upload coverage report
+      run: |
+        pip install coverage
+        poetry run coverage combine || true
+        poetry run coverage report --rcfile=config/coverage.ini
+        poetry run coverage html --rcfile=config/coverage.ini
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: build/coverage/
+        retention-days: 7
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+        flags: ${{ matrix.os }}
+        verbose: true

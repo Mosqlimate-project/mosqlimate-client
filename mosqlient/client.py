@@ -4,6 +4,7 @@ import re
 import uuid
 import asyncio
 import json
+import os
 from collections import defaultdict
 from itertools import chain
 from typing import Literal, List
@@ -15,14 +16,18 @@ from aiohttp import (
     ServerTimeoutError,
 )
 import requests
+from dotenv import load_dotenv
 from typing_extensions import Annotated
 from pydantic.functional_validators import AfterValidator
+from pydantic_core import to_jsonable_python
 from tqdm.asyncio import tqdm_asyncio
 from loguru import logger
 
 from mosqlient.types import Params
 from mosqlient._utils import parse_params
 from mosqlient import errors
+
+load_dotenv()
 
 
 class Mosqlient:
@@ -31,7 +36,10 @@ class Mosqlient:
         x_uid_key: str,
         timeout: int = 300,
         max_items_per_page: int = 300,
-        _api_url: str = "https://api.mosqlimate.org/api/",
+        _api_url: str = os.getenv(
+            "MOSQLIENT_API_URL",
+            "https://api.mosqlimate.org/api/",
+        ),
     ):
         self.username, self.uid_key = x_uid_key.split(":")
         self.timeout = timeout
@@ -56,11 +64,21 @@ class Mosqlient:
         if not hasattr(params, "page"):
             res = requests.get(
                 url=url,
+                params=parse_params(**params.params()),
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
-            res.raise_for_status()
-            return res.json()
+            if res.status_code == 422:
+                raise ValueError(res.text)
+            try:
+                res.raise_for_status()
+            except requests.HTTPError as err:
+                logger.error(res.text)
+                raise err
+            data = res.json()
+            if isinstance(data, dict):
+                return data.get("items", data)
+            return data
 
         _params = params.params()
 
@@ -78,7 +96,13 @@ class Mosqlient:
                 headers={"X-UID-Key": self.X_UID_KEY},
                 timeout=self.timeout,
             )
-            res.raise_for_status()
+            if res.status_code == 422:
+                raise ValueError(res.text)
+            try:
+                res.raise_for_status()
+            except requests.HTTPError as err:
+                logger.error(res.text)
+                raise err
             data = res.json()
             if "message" in data:
                 logger.warning(data["message"])
@@ -94,6 +118,33 @@ class Mosqlient:
         }
         res = requests.post(
             url=self.api_url + params.app + "/" + params.endpoint + "/",
+            data=json.dumps(to_jsonable_python(params.params())),
+            timeout=self.timeout,
+            headers=headers,
+        )
+        if res.status_code == 422:
+            raise ValueError(res.text)
+        try:
+            res.raise_for_status()
+        except requests.HTTPError as err:
+            logger.error(res.text)
+            raise err
+        return res
+
+    def patch(self, params: Params) -> requests.models.Response:
+        self.__validate_request(params)
+        headers = {
+            "X-UID-Key": self.X_UID_KEY,
+            "Content-Type": "application/json",
+        }
+        res = requests.patch(
+            url=(
+                self.api_url
+                + params.app
+                + "/"
+                + params.endpoint.strip("/")
+                + "/"
+            ),
             data=json.dumps(params.params()),
             timeout=self.timeout,
             headers=headers,
@@ -210,7 +261,7 @@ class Mosqlient:
 
     def __validate_endpoint(
         self,
-        method: Literal["GET", "POST", "PUT", "DELETE"],
+        method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"],
         app: str,
         endpoint: str,
     ) -> None:

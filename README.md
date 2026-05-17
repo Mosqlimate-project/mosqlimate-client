@@ -247,3 +247,4 @@ Full documentation, including detailed API reference and additional tutorials, i
 ## License
 
 This project is licensed under the GPLv3 License — see the [LICENSE](LICENSE) file for details.
+In the examples folder, you can find an [R jupyter notebook](docs/tutorials/Using%20Mosqlient%20from%20R.ipynb) of how to use `mosqlient` from R.
