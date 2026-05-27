@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
+import scipy.stats as st
 from scipy.optimize import minimize
-from scipy.stats import lognorm, norm
-
 
 def get_lognormal_pars(
     med: float,
@@ -60,7 +59,7 @@ def get_lognormal_pars(
         raise ValueError("med, lwr, and upr must be non-negative.")
 
     def loss_lower(theta):
-        tent_qs = lognorm.ppf(
+        tent_qs = st.lognorm.ppf(
             [(1 - conf_level) / 2, (1 + conf_level) / 2],
             s=theta[1],
             scale=np.exp(theta[0]),
@@ -74,7 +73,7 @@ def get_lognormal_pars(
         return attained_loss
 
     def loss_median(theta):
-        tent_qs = lognorm.ppf(
+        tent_qs = st.lognorm.ppf(
             [0.5, (1 + conf_level) / 2], s=theta[1], scale=np.exp(theta[0])
         )
         if med == 0:
@@ -168,7 +167,7 @@ def get_normal_pars(
     """
 
     def loss_lower(theta):
-        tent_qs = norm.ppf(
+        tent_qs = st.norm.ppf(
             [(1 - conf_level) / 2, (1 + conf_level) / 2],
             loc=theta[0],
             scale=theta[1],
@@ -182,7 +181,7 @@ def get_normal_pars(
         return attained_loss
 
     def loss_median(theta):
-        tent_qs = norm.ppf(
+        tent_qs = st.norm.ppf(
             [0.5, (1 + conf_level) / 2], loc=theta[0], scale=theta[1]
         )
         if lwr == 0:
@@ -289,7 +288,7 @@ def get_df_pars(
 
     if dist == "log_normal":
         theo_pred_df = preds_.apply(
-            lambda row: lognorm.ppf(
+            lambda row: st.lognorm.ppf(
                 [0.5, (1 - conf_level) / 2, (1 + conf_level) / 2],
                 s=row["sigma"],
                 scale=np.exp(row["mu"]),
@@ -299,7 +298,7 @@ def get_df_pars(
         )
     elif dist == "normal":
         theo_pred_df = preds_.apply(
-            lambda row: norm.ppf(
+            lambda row: st.norm.ppf(
                 [0.5, (1 - conf_level) / 2, (1 + conf_level) / 2],
                 loc=row["mu"],
                 scale=row["sigma"],
@@ -312,3 +311,175 @@ def get_df_pars(
     preds_ = pd.concat([preds_, theo_pred_df], axis=1)
 
     return preds_
+
+
+quantile_cols = [
+    'lower_95',
+    'lower_90',
+    'lower_80',
+    'lower_50',
+    'pred',
+    'upper_50',
+    'upper_80',
+    'upper_90',
+    'upper_95'
+]
+
+quantile_levels = [0.025, 0.05, 0.1, 0.25, 0.5,
+                    0.75, 0.9, 0.95, 0.975]
+
+
+def _fit_ln_least_squares(p, Q):
+    """
+    Fit a lognormal distribution from quantile estimates using least squares.
+
+    This function estimates the parameters of a lognormal distribution
+    (`mu` and `sigma`) from a set of quantile values and their associated
+    cumulative probabilities. The estimation is performed by transforming
+    the quantiles into log-space and fitting a linear relationship between
+    the standard normal quantiles and the logarithm of the observed quantiles.
+
+    Parameters
+    ----------
+    p : array-like of float
+        Cumulative probability levels associated with the quantiles.
+        Values must be in the interval ``(0, 1)``.
+
+    Q : array-like of float
+        Quantile values corresponding to the probabilities in `p`.
+        Non-positive values are replaced by ``0.01`` before applying
+        the logarithmic transformation.
+
+    Returns
+    -------
+    mu : float
+        Estimated mean parameter of the underlying normal distribution
+        in log-space.
+
+    sigma : float
+        Estimated standard deviation parameter of the underlying normal
+        distribution in log-space.
+
+    Notes
+    -----
+    The method assumes that the data follow a lognormal distribution:
+
+    .. math::
+
+        Y \\sim \\text{LogNormal}(\\mu, \\sigma)
+
+    such that:
+
+    .. math::
+
+        \\log(Y) \\sim \\mathcal{N}(\\mu, \\sigma^2)
+
+    The parameters are estimated by solving a simple linear regression:
+
+    .. math::
+
+        \\log(Q_p) = \\mu + \\sigma z_p
+
+    where :math:`z_p` are the standard normal quantiles associated with
+    probabilities `p`.
+
+    Examples
+    --------
+    >>> p = [0.1, 0.5, 0.9]
+    >>> Q = [2.3, 5.0, 10.2]
+    >>> mu, sigma = _fit_ln_least_squares(p, Q)
+    """
+    Q = np.where(Q <= 0, 0.01, Q)
+
+    z = st.norm.ppf(p)
+    y = np.log(Q)
+
+    z_bar = z.mean()
+    y_bar = y.mean()
+
+    sigma = np.sum((z - z_bar) * (y - y_bar)) / np.sum((z - z_bar) ** 2)
+    mu = y_bar - sigma * z_bar
+
+    return mu, sigma
+
+
+def fit_row(row):
+    """
+    Estimate lognormal distribution parameters for a single dataframe row.
+
+    This function extracts quantile values from a dataframe row using the
+    global variable `quantile_cols`, fits a lognormal distribution using
+    `_fit_ln_least_squares`, and returns the estimated parameters.
+
+    Parameters
+    ----------
+    row : pandas.Series
+        Row containing quantile columns defined in `quantile_cols`.
+
+    Returns
+    -------
+    pandas.Series
+        Series containing the estimated lognormal parameters:
+
+        - ``mu`` : float
+            Mean parameter in log-space.
+        - ``sigma`` : float
+            Standard deviation parameter in log-space.
+
+    Notes
+    -----
+    This function depends on the following global variables:
+
+    - `quantile_cols` : list of str
+        Column names containing quantile values.
+    - `QUANTILES_LEVELS` : array-like of float
+        Probability levels associated with the quantiles.
+
+    Examples
+    --------
+    >>> df[['mu', 'sigma']] = df.apply(fit_row, axis=1)
+    """
+    Q = row[quantile_cols].values.astype(float)
+
+    mu, sigma = _fit_ln_least_squares(
+        quantile_levels,
+        Q
+    )
+
+    return pd.Series({
+        'mu': mu,
+        'sigma': sigma
+    })
+
+def get_df_pars_ls(df): 
+    """
+    Estimate lognormal distribution parameters for all rows in a dataset.
+
+    This function converts the input object to a pandas DataFrame,
+    applies the `fit_row` function to each row, and appends the
+    estimated lognormal parameters (`mu` and `sigma`) as new columns.
+
+    Parameters
+    ----------
+    df : xarray.Dataset or pandas.DataFrame
+        Input dataset containing quantile columns defined in the global
+        variable `quantile_cols`. If an xarray object is provided,
+        it must implement the ``to_dataframe()`` method.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing all original columns plus:
+
+        - ``mu`` : float
+            Estimated mean parameter of the underlying normal
+            distribution in log-space.
+        - ``sigma`` : float
+            Estimated standard deviation parameter of the underlying
+            normal distribution in log-space.
+
+    """
+
+    df[['mu', 'sigma']] = df.apply(fit_row, axis=1)
+
+    return df 
