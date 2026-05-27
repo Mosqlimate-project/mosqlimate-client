@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from scipy.stats import lognorm
 from mosqlient import get_prediction_by_id
 from scoringrules import crps_normal, crps_lognormal, logs_normal
-from mosqlient.prediction_optimize import get_df_pars
+from mosqlient.prediction_optimize import get_df_pars, get_df_pars_ls
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
@@ -265,6 +265,27 @@ def plot_score(
     )
 
 
+cols_preds_before_update = [
+    "date",
+    f"lower_90",
+    "pred",
+    f"upper_90",
+]
+
+cols_preds_complete = [
+    "date",
+    "lower_50",
+    "lower_80",
+    "lower_90",
+    "lower_95",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
+]
+
+
 class Scorer:
     """
     A class to compare the score of the models.
@@ -382,8 +403,6 @@ class Scorer:
         ids: Optional[list[int] | list[str]] = None,
         pred: Optional[pd.DataFrame] = None,
         dist: str = "log_normal",
-        fn_loss: str = "median",
-        conf_level: float = 0.90,
     ):
         """
         Parameters
@@ -395,14 +414,8 @@ class Scorer:
         pred: pd.DataFrame
             Pandas Dataframe already in the format accepted by the platform
             that will be computed the score.
-        dist : {'normal', 'log_normal'}, optional, default='log_normal'
+        dist : {'log_normal'}, optional, default='log_normal'
             The type of distribution used for parameter estimation.
-        fn_loss : {'median', 'lower'}, optional, default='median'
-            Specifies the method for parameter estimation:
-            - 'median': Fits the log-normal distribution by minimizing `pred` and `upper` columns.
-            - 'lower': Fits the log-normal distribution by minimizing `lower` and `upper` columns.
-        conf_level: float.
-            The confidence level of the predictions of the columns upper and lower.
         """
 
         # input validation data
@@ -422,21 +435,34 @@ class Scorer:
         dict_df_ids = {}
 
         if pred is not None:
-            cols_preds = [
-                "date",
-                f"lower_{int(100*conf_level)}",
-                "pred",
-                f"upper_{int(100*conf_level)}",
-            ]
-            if not set(cols_preds).issubset(set(list(pred.columns))):
-                raise ValueError(
-                    "Missing required keys in the pred:"
-                    f"{set(cols_preds).difference(set(list(pred.columns)))}"
+
+            pred = pred.dropna(axis=1)
+
+            if len(pred.columns) == 4:
+
+                if not set(cols_preds_before_update).issubset(
+                    set(list(pred.columns))
+                ):
+                    raise ValueError(
+                        "Missing required keys in the pred:"
+                        f"{set(cols_preds_before_update).difference(set(list(pred.columns)))}"
+                    )
+
+                pred = get_df_pars(
+                    pred.copy(), conf_level=0.9, dist=dist, fn_loss="median"
                 )
 
-            pred = get_df_pars(
-                pred.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss
-            )
+            else:
+
+                if not set(cols_preds_complete).issubset(
+                    set(list(pred.columns))
+                ):
+                    raise ValueError(
+                        "Missing required keys in the pred:"
+                        f"{set(cols_preds_before_update).difference(set(list(pred.columns)))}"
+                    )
+
+                pred = get_df_pars_ls(pred.copy())
 
             dict_df_ids["pred"] = pred
             pred.date = pd.to_datetime(pred.date)
@@ -460,12 +486,18 @@ class Scorer:
                 df_ = df_.dropna(axis=1)
                 df_ = df_.sort_values(by="date")
                 df_.date = pd.to_datetime(df_.date)
-                df_ = get_df_pars(
-                    df_.copy(),
-                    conf_level=conf_level,
-                    dist=dist,
-                    fn_loss=fn_loss,
-                )
+
+                if len(df_.columns) == 4:
+                    df_ = get_df_pars(
+                        df_.copy(),
+                        conf_level=0.9,
+                        dist=dist,
+                        fn_loss="median",
+                    )
+
+                else:
+                    df_ = get_df_pars_ls(df_.copy())
+
                 dict_df_ids[id_] = df_
                 min_dates.append(min(df_.date))
                 max_dates.append(max(df_.date))
@@ -498,7 +530,6 @@ class Scorer:
         self.min_date = min_date
         self.max_date = max_date
         self.dist = dist
-        self.conf_level = conf_level
 
     def set_date_range(self, start_date: str, end_date: str) -> None:
         """
@@ -620,12 +651,6 @@ class Scorer:
 
             df_id_ = dict_df_ids[id_]
 
-            if dist == "normal":
-                score = crps_normal(
-                    df_true.casos,
-                    df_id_.mu,
-                    df_id_.sigma,
-                )
             if dist == "log_normal":
                 score = crps_lognormal(
                     df_true.casos,
@@ -669,13 +694,6 @@ class Scorer:
 
             df_id_ = dict_df_ids[id_]
 
-            if dist == "normal":
-                score = logs_normal(
-                    df_true.casos,
-                    df_id_.mu,
-                    df_id_.sigma,
-                    negative=False,
-                )
             if dist == "log_normal":
                 score = lognorm.logpdf(
                     df_true.casos.values,
@@ -710,7 +728,7 @@ class Scorer:
         ids = self.ids
         dict_df_ids = self.filtered_dict_df_ids
         df_true = self.filtered_df_true
-        conf_level = self.conf_level
+        conf_level = 0.9
 
         scores_curve = {}
 
