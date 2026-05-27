@@ -1,3 +1,15 @@
+# [2.2.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.2...2.2.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* improvments after run pre-commit ([c42f961](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c42f961a8f8982fb4cf8c02e57e45a13892f9c63))
+
+
+### Features
+
+* **scoring:** improvements in the calculation of parametric distributions ([0026421](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0026421e9de487ba180832babf6d46f883d3bc2e))
+
 ## [2.1.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.1...2.1.2) (2026-05-06)
 
 
