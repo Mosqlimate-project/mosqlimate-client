@@ -3,6 +3,7 @@ import pandas as pd
 import scipy.stats as st
 from scipy.optimize import minimize
 
+
 def get_lognormal_pars(
     med: float,
     lwr: float,
@@ -314,19 +315,18 @@ def get_df_pars(
 
 
 quantile_cols = [
-    'lower_95',
-    'lower_90',
-    'lower_80',
-    'lower_50',
-    'pred',
-    'upper_50',
-    'upper_80',
-    'upper_90',
-    'upper_95'
+    "lower_95",
+    "lower_90",
+    "lower_80",
+    "lower_50",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
 ]
 
-quantile_levels = [0.025, 0.05, 0.1, 0.25, 0.5,
-                    0.75, 0.9, 0.95, 0.975]
+quantile_levels = [0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.975]
 
 
 def _fit_ln_least_squares(p, Q):
@@ -441,17 +441,12 @@ def fit_row(row):
     """
     Q = row[quantile_cols].values.astype(float)
 
-    mu, sigma = _fit_ln_least_squares(
-        quantile_levels,
-        Q
-    )
+    mu, sigma = _fit_ln_least_squares(quantile_levels, Q)
 
-    return pd.Series({
-        'mu': mu,
-        'sigma': sigma
-    })
+    return pd.Series({"mu": mu, "sigma": sigma})
 
-def get_df_pars_ls(df): 
+
+def get_df_pars_ls(df):
     """
     Estimate lognormal distribution parameters for all rows in a dataset.
 
@@ -480,6 +475,6 @@ def get_df_pars_ls(df):
 
     """
 
-    df[['mu', 'sigma']] = df.apply(fit_row, axis=1)
+    df[["mu", "sigma"]] = df.apply(fit_row, axis=1)
 
-    return df 
+    return df

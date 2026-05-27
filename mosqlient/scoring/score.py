@@ -264,25 +264,27 @@ def plot_score(
         title={"text": title, "subtitle": subtitle}
     )
 
+
 cols_preds_before_update = [
-                "date",
-                f"lower_90",
-                "pred",
-                f"upper_90",
-            ]
+    "date",
+    f"lower_90",
+    "pred",
+    f"upper_90",
+]
 
 cols_preds_complete = [
-                "date",
-                "lower_50",
-                "lower_80",
-                "lower_90",
-                "lower_95",
-                "pred",
-                "upper_50",
-                "upper_80",
-                "upper_90", 
-                "upper_95",
-            ]
+    "date",
+    "lower_50",
+    "lower_80",
+    "lower_90",
+    "lower_95",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
+]
+
 
 class Scorer:
     """
@@ -434,11 +436,13 @@ class Scorer:
 
         if pred is not None:
 
-            pred = pred.dropna(axis =1)
+            pred = pred.dropna(axis=1)
 
-            if len(pred.columns) == 4: 
+            if len(pred.columns) == 4:
 
-                if not set(cols_preds_before_update).issubset(set(list(pred.columns))):
+                if not set(cols_preds_before_update).issubset(
+                    set(list(pred.columns))
+                ):
                     raise ValueError(
                         "Missing required keys in the pred:"
                         f"{set(cols_preds_before_update).difference(set(list(pred.columns)))}"
@@ -448,17 +452,17 @@ class Scorer:
                     pred.copy(), conf_level=0.9, dist=dist, fn_loss="median"
                 )
 
-            else: 
-                
-                if not set(cols_preds_complete).issubset(set(list(pred.columns))):
+            else:
+
+                if not set(cols_preds_complete).issubset(
+                    set(list(pred.columns))
+                ):
                     raise ValueError(
                         "Missing required keys in the pred:"
                         f"{set(cols_preds_before_update).difference(set(list(pred.columns)))}"
                     )
 
-                pred = get_df_pars_ls(
-                    pred.copy()
-                )  
+                pred = get_df_pars_ls(pred.copy())
 
             dict_df_ids["pred"] = pred
             pred.date = pd.to_datetime(pred.date)
@@ -483,17 +487,17 @@ class Scorer:
                 df_ = df_.sort_values(by="date")
                 df_.date = pd.to_datetime(df_.date)
 
-                if len(df_.columns) == 4: 
+                if len(df_.columns) == 4:
                     df_ = get_df_pars(
                         df_.copy(),
                         conf_level=0.9,
                         dist=dist,
-                        fn_loss='median',
+                        fn_loss="median",
                     )
 
-                else: 
-                    df_ = get_df_pars_ls(df_.copy()) 
-                     
+                else:
+                    df_ = get_df_pars_ls(df_.copy())
+
                 dict_df_ids[id_] = df_
                 min_dates.append(min(df_.date))
                 max_dates.append(max(df_.date))
