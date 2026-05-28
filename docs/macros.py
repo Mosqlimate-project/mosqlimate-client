@@ -23,9 +23,7 @@ def get_credits_data() -> dict:
 
     direct_dependencies = set(metadata["dependencies"].keys())
     direct_dependencies.remove("python")
-    dev_dependencies = set(
-        metadata.get("dev-dependencies", {}).keys()
-    ) or set(
+    dev_dependencies = set(metadata.get("dev-dependencies", {}).keys()) or set(
         toml.load(project_dir / "pyproject.toml")
         .get("tool", {})
         .get("poetry", {})
