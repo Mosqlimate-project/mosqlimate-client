@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional, Any, Dict, Literal, List, Union
+from typing import Optional, Any, Dict, Literal, List, Union, Mapping
 
 import json
 import nest_asyncio
@@ -347,7 +347,7 @@ class Prediction(types.Model):
         return self._schema.end_date  # type: ignore
 
     @property
-    def scores(self) -> Dict[str, float]:
+    def scores(self) -> Optional[Mapping[str, float | None]]:
         return self._schema.scores or {}
 
     @property
