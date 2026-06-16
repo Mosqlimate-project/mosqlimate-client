@@ -1,6 +1,6 @@
 from datetime import timedelta
 from datetime import date as dt
-from typing import Optional, List, Literal, Dict
+from typing import Optional, List, Literal, Mapping
 
 import pandas as pd
 from mosqlient import types
@@ -94,7 +94,7 @@ class Prediction(types.Schema):
     published: bool
     start_date: Optional[dt] = None
     end_date: Optional[dt] = None
-    scores: Optional[Dict[str, float]] = None
+    scores: Optional[Mapping[str, float | None]] = None
     adm_level: int
     adm_0: Optional[str] = None
     adm_1: Optional[int] = None
