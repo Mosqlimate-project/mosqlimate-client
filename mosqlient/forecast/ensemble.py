@@ -11,13 +11,12 @@ from scipy.integrate import cumulative_trapezoid
 from scoringrules import crps_lognormal
 from mosqlient.prediction_optimize import get_df_pars, get_df_pars_ls
 
-
 cols_preds_before_update = [
     "date",
     f"lower_90",
     "pred",
-    f"upper_90", 
-    "model_id"
+    f"upper_90",
+    "model_id",
 ]
 
 cols_preds_complete = [
@@ -31,7 +30,7 @@ cols_preds_complete = [
     "upper_80",
     "upper_90",
     "upper_95",
-    "model_id"
+    "model_id",
 ]
 
 
@@ -197,7 +196,6 @@ def find_opt_weights_log(
             preds_ = preds_.drop(["date"], axis=1).reset_index(drop=True)
             ms = preds_["mu"]
             vs = preds_.sigma**2
-           
 
             if not len(ms) == len(vs) == K:
                 print(ms)
@@ -321,28 +319,26 @@ class EnsembleDistPool:
         if len(df.columns) == 5:
 
             if not set(cols_preds_before_update).issubset(
-                    set(list(df.columns))
-                ):
+                set(list(df.columns))
+            ):
                 raise ValueError(
-                        "Missing required keys in the df:"
-                        f"{set(cols_preds_before_update).difference(set(list(df.columns)))}"
-                    )
+                    "Missing required keys in the df:"
+                    f"{set(cols_preds_before_update).difference(set(list(df.columns)))}"
+                )
 
-            if dist == 'log_normal':
+            if dist == "log_normal":
                 df = get_df_pars(
-                        df.copy(), conf_level=0.9, dist=dist, fn_loss="median"
-                    )
+                    df.copy(), conf_level=0.9, dist=dist, fn_loss="median"
+                )
 
         else:
 
-            if not set(cols_preds_complete).issubset(
-                    set(list(df.columns))
-                ):
+            if not set(cols_preds_complete).issubset(set(list(df.columns))):
                 raise ValueError(
-                        "Missing required keys in the pred:"
-                        f"{set(cols_preds_before_update).difference(set(list(df.columns)))}"
-                    )
-            if dist == 'log_normal':
+                    "Missing required keys in the pred:"
+                    f"{set(cols_preds_before_update).difference(set(list(df.columns)))}"
+                )
+            if dist == "log_normal":
 
                 df = get_df_pars_ls(df.copy())
 
@@ -384,7 +380,7 @@ class EnsembleDistPool:
 
         preds = self.df[["date", "mu", "sigma", "model_id"]]
 
-        preds.loc[:, 'date'] = pd.to_datetime(preds["date"])
+        preds.loc[:, "date"] = pd.to_datetime(preds["date"])
 
         if self.mixture == "linear":
             weights = find_opt_weights_linear(
@@ -824,7 +820,10 @@ def get_quantiles_linear(
 
     return quantiles
 
-def ensemble_vincentization(df_preds, models = None, index_cols = ['date'], model_col = 'model_id'): 
+
+def ensemble_vincentization(
+    df_preds, models=None, index_cols=["date"], model_col="model_id"
+):
     """
     Construct a median ensemble forecast using Vincentization.
 
@@ -883,32 +882,47 @@ def ensemble_vincentization(df_preds, models = None, index_cols = ['date'], mode
 
     """
 
-    if models is not None: 
+    if models is not None:
         df_preds = df_preds.loc[df_preds[model_col].isin(models)]
-        
+
     list_dfs = []
-    
-    for col in ['lower_95', 'lower_90', 'lower_80', 'lower_50', 'pred',
-           'upper_50', 'upper_80', 'upper_90', 'upper_95']:
 
-        list_dfs.append(pd.DataFrame(df_preds.pivot(index = index_cols,
-                                                    columns = model_col, values = col).median(axis =1)).rename(columns = {0: col}))
+    for col in [
+        "lower_95",
+        "lower_90",
+        "lower_80",
+        "lower_50",
+        "pred",
+        "upper_50",
+        "upper_80",
+        "upper_90",
+        "upper_95",
+    ]:
 
+        list_dfs.append(
+            pd.DataFrame(
+                df_preds.pivot(
+                    index=index_cols, columns=model_col, values=col
+                ).median(axis=1)
+            ).rename(columns={0: col})
+        )
 
-    df_median_ens = pd.concat(list_dfs ,axis =1).reset_index()
-    
+    df_median_ens = pd.concat(list_dfs, axis=1).reset_index()
+
     quantile_order = (
-    (df_median_ens['lower_95'] <= df_median_ens['lower_90']) &
-    (df_median_ens['lower_90'] <= df_median_ens['lower_80']) &
-    (df_median_ens['lower_80'] <= df_median_ens['lower_50']) &
-    (df_median_ens['lower_50'] <= df_median_ens['pred']) &
-    (df_median_ens['pred']     <= df_median_ens['upper_50']) &
-    (df_median_ens['upper_50'] <= df_median_ens['upper_80']) &
-    (df_median_ens['upper_80'] <= df_median_ens['upper_90']) &
-    (df_median_ens['upper_90'] <= df_median_ens['upper_95'])
+        (df_median_ens["lower_95"] <= df_median_ens["lower_90"])
+        & (df_median_ens["lower_90"] <= df_median_ens["lower_80"])
+        & (df_median_ens["lower_80"] <= df_median_ens["lower_50"])
+        & (df_median_ens["lower_50"] <= df_median_ens["pred"])
+        & (df_median_ens["pred"] <= df_median_ens["upper_50"])
+        & (df_median_ens["upper_50"] <= df_median_ens["upper_80"])
+        & (df_median_ens["upper_80"] <= df_median_ens["upper_90"])
+        & (df_median_ens["upper_90"] <= df_median_ens["upper_95"])
     )
 
-    if ~quantile_order.all(): 
-        raise Exception("The ensemble includes quantile values that violate monotonicity.")
+    if ~quantile_order.all():
+        raise Exception(
+            "The ensemble includes quantile values that violate monotonicity."
+        )
 
     return df_median_ens

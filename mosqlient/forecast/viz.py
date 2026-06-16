@@ -117,9 +117,8 @@ def plot_preds(
     # Forecasts
     for model in models:
 
-        preds_ = (
-            df_preds.loc[df_preds[model_col] == model]
-            .sort_values(date_col)
+        preds_ = df_preds.loc[df_preds[model_col] == model].sort_values(
+            date_col
         )
 
         color = color_map[model]
