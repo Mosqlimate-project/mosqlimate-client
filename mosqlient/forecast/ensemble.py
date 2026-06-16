@@ -8,39 +8,31 @@ from scipy.optimize import minimize
 from scipy.stats import lognorm, norm
 from scipy.interpolate import interp1d
 from scipy.integrate import cumulative_trapezoid
-from scoringrules import crps_lognormal, crps_normal
-from mosqlient.prediction_optimize import get_df_pars
+from scoringrules import crps_lognormal
+from mosqlient.prediction_optimize import get_df_pars, get_df_pars_ls
 
 
-def validate_df_preds(df_preds: pd.DataFrame, conf_level=0.9):
-    """
-    Validade if the predictions dataframe contains the necessary columns
+cols_preds_before_update = [
+    "date",
+    f"lower_90",
+    "pred",
+    f"upper_90", 
+    "model_id"
+]
 
-    Parameters
-    ------------
-
-    df_preds: pd.DataFrame
-
-    conf_level : float, optional, default=0.90
-        Confidence level used to define the lower and upper bounds.
-
-    Returns
-    ---------
-    Returns an error if df_preds is missing the required columns.
-    """
-    expected_cols = {
-        "date",
-        f"lower_{int(100 * conf_level)}",
-        "pred",
-        f"upper_{int(100 * conf_level)}",
-        "model_id",
-    }
-
-    if not expected_cols.issubset(df_preds.columns):
-        raise ValueError(
-            f"df_preds must contain the following columns: {expected_cols}. "
-            f"Missing: {expected_cols - set(df_preds.columns)}"
-        )
+cols_preds_complete = [
+    "date",
+    "lower_50",
+    "lower_80",
+    "lower_90",
+    "lower_95",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
+    "model_id"
+]
 
 
 def invlogit(y: float) -> float:
@@ -77,7 +69,7 @@ def pool_par_gauss(
     alpha: NDArray[np.float64], m: NDArray[np.float64], v: NDArray[np.float64]
 ) -> tuple:
     """
-    Function to get the output distribution from a logarithmic pool of lognormal (or normal) distrutions
+    Function to get the output distribution from a logarithmic pool of lognormal distrutions
 
     Parameters
     ----------
@@ -108,40 +100,6 @@ def pool_par_gauss(
     return mstar, np.sqrt(vstar)
 
 
-def linear_mix(
-    weights: NDArray[np.float64],
-    ms: NDArray[np.float64],
-    vs: NDArray[np.float64],
-) -> tuple:
-    """
-    Computes the mean (mu) and standard deviation (sd) of a linear mixture of normal distributions
-    weighted by `weights`.
-
-    Parameters
-    ----------
-    weights : np.array
-        Array of weights for the linear mixture. Should sum to 1.
-    ms : np.array
-        Array of mean values of the normal distributions.
-    vs : np.array
-        Array of variance values of the normal distributions.
-
-    Returns
-    -------
-    tuple (mu, sd)
-        mu : float
-            Mean of the resulting normal distribution.
-        sd : float
-            Standard deviation of the resulting normal distribution.
-    """
-
-    mu = np.dot(weights, ms)
-
-    sd = np.sqrt(np.dot(weights**2, vs))
-
-    return mu, sd
-
-
 def get_score(
     obs: float,
     mu: float,
@@ -164,8 +122,8 @@ def get_score(
     sd: float
         The sd parameter associated with the distribution
 
-    dist: str ['normal', 'log_normal']
-        Distribution type, either 'normal' or 'log_normal'.
+    dist: str ['log_normal']
+        Distribution type. Currently, it only accepts 'log_normal'.
 
     metric: str ['crps', 'log_score']
         Scoring metric, either 'crps' or 'log_score'.
@@ -180,15 +138,9 @@ def get_score(
         if dist == "log_normal":
             return -lognorm.logpdf(obs, s=sd, scale=np.exp(mu))
 
-        elif dist == "normal":
-            return -np.log(norm.pdf(obs, loc=mu, scale=sd))
-
     if metric == "crps":
         if dist == "log_normal":
             return crps_lognormal(obs, mu, sd)
-
-        elif dist == "normal":
-            return crps_normal(obs, mu, sd)
 
     raise ValueError(f"Invalid distribution '{dist}' and metric '{metric}'")
 
@@ -215,8 +167,8 @@ def find_opt_weights_log(
     order_models: list
         Order of the different models in the model_id column
 
-    dist: str ['log_normal', 'normal']
-        Distribution used to represent the forecast
+    dist: str ['log_normal']
+        Distribution used to represent the forecast. Currently, it only accepts 'log_normal'.
 
     metric: str ['crps', 'log_score']
         Metric used to optimize the weights
@@ -245,8 +197,13 @@ def find_opt_weights_log(
             preds_ = preds_.drop(["date"], axis=1).reset_index(drop=True)
             ms = preds_["mu"]
             vs = preds_.sigma**2
+           
 
             if not len(ms) == len(vs) == K:
+                print(ms)
+                print(vs)
+                print(K)
+                print(date)
                 raise ValueError("n_models and vs are not the same size!")
 
             mu, sd = pool_par_gauss(alpha=ws, m=ms, v=vs)
@@ -307,7 +264,7 @@ def get_ci_columns(p):
     return columns
 
 
-class Ensemble:
+class EnsembleDistPool:
     """
     A class to compute the weights and apply the ensemble of multiple models.
 
@@ -316,7 +273,7 @@ class Ensemble:
     df : pd.DataFrame
         Processed DataFrame containing model predictions.
     dist : str
-        The distribution type used for modeling ('log_normal' or 'normal').
+        The distribution type used for modeling. Currently, it only accepts 'log_normal'.
     order_models : list
         List of models in a specific order for weight computation.
 
@@ -336,8 +293,6 @@ class Ensemble:
         order_models: list,
         mixture: str = "log",
         dist: str = "log_normal",
-        fn_loss: str = "median",
-        conf_level: float = 0.9,
     ):
         """
         Initializes the Ensemble class by processing the input DataFrame and defining key attributes.
@@ -352,11 +307,10 @@ class Ensemble:
             Determine how the predictions are combined. Choose `linear` for a weighted
             linear mixture or `log` for logarithmic pooling.
         dist : str, optional
-            The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+            The distribution type used for parameterizing predictions. Currently, it only accepts 'log_normal'.
         fn_loss : str, optional
             Loss function used for estimation ('median' or 'lower'). Default is 'median'.
-        conf_level : float, optional, default=0.9
-            Confidence level used for computing the confidence intervals.
+
 
         Raises
         ------
@@ -364,25 +318,33 @@ class Ensemble:
             If the input DataFrame does not contain the required columns.
         """
 
-        try:
-            df = df[
-                [
-                    "date",
-                    "pred",
-                    f"lower_{int(100 * conf_level)}",
-                    f"upper_{int(100 * conf_level)}",
-                    "model_id",
-                ]
-            ]
+        if len(df.columns) == 5:
 
-        except:
-            raise ValueError(
-                f"The input dataframe must contain the columns: 'date', 'pred', 'lower_{int(100 * conf_level)}', 'upper_{int(100 * conf_level)}', 'model_id'"
-            )
+            if not set(cols_preds_before_update).issubset(
+                    set(list(df.columns))
+                ):
+                raise ValueError(
+                        "Missing required keys in the df:"
+                        f"{set(cols_preds_before_update).difference(set(list(df.columns)))}"
+                    )
 
-        df = get_df_pars(
-            df.copy(), conf_level=conf_level, dist=dist, fn_loss=fn_loss
-        )
+            if dist == 'log_normal':
+                df = get_df_pars(
+                        df.copy(), conf_level=0.9, dist=dist, fn_loss="median"
+                    )
+
+        else:
+
+            if not set(cols_preds_complete).issubset(
+                    set(list(df.columns))
+                ):
+                raise ValueError(
+                        "Missing required keys in the pred:"
+                        f"{set(cols_preds_before_update).difference(set(list(df.columns)))}"
+                    )
+            if dist == 'log_normal':
+
+                df = get_df_pars_ls(df.copy())
 
         # organize the dataframe:
         df["model_id"] = pd.Categorical(
@@ -421,6 +383,8 @@ class Ensemble:
         """
 
         preds = self.df[["date", "mu", "sigma", "model_id"]]
+
+        preds.loc[:, 'date'] = pd.to_datetime(preds["date"])
 
         if self.mixture == "linear":
             weights = find_opt_weights_linear(
@@ -678,7 +642,7 @@ def find_opt_weights_linear(
     order_models : list
         List defining the order of models for weight computation.
     dist : str, optional
-        The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+        The distribution type used for parameterizing predictions. Currently, it only accepts 'log_normal'.
     metric : str, optional
         Metric used for optimization. Options: `crps`, `log_score`.
     bounds: tuple
@@ -695,11 +659,6 @@ def find_opt_weights_linear(
 
     if dist == "log_normal":
         weights = find_opt_weights_linear_mix_log(
-            obs, preds, order_models, metric=metric, bounds=bounds
-        )
-
-    if dist == "normal":
-        weights = find_opt_weights_linear_mix_norm(
             obs, preds, order_models, metric=metric, bounds=bounds
         )
 
@@ -791,90 +750,6 @@ def find_opt_weights_linear_mix_log(
     return {"weights": optimal_weights, "loss": opt_result.fun}
 
 
-def find_opt_weights_linear_mix_norm(
-    obs: pd.DataFrame,
-    preds: pd.DataFrame,
-    order_models: list,
-    metric: str,
-    bounds: tuple,
-) -> dict:
-    """
-    Find the weights of a lognormal linear mix distributions that minimizes the metric selected.
-
-    Parameters
-    -----------
-    obs: pd.Dataframe
-        Dataframe with the columns: `date` and `casos`
-    preds: pd.Dataframe
-        Dataframe with the columns: `date`, `mu`, `sigma`, `model_id`
-    order_models: list
-        Order of the different models in the model_id column
-    metric: str ['crps', 'log_score']
-        Metric used to optimize the weights
-    bounds: tuple
-        Tuple where the first element represents the minimum value and the second
-        represents the maximum value for the bounds.
-
-    Return
-    -------
-    dict
-        A dictionary containing:
-        - `weights`: The optimized weights for the models.
-        - `loss`: The minimized loss value based on the selected metric.
-    """
-    K = len(order_models)
-
-    def loss(eta):
-        """
-        Computes the loss function based on the selected metric.
-
-        Parameters
-        ----------
-        eta : array-like
-            Parameterization of the weights, transformed via `alpha_01`.
-
-        Returns
-        -------
-        float
-            The computed loss value.
-        """
-        ws = alpha_01(eta)
-        ws = np.where(ws < 1e-6, 1e-6, ws)
-
-        score = 0
-        for date in obs.date:
-            preds_ = preds.loc[preds.date == date]
-            preds_ = preds_.drop(["date"], axis=1).reset_index(drop=True)
-
-            ms = preds_["mu"]
-            vs = preds_.sigma**2
-
-            if not len(ms) == len(vs) == K:
-                raise ValueError("n_models and vs are not the same size!")
-
-            mu, sd = linear_mix(weights=ws, ms=ms, vs=vs)
-
-            score = score + get_score(
-                obs=obs.loc[obs.date == date].casos,
-                mu=mu,
-                sd=sd,
-                dist="norm",
-                metric=metric,
-            )
-
-        return score
-
-    initial_guess = np.random.normal(size=K - 1)
-    bounds_ = [bounds] * (K - 1)
-    opt_result = minimize(
-        loss, initial_guess, method="Nelder-mead", bounds=bounds_
-    )
-
-    optimal_weights = alpha_01(opt_result.x)
-
-    return {"weights": optimal_weights, "loss": opt_result.fun}
-
-
 def get_quantiles_log(
     dist: str,
     weights: NDArray[np.float64],
@@ -888,7 +763,7 @@ def get_quantiles_log(
     Parameters
     ------------
     dist : str, optional
-        The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+        The distribution type used for parameterizing predictions. Currently, it only accepts 'log_normal'..
     weights: np.array
         The weights assigned to each prediction.
     ms: np.array
@@ -908,9 +783,6 @@ def get_quantiles_log(
     if dist == "log_normal":
         quantiles = lognorm.ppf(p, s=pool[1], scale=np.exp(pool[0]))
 
-    elif dist == "normal":
-        quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
-
     return quantiles
 
 
@@ -926,7 +798,7 @@ def get_quantiles_linear(
     Parameters
     ------------
     dist : str, optional
-        The distribution type used for parameterizing predictions ('log_normal' or 'normal'). Default is 'log_normal'.
+        The distribution type used for parameterizing predictions. Currently, it only accepts 'log_normal'..
     weights: np.array
         The weights assigned to each prediction.
     preds: pd.DataFrame
@@ -942,11 +814,6 @@ def get_quantiles_linear(
 
     weights = np.where(weights < 1e-6, 1e-6, weights)
 
-    if dist == "normal":
-        pool = linear_mix(weights=weights, ms=preds.mu, vs=preds.sigma**2)
-
-        quantiles = norm.ppf(p, loc=pool[0], scale=pool[1])
-
     if dist == "log_normal":
         quantiles = compute_ppf(
             mu=preds["mu"].values,
@@ -956,3 +823,92 @@ def get_quantiles_linear(
         )
 
     return quantiles
+
+def ensemble_vincentization(df_preds, models = None, index_cols = ['date'], model_col = 'model_id'): 
+    """
+    Construct a median ensemble forecast using Vincentization.
+
+    Vincentization combines forecasts by taking the median of corresponding
+    quantiles across a set of models. For each forecast horizon (defined by
+    ``index_cols``), the ensemble quantiles are obtained as the median of the
+    same quantile from all included models.
+
+    The function expects the following quantile columns to be present:
+
+    - ``lower_95``
+    - ``lower_90``
+    - ``lower_80``
+    - ``lower_50``
+    - ``pred`` (point forecast / median)
+    - ``upper_50``
+    - ``upper_80``
+    - ``upper_90``
+    - ``upper_95``
+
+    After aggregation, the resulting quantiles are checked for monotonicity.
+    An exception is raised if any forecast has crossing quantiles.
+
+    Parameters
+    ----------
+    df_preds : pandas.DataFrame
+        DataFrame containing forecasts from multiple models. Each row
+        corresponds to a model forecast and must include the quantile columns
+        listed above, along with the columns specified by ``index_cols`` and
+        ``model_col``.
+
+    models : list-like, optional, default=None
+        Subset of model identifiers to include in the ensemble. If ``None``,
+        all available models are used.
+
+    index_cols : list of str, optional, default=["date"]
+        Columns defining a unique forecast target (e.g., forecast date,
+        location, horizon). Forecasts are aggregated separately for each
+        unique combination of these columns.
+
+    model_col : str, optional, default="model_id"
+        Name of the column containing model identifiers.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Ensemble forecast DataFrame containing ``index_cols`` and the
+        aggregated quantile columns. Each quantile is the median across models
+        for the corresponding forecast target.
+
+    Raises
+    ------
+    Exception
+        If the resulting ensemble contains non-monotonic quantiles
+        (i.e., quantile crossing).
+
+    """
+
+    if models is not None: 
+        df_preds = df_preds.loc[df_preds[model_col].isin(models)]
+        
+    list_dfs = []
+    
+    for col in ['lower_95', 'lower_90', 'lower_80', 'lower_50', 'pred',
+           'upper_50', 'upper_80', 'upper_90', 'upper_95']:
+
+        list_dfs.append(pd.DataFrame(df_preds.pivot(index = index_cols,
+                                                    columns = model_col, values = col).median(axis =1)).rename(columns = {0: col}))
+
+
+    df_median_ens = pd.concat(list_dfs ,axis =1).reset_index()
+    
+    quantile_order = (
+    (df_median_ens['lower_95'] <= df_median_ens['lower_90']) &
+    (df_median_ens['lower_90'] <= df_median_ens['lower_80']) &
+    (df_median_ens['lower_80'] <= df_median_ens['lower_50']) &
+    (df_median_ens['lower_50'] <= df_median_ens['pred']) &
+    (df_median_ens['pred']     <= df_median_ens['upper_50']) &
+    (df_median_ens['upper_50'] <= df_median_ens['upper_80']) &
+    (df_median_ens['upper_80'] <= df_median_ens['upper_90']) &
+    (df_median_ens['upper_90'] <= df_median_ens['upper_95'])
+    )
+
+    if ~quantile_order.all(): 
+        raise Exception("The ensemble includes quantile values that violate monotonicity.")
+
+    return df_median_ens
