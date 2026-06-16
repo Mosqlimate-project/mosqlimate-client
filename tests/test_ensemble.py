@@ -121,7 +121,9 @@ class TestEnsemble:
 
     def test_init_invalid_columns(self):
         df = pd.DataFrame({"date": ["2023-01-01"], "pred": [50.0]})
-        with pytest.raises(ValueError, match="Missing required keys in the pred"):
+        with pytest.raises(
+            ValueError, match="Missing required keys in the pred"
+        ):
             EnsembleDistPool(df=df, order_models=["model_a"])
 
     def test_compute_weights(self, sample_ensemble_df, sample_obs_df):

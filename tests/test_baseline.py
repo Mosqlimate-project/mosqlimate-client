@@ -43,9 +43,11 @@ class TestGetPredictionDataFrame:
 
         boxcox = ppc.BoxCoxEndogTransformer().fit(df.y)
         df_transformed = df.copy()
-        df_transformed = df_transformed.astype({
-                                            "y": float,
-                                        })
+        df_transformed = df_transformed.astype(
+            {
+                "y": float,
+            }
+        )
         df_transformed.loc[:, "y"] = boxcox.transform(df.y)[0]
 
         model = pm.auto_arima(
