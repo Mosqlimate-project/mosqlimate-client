@@ -4,16 +4,13 @@ import pytest
 import numpy as np
 import pandas as pd
 from mosqlient.forecast.ensemble import (
-    validate_df_preds,
     invlogit,
     alpha_01,
     pool_par_gauss,
-    linear_mix,
     get_score,
-    find_opt_weights_log,
     get_epiweek,
     get_ci_columns,
-    Ensemble,
+    EnsembleDistPool,
     dlnorm_mix,
     compute_ppf,
     crps_lognormal_mix,
@@ -21,27 +18,6 @@ from mosqlient.forecast.ensemble import (
     get_quantiles_log,
     get_quantiles_linear,
 )
-
-
-class TestValidateDfPreds:
-    def test_valid_df(self):
-        df = pd.DataFrame(
-            {
-                "date": ["2023-01-01"],
-                "lower_90": [30.0],
-                "pred": [50.0],
-                "upper_90": [70.0],
-                "model_id": ["test"],
-            }
-        )
-        validate_df_preds(df, conf_level=0.9)
-
-    def test_missing_columns(self):
-        df = pd.DataFrame({"date": ["2023-01-01"], "pred": [50.0]})
-        with pytest.raises(
-            ValueError, match="must contain the following columns"
-        ):
-            validate_df_preds(df)
 
 
 class TestInvlogit:
@@ -88,33 +64,15 @@ class TestPoolParGauss:
             )
 
 
-class TestLinearMix:
-    def test_basic(self):
-        weights = np.array([0.5, 0.5])
-        ms = np.array([1.0, 2.0])
-        vs = np.array([1.0, 1.0])
-        mu, sd = linear_mix(weights, ms, vs)
-        assert isinstance(mu, float)
-        assert isinstance(sd, float)
-
-
 class TestGetScore:
     def test_crps_lognormal(self):
         score = get_score(10.0, 2.0, 0.5, dist="log_normal", metric="crps")
-        assert isinstance(score, float)
-
-    def test_crps_normal(self):
-        score = get_score(10.0, 2.0, 0.5, dist="normal", metric="crps")
         assert isinstance(score, float)
 
     def test_log_score_lognormal(self):
         score = get_score(
             10.0, 2.0, 0.5, dist="log_normal", metric="log_score"
         )
-        assert isinstance(score, float)
-
-    def test_log_score_normal(self):
-        score = get_score(10.0, 2.0, 0.5, dist="normal", metric="log_score")
         assert isinstance(score, float)
 
     def test_invalid_dist_metric(self):
@@ -152,7 +110,7 @@ class TestGetCiColumns:
 class TestEnsemble:
     def test_init(self, sample_ensemble_df):
         order = ["model_a", "model_b", "model_c"]
-        ens = Ensemble(
+        ens = EnsembleDistPool(
             df=sample_ensemble_df,
             order_models=order,
             mixture="log",
@@ -163,12 +121,14 @@ class TestEnsemble:
 
     def test_init_invalid_columns(self):
         df = pd.DataFrame({"date": ["2023-01-01"], "pred": [50.0]})
-        with pytest.raises(ValueError, match="must contain the columns"):
-            Ensemble(df=df, order_models=["model_a"])
+        with pytest.raises(
+            ValueError, match="Missing required keys in the pred"
+        ):
+            EnsembleDistPool(df=df, order_models=["model_a"])
 
     def test_compute_weights(self, sample_ensemble_df, sample_obs_df):
         order = ["model_a", "model_b", "model_c"]
-        ens = Ensemble(
+        ens = EnsembleDistPool(
             df=sample_ensemble_df,
             order_models=order,
             mixture="log",
@@ -180,7 +140,7 @@ class TestEnsemble:
 
     def test_apply_ensemble(self, sample_ensemble_df, sample_obs_df):
         order = ["model_a", "model_b", "model_c"]
-        ens = Ensemble(
+        ens = EnsembleDistPool(
             df=sample_ensemble_df,
             order_models=order,
             mixture="log",
@@ -193,7 +153,7 @@ class TestEnsemble:
 
     def test_apply_ensemble_no_weights(self, sample_ensemble_df):
         order = ["model_a", "model_b", "model_c"]
-        ens = Ensemble(
+        ens = EnsembleDistPool(
             df=sample_ensemble_df,
             order_models=order,
             mixture="log",
@@ -204,7 +164,7 @@ class TestEnsemble:
 
     def test_linear_mixture(self, sample_ensemble_df, sample_obs_df):
         order = ["model_a", "model_b", "model_c"]
-        ens = Ensemble(
+        ens = EnsembleDistPool(
             df=sample_ensemble_df,
             order_models=order,
             mixture="linear",
@@ -311,31 +271,8 @@ class TestGetQuantilesLog:
         result = get_quantiles_log("log_normal", weights, ms, vs, p)
         assert len(result) == 1
 
-    def test_normal(self):
-        weights = np.array([0.5, 0.5])
-        ms = np.array([1.0, 2.0])
-        vs = np.array([0.25, 0.25])
-        p = np.array([0.5])
-        result = get_quantiles_log("normal", weights, ms, vs, p)
-        assert len(result) == 1
-
 
 class TestGetQuantilesLinear:
-    def test_normal(self):
-        preds = pd.DataFrame(
-            {
-                "date": ["2023-01-01"],
-                "pred": [50.0],
-                "mu": [3.0],
-                "sigma": [0.5],
-                "model_id": ["test"],
-            }
-        )
-        weights = np.array([1.0])
-        p = np.array([0.5])
-        result = get_quantiles_linear("normal", weights, preds, p)
-        assert len(result) == 1
-
     def test_lognormal(self):
         preds = pd.DataFrame(
             {

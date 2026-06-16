@@ -11,8 +11,10 @@ from mosqlient.forecast.viz import plot_preds
 class TestPlotPreds:
     def test_with_data(self):
         data = pd.DataFrame(
-            {"casprov": [10, 15, 20]},
-            index=pd.date_range("2023-01-01", periods=3, freq="W-SUN"),
+            {
+                "casprov": [10, 15, 20],
+                "date": pd.date_range("2023-01-01", periods=3, freq="W-SUN"),
+            },
         )
         df_preds = pd.DataFrame(
             {
@@ -23,7 +25,7 @@ class TestPlotPreds:
                 "model_id": ["model_a"] * 3,
             }
         )
-        ax = plot_preds(data, df_preds, conf_level=0.9)
+        ax = plot_preds(data, df_preds, data_col="casprov", conf_level=0.9)
         assert ax is not None
 
     def test_without_data(self):
@@ -57,8 +59,10 @@ class TestPlotPreds:
 
     def test_custom_data_col(self):
         data = pd.DataFrame(
-            {"cases": [10, 15, 20]},
-            index=pd.date_range("2023-01-01", periods=3, freq="W-SUN"),
+            {
+                "cases": [10, 15, 20],
+                "date": pd.date_range("2023-01-01", periods=3, freq="W-SUN"),
+            },
         )
         df_preds = pd.DataFrame(
             {
@@ -79,7 +83,5 @@ class TestPlotPreds:
                 "pred": [10, 15, 20],
             }
         )
-        with pytest.raises(
-            ValueError, match="must contain the following columns"
-        ):
+        with pytest.raises(ValueError, match="Missing columns in df_preds"):
             plot_preds(None, df_preds, conf_level=0.9)
