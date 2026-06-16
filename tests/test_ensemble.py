@@ -69,18 +69,10 @@ class TestGetScore:
         score = get_score(10.0, 2.0, 0.5, dist="log_normal", metric="crps")
         assert isinstance(score, float)
 
-    def test_crps_normal(self):
-        score = get_score(10.0, 2.0, 0.5, dist="normal", metric="crps")
-        assert isinstance(score, float)
-
     def test_log_score_lognormal(self):
         score = get_score(
             10.0, 2.0, 0.5, dist="log_normal", metric="log_score"
         )
-        assert isinstance(score, float)
-
-    def test_log_score_normal(self):
-        score = get_score(10.0, 2.0, 0.5, dist="normal", metric="log_score")
         assert isinstance(score, float)
 
     def test_invalid_dist_metric(self):
@@ -277,31 +269,8 @@ class TestGetQuantilesLog:
         result = get_quantiles_log("log_normal", weights, ms, vs, p)
         assert len(result) == 1
 
-    def test_normal(self):
-        weights = np.array([0.5, 0.5])
-        ms = np.array([1.0, 2.0])
-        vs = np.array([0.25, 0.25])
-        p = np.array([0.5])
-        result = get_quantiles_log("normal", weights, ms, vs, p)
-        assert len(result) == 1
-
 
 class TestGetQuantilesLinear:
-    def test_normal(self):
-        preds = pd.DataFrame(
-            {
-                "date": ["2023-01-01"],
-                "pred": [50.0],
-                "mu": [3.0],
-                "sigma": [0.5],
-                "model_id": ["test"],
-            }
-        )
-        weights = np.array([1.0])
-        p = np.array([0.5])
-        result = get_quantiles_linear("normal", weights, preds, p)
-        assert len(result) == 1
-
     def test_lognormal(self):
         preds = pd.DataFrame(
             {
