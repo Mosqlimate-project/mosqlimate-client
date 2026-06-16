@@ -1,3 +1,15 @@
+# [2.3.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.2.0...2.3.0) (2026-06-16)
+
+
+### Bug Fixes
+
+* **Prediction:** fix pydantic error on scores field ([#95](https://github.com/Mosqlimate-project/mosqlimate-client/issues/95)) ([a19ebf8](https://github.com/Mosqlimate-project/mosqlimate-client/commit/a19ebf8c7d85a64c87f25d5b662ad86ae3eef37f))
+
+
+### Features
+
+* **ensemble:** Update ensemble class ([#94](https://github.com/Mosqlimate-project/mosqlimate-client/issues/94)) ([adcebb2](https://github.com/Mosqlimate-project/mosqlimate-client/commit/adcebb2334cea9f98d57a29e14f90d3125cb9507))
+
 # [2.2.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.2...2.2.0) (2026-05-27)
 
 
