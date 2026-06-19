@@ -23,6 +23,37 @@ class MosquitoSchema(types.Schema):
     pass
 
 
+class VegetationSchema(types.Schema):
+    pass
+
+
+class VegetationGETParams(types.Params):
+    method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
+    app: types.APP = "datastore"
+    endpoint: str = "vegetation"
+    page: Optional[int] = None
+    per_page: Optional[int] = None
+    start: Optional[types.Date] = None
+    end: Optional[types.Date] = None
+    geocode: Optional[types.Geocode] = None
+    uf: Optional[types.UF] = None
+    collection: Optional[str] = None
+    attribute: Optional[str] = None
+
+    def params(self) -> dict:
+        p = {
+            "start": self.start,
+            "end": self.end,
+            "geocode": self.geocode,
+            "uf": self.uf,
+            "collection": self.collection,
+            "attribute": self.attribute,
+            "page": self.page,
+            "per_page": self.per_page,
+        }
+        return {k: v for k, v in p.items() if v is not None}
+
+
 class InfodengueGETParams(types.Params):
     method: Literal["GET", "POST", "PUT", "DELETE"] = "GET"
     app: types.APP = "datastore"
