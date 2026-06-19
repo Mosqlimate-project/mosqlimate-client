@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.3.0...2.4.0) (2026-06-19)
+
+
+### Features
+
+* **datastore:** include endpoint for vegetation ([#98](https://github.com/Mosqlimate-project/mosqlimate-client/issues/98)) ([725fb64](https://github.com/Mosqlimate-project/mosqlimate-client/commit/725fb64a9e124ec464cbeb7a55b00bf55c764363))
+
 # [2.3.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.2.0...2.3.0) (2026-06-16)
 
 
