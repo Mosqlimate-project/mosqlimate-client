@@ -5,6 +5,34 @@ from mosqlient.datastore import schema
 from mosqlient import types, Mosqlient
 
 
+class Vegetation(types.Model):
+    _schema: schema.VegetationSchema
+
+    @classmethod
+    def get(
+        cls,
+        api_key: str,
+        start: str | date,
+        end: str | date,
+        uf: Optional[types.UF] = None,
+        geocode: Optional[int] = None,
+        collection: Optional[str] = None,
+        attribute: Optional[str] = None,
+        page: Optional[int] = None,
+    ):
+        client = Mosqlient(x_uid_key=api_key)
+        params = schema.VegetationGETParams(
+            start=start,
+            end=end,
+            uf=uf,
+            geocode=geocode,
+            collection=collection,
+            attribute=attribute,
+            page=page,
+        )
+        return client.get(params=params)
+
+
 class Infodengue(types.Model):
     _schema: schema.InfodengueSchema
 

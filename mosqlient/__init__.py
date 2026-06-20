@@ -18,13 +18,14 @@ from mosqlient.datastore._climate_get_impl import *
 from mosqlient.datastore._infodengue_get_impl import *
 from mosqlient.datastore._episcanner_get_impl import *
 from mosqlient.datastore._mosquito_get_impl import *
+from mosqlient.datastore._vegetation_get_impl import *
 
 
 def get_version() -> str:
     try:
         return importlib_metadata.version(__name__)
     except importlib_metadata.PackageNotFoundError:  # pragma: no cover
-        return "2.1.2"  # changed by semantic-release
+        return "2.4.0"  # changed by semantic-release
 
 
 version: str = get_version()

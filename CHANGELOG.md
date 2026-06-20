@@ -1,3 +1,34 @@
+# [2.4.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.3.0...2.4.0) (2026-06-19)
+
+
+### Features
+
+* **datastore:** include endpoint for vegetation ([#98](https://github.com/Mosqlimate-project/mosqlimate-client/issues/98)) ([725fb64](https://github.com/Mosqlimate-project/mosqlimate-client/commit/725fb64a9e124ec464cbeb7a55b00bf55c764363))
+
+# [2.3.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.2.0...2.3.0) (2026-06-16)
+
+
+### Bug Fixes
+
+* **Prediction:** fix pydantic error on scores field ([#95](https://github.com/Mosqlimate-project/mosqlimate-client/issues/95)) ([a19ebf8](https://github.com/Mosqlimate-project/mosqlimate-client/commit/a19ebf8c7d85a64c87f25d5b662ad86ae3eef37f))
+
+
+### Features
+
+* **ensemble:** Update ensemble class ([#94](https://github.com/Mosqlimate-project/mosqlimate-client/issues/94)) ([adcebb2](https://github.com/Mosqlimate-project/mosqlimate-client/commit/adcebb2334cea9f98d57a29e14f90d3125cb9507))
+
+# [2.2.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.2...2.2.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* improvments after run pre-commit ([c42f961](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c42f961a8f8982fb4cf8c02e57e45a13892f9c63))
+
+
+### Features
+
+* **scoring:** improvements in the calculation of parametric distributions ([0026421](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0026421e9de487ba180832babf6d46f883d3bc2e))
+
 ## [2.1.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.1.1...2.1.2) (2026-05-06)
 
 
