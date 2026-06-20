@@ -48,7 +48,7 @@ import mosqlient
 # Dengue cases for Rio de Janeiro city (geocode=3304557)
 df = mosqlient.get_infodengue(
     api_key=api_key,
-    disease="dengue",
+    disease="A90",  # ICD-10 code for dengue
     start_date="2010-01-01",
     end_date="2023-12-31",
     geocode=3304557,
@@ -57,7 +57,7 @@ df = mosqlient.get_infodengue(
 # All cities in Paraná state
 df_pr = mosqlient.get_infodengue(
     api_key=api_key,
-    disease="dengue",
+    disease="A90",
     start_date="2022-01-01",
     end_date="2023-01-01",
     uf="PR",
@@ -79,42 +79,20 @@ df_climate = mosqlient.get_climate(
 
 ### 3. Model registry
 
-Browse, search, and register forecast models on the platform.
+Browse and search forecast models registered on the platform. Model registration is done through the [Mosqlimate platform](https://api.mosqlimate.org/) (not via API).
 
 ```python
-from mosqlient import get_all_models, get_models, get_model_by_id
+from mosqlient import get_all_models, get_models
 
 # List all registered models
 all_models = get_all_models(api_key)
 
 # Search with filters
-sprint_models = get_models(api_key, sprint=True)
-dengue_models = get_models(api_key, disease="dengue", adm_level=1)
-
-# Get a specific model
-model = get_model_by_id(api_key, id=30)
-print(model.name, model.disease, model.time_resolution)
+imdc_2024_models = get_models(api_key, imdc_year=2024)
+dengue_models = get_models(api_key, disease="A90", adm_level=1)
 ```
 
-**Register a new model:**
-
-```python
-from mosqlient import upload_model
-
-new_model = upload_model(
-    api_key=api_key,
-    name="My ARIMA Model",
-    description="ARIMA baseline for dengue in Rio de Janeiro",
-    repository="https://github.com/user/repo",
-    implementation_language="Python",
-    disease="dengue",
-    temporal=True,
-    spatial=False,
-    categorical=False,
-    adm_level=2,
-    time_resolution="week",
-)
-```
+Disease codes use ICD-10 format: `"A90"` (Dengue), `"A92.0"` (Chikungunya), `"A92.5"` (Zika).
 
 **Upload predictions:**
 
@@ -127,17 +105,35 @@ prediction_data = [
         "lower_95": 500, "lower_50": 1200, "pred": 1491,
         "upper_50": 1800, "upper_95": 4000,
     },
-    # ... more weeks
+    # ... must contain all weeks in the date range without gaps
 ]
 
 upload_prediction(
     api_key=api_key,
-    model_id=new_model.id,
+    repository="username/repository",  # format: owner/repo_name
+    disease="A90",
     description="Out-of-sample forecast for Rio de Janeiro",
     commit="abc123",
-    predict_date="2024-10-01",
+    adm_level=2,
+    case_definition="probable",
+    adm_0="BRA",
+    adm_2=3304557,  # geocode for Rio de Janeiro
     prediction=prediction_data,
 )
+```
+
+For IMDC submissions, prediction data must contain all weeks in the date range without gaps:
+
+```python
+import pandas as pd
+from epiweeks import Week
+
+# Generate all required weeks for an IMDC submission
+prediction_data = pd.date_range(
+    start=Week(2023, 41).startdate(),  # Year-1 week 41
+    end=Week(2024, 40).startdate(),    # Current year week 40
+    freq="W-SUN",
+).to_frame(name="date")
 ```
 
 ### 4. Building a baseline ARIMA forecast
@@ -153,7 +149,7 @@ from mosqlient.forecast import Arima
 # Load and prepare data
 df = Infodengue.get(
     api_key=api_key,
-    disease="dengue",
+    disease="A90",
     start="2010-01-01",
     end=date.today().strftime("%Y-%m-%d"),
     geocode=3304557,
