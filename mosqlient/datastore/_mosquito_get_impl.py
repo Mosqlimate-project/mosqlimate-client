@@ -9,7 +9,7 @@ from .models import Mosquito
 
 
 def get_mosquito(
-    api_key: str,
+    api_key: str | None = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     state: Optional[str] = None,

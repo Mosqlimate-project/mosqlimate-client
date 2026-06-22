@@ -5,15 +5,17 @@ import uuid
 import asyncio
 import json
 import os
+import time
 from collections import defaultdict
 from itertools import chain
-from typing import Literal, List
+from typing import Literal, List, Optional
 
 from aiohttp import (
     ClientSession,
     ClientTimeout,
     ClientConnectionError,
     ServerTimeoutError,
+    ClientResponseError,
 )
 import requests
 from dotenv import load_dotenv
@@ -33,7 +35,7 @@ load_dotenv()
 class Mosqlient:
     def __init__(
         self,
-        x_uid_key: str,
+        x_uid_key: Optional[str] = None,
         timeout: int = 300,
         max_items_per_page: int = 300,
         _api_url: str = os.getenv(
@@ -41,14 +43,28 @@ class Mosqlient:
             "https://api.mosqlimate.org/api/",
         ),
     ):
-        self.username, self.uid_key = x_uid_key.split(":")
         self.timeout = timeout
         self.per_page = max_items_per_page
         self.api_url = _api_url
         self.endpoints: dict = defaultdict(dict)
+        self._max_concurrent_requests = 10
+
+        self._token_capacity = 0
+        self._tokens = 0
+        self._token_refill_rate = 0
+        self._last_request_time = time.monotonic()
+
+        self.is_demo_user = False
+
+        if x_uid_key:
+            self.username, self.uid_key = x_uid_key.split(":")
+        else:
+            self.is_demo_user = True
+            self.__fetch_temp_credentials()
+
         self.__validate_uuid4()
         self.__fetch_openapi()
-        self._max_concurrent_requests = 10
+        self.__fetch_rate_limit()
 
     def __str__(self):
         return self.username
@@ -56,6 +72,40 @@ class Mosqlient:
     @property
     def X_UID_KEY(self):
         return f"{self.username}:{self.uid_key}"
+
+    def __fetch_temp_credentials(self):
+        url = self.api_url + "user/create-temp-user/"
+        res = requests.post(url, timeout=self.timeout)
+        res.raise_for_status()
+        data = res.json()
+        self.username, self.uid_key = data["api_key"].split(":")
+
+        logger.warning(
+            "You are using a demo version of the API. "
+            "If you want a full version, please register at www.mosqlimate.org "
+            "and use your own api_key."
+        )
+
+    def __fetch_rate_limit(self):
+        url = self.api_url + "user/rate-limit/"
+        res = requests.get(
+            url, headers={"X-UID-Key": self.X_UID_KEY}, timeout=self.timeout
+        )
+        if res.status_code == 200:
+            rate_limit_str = res.json().get("rate_limit", "unlimited")
+            if rate_limit_str != "unlimited":
+                try:
+                    count_str, period = rate_limit_str.split("/")
+                    count = int(count_str)
+                    period_seconds = {
+                        "s": 1,
+                        "m": 60,
+                        "h": 3600,
+                        "d": 86400,
+                    }.get(period, 60)
+                    self._delay_between_requests = period_seconds / count
+                except (ValueError, AttributeError):
+                    pass
 
     def get(self, params: Params) -> List[dict]:
         self.__validate_request(params)
@@ -176,6 +226,17 @@ class Mosqlient:
             raise err
         return res
 
+    async def __throttle(self):
+        if self._delay_between_requests <= 0:
+            return
+
+        async with self._request_lock:
+            now = asyncio.get_event_loop().time()
+            elapsed = now - self._last_request_time
+            if elapsed < self._delay_between_requests:
+                await asyncio.sleep(self._delay_between_requests - elapsed)
+            self._last_request_time = asyncio.get_event_loop().time()
+
     async def __aget(
         self,
         session: ClientSession,
@@ -187,18 +248,43 @@ class Mosqlient:
         try:
             if retries < 0:
                 raise ClientConnectionError("Too many attempts")
+
+            await self.__throttle()
+
             async with session.get(url, params=params, headers=headers) as res:
                 if res.status == 200:
                     return await res.json()
-                res.raise_for_status()
-                await asyncio.sleep(10 / (retries + 1))
-                return await self.__aget(session, url, params, retries - 1)
+
+                error_text = await res.text()
+                error_message = error_text
+
+                try:
+                    error_json = json.loads(error_text)
+                    if isinstance(error_json, dict):
+                        error_message = str(
+                            error_json.get(
+                                "message", error_json.get("detail", error_text)
+                            )
+                        )
+                except json.JSONDecodeError:
+                    pass
+
+                raise ClientResponseError(
+                    request_info=res.request_info,
+                    history=res.history,
+                    status=res.status,
+                    message=str(error_message),
+                    headers=res.headers,
+                )
+
         except ServerTimeoutError:
             await asyncio.sleep(8 / (retries + 1))
             return await self.__aget(session, url, params, retries - 1)
-        raise ClientConnectionError("Invalid request")
 
     async def __get_all(self, url: str, params: dict) -> List[dict]:
+        self._request_lock = asyncio.Lock()
+        self._last_request_time = asyncio.get_event_loop().time()
+
         async with ClientSession(
             timeout=ClientTimeout(total=self.timeout)
         ) as session:
@@ -207,6 +293,16 @@ class Mosqlient:
             total_pages = first_page["pagination"]["total_pages"]
 
             results = [first_page]
+
+            if self.is_demo_user and total_pages > 1:
+                logger.warning(
+                    "Demo users are limited to the first page of results. "
+                    "To access all pages, please register at www.mosqlimate.org "
+                    "and use your own api_key."
+                )
+                return list(
+                    chain.from_iterable(res["items"] for res in results)
+                )
 
             tasks = []
             for page in range(2, total_pages + 1):
@@ -293,7 +389,6 @@ class Mosqlient:
             raise ValueError(f"uid_key is not a valid key. See {docs_url}")
 
 
-# Avoiding circular imports
 def validate_client(c: Mosqlient) -> Mosqlient:
     return c
 

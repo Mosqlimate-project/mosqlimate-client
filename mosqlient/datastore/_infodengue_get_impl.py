@@ -10,10 +10,10 @@ from .models import Infodengue
 
 
 def get_infodengue(
-    api_key: str,
-    disease: Literal["dengue", "zika", "chikungunya"],
-    start_date: date | str,
-    end_date: date | str,
+    api_key: str | None = None,
+    disease: Literal["dengue", "zika", "chikungunya"] = "dengue",
+    start_date: date | str = "2024-01-01",
+    end_date: date | str = "2024-02-01",
     uf: Optional[types.UF] = None,
     geocode: Optional[int] = None,
 ) -> pd.DataFrame:

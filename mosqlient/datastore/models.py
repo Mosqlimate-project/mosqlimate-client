@@ -11,9 +11,9 @@ class Vegetation(types.Model):
     @classmethod
     def get(
         cls,
-        api_key: str,
         start: str | date,
         end: str | date,
+        api_key: Optional[str] = None,
         uf: Optional[types.UF] = None,
         geocode: Optional[int] = None,
         collection: Optional[str] = None,
@@ -39,17 +39,14 @@ class Infodengue(types.Model):
     @classmethod
     def get(
         cls,
-        api_key: str,
         disease: Literal["dengue", "zika", "chikungunya"],
         start: str | date,
         end: str | date,
+        api_key: Optional[str] = None,
         uf: Optional[types.UF] = None,
         geocode: Optional[int] = None,
         page: Optional[int] = None,
     ):
-        """
-        datastore.schema.InfodengueGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.InfodengueGETParams(
             start=start,
@@ -68,16 +65,13 @@ class Climate(types.Model):
     @classmethod
     def get(
         cls,
-        api_key: str,
         start: str | date,
         end: str | date,
+        api_key: Optional[str] = None,
         uf: Optional[str] = None,
         geocode: Optional[int] = None,
         page: Optional[int] = None,
     ):
-        """
-        datastore.schema.ClimateGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ClimateGETParams(
             start=start, end=end, uf=uf, geocode=geocode, page=page
@@ -91,17 +85,14 @@ class ClimateWeekly(types.Model):
     @classmethod
     def get(
         cls,
-        api_key: str,
         start: str,
         end: str,
+        api_key: Optional[str] = None,
         uf: Optional[str] = None,
         geocode: Optional[int] = None,
         macro_health_code: Optional[int] = None,
         page: Optional[int] = None,
     ):
-        """
-        datastore.schema.ClimateWeeklyGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ClimateWeeklyGETParams(
             start=start,
@@ -120,14 +111,11 @@ class Episcanner(types.Model):
     @classmethod
     def get(
         cls,
-        api_key: str,
         disease: Literal["dengue", "zika", "chikungunya"],
         uf: str,
+        api_key: Optional[str] = None,
         year: Optional[int] = date.today().year,
     ):
-        """
-        datastore.schema.EpiscannerGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.EpiscannerGETParams(disease=disease, uf=uf, year=year)
         return client.get(params=params)
@@ -139,16 +127,13 @@ class Mosquito(types.Model):
     @classmethod
     def get(
         cls,
-        api_key: str,
+        api_key: Optional[str] = None,
         date_start: Optional[types.Date] = None,
         date_end: Optional[types.Date] = None,
         state: Optional[types.UF] = None,
         municipality: Optional[str] = None,
         page: Optional[int] = None,
     ):
-        """
-        datastore.schema.MosquitoGETParams
-        """
         client = Mosqlient(x_uid_key=api_key)
         params = schema.MosquitoGETParams(
             date_start=date_start,

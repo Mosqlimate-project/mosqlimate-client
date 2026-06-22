@@ -11,11 +11,11 @@ from .models import Climate, ClimateWeekly
 
 
 def get_climate(
-    api_key: str,
-    start_date: date | str,
-    end_date: date | str,
-    uf: Optional[types.UF] = None,
-    geocode: Optional[int] = None,
+    api_key: str | None = None,
+    start_date: date | str = "2024-01-01",
+    end_date: date | str = "2024-01-01",
+    uf: Optional[types.UF] = "RJ",
+    geocode: Optional[int] = 3304557,
 ) -> pd.DataFrame:
     """
     Retrieve historical climate data from the Mosqlimate API for a specific region and date range.
@@ -65,9 +65,9 @@ def get_climate(
 
 
 def get_climate_weekly(
-    api_key: str,
-    start: str,
-    end: str,
+    api_key: str | None = None,
+    start: str = "2024-01-01",
+    end: str = "2024-01-08",
     uf: Optional[types.UF] = None,
     geocode: Optional[int] = None,
     macro_health_code: Optional[int] = None,
