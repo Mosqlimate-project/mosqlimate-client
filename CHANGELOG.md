@@ -1,3 +1,10 @@
+## [2.5.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.5.0...2.5.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* **users:** fix get rate limit endpoint ([#100](https://github.com/Mosqlimate-project/mosqlimate-client/issues/100)) ([3393f83](https://github.com/Mosqlimate-project/mosqlimate-client/commit/3393f83cd23a98f106b56961014e02036a789687))
+
 # [2.5.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.4.0...2.5.0) (2026-06-23)
 
 
