@@ -263,3 +263,19 @@ def sample_arima_df():
         {"y": [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80]},
         index=pd.date_range("2023-01-01", periods=15, freq="W-SUN"),
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_mosqlient_init_requests():
+    with (
+        patch(
+            "mosqlient.client.Mosqlient._Mosqlient__fetch_rate_limit"
+        ) as mock_rate,
+        patch(
+            "mosqlient.client.Mosqlient._Mosqlient__fetch_temp_credentials"
+        ) as mock_temp,
+    ):
+        mock_rate.return_value = None
+        mock_temp.return_value = None
+
+        yield
