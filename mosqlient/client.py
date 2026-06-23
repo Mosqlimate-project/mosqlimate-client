@@ -53,6 +53,7 @@ class Mosqlient:
         self._tokens = 0
         self._token_refill_rate = 0
         self._last_request_time = time.monotonic()
+        self._delay_between_requests = 0
 
         self.is_demo_user = False
 
@@ -103,7 +104,11 @@ class Mosqlient:
                         "h": 3600,
                         "d": 86400,
                     }.get(period, 60)
-                    self._delay_between_requests = period_seconds / count
+
+                    self._token_capacity = count
+                    self._tokens = count
+                    self._token_refill_rate = count / period_seconds
+                    self._last_request_time = time.monotonic()
                 except (ValueError, AttributeError):
                     pass
 
@@ -227,15 +232,26 @@ class Mosqlient:
         return res
 
     async def __throttle(self):
-        if self._delay_between_requests <= 0:
+        if self._token_capacity <= 0:
             return
 
         async with self._request_lock:
-            now = asyncio.get_event_loop().time()
+            now = time.monotonic()
             elapsed = now - self._last_request_time
-            if elapsed < self._delay_between_requests:
-                await asyncio.sleep(self._delay_between_requests - elapsed)
-            self._last_request_time = asyncio.get_event_loop().time()
+            self._last_request_time = now
+
+            self._tokens = min(
+                self._token_capacity,
+                self._tokens + (elapsed * self._token_refill_rate),
+            )
+
+            if self._tokens >= 1:
+                self._tokens -= 1
+                return
+
+            wait_time = (1 - self._tokens) / self._token_refill_rate
+            self._tokens -= 1
+            await asyncio.sleep(wait_time)
 
     async def __aget(
         self,
