@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.4.0...2.5.0) (2026-06-23)
+
+
+### Features
+
+* **api:** include temporary user logic to the client ([#99](https://github.com/Mosqlimate-project/mosqlimate-client/issues/99)) ([0a41ac8](https://github.com/Mosqlimate-project/mosqlimate-client/commit/0a41ac8d24ea30b823b8a85b8bbe03b6cf71dbe9))
+
 # [2.4.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.3.0...2.4.0) (2026-06-19)
 
 
