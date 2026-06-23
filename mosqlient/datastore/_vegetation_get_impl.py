@@ -11,9 +11,9 @@ from .models import Vegetation
 
 
 def get_vegetation(
-    api_key: str,
-    start_date: date | str,
-    end_date: date | str,
+    api_key: str | None = None,
+    start_date: date | str = "2024-01-01",
+    end_date: date | str = "2024-02-01",
     uf: Optional[types.UF] = None,
     geocode: Optional[int] = None,
     collection: Optional[str] = None,

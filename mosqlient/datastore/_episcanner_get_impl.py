@@ -11,8 +11,8 @@ from .models import Episcanner
 
 
 def get_episcanner(
-    api_key: str,
-    uf: types.UF,
+    api_key: str | None = None,
+    uf: types.UF = "RJ",
     disease: Literal["dengue", "zika", "chikungunya"] = "dengue",
     year: Optional[int] = date.today().year,
 ) -> pd.DataFrame:
