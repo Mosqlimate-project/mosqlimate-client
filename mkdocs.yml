@@ -10,13 +10,12 @@ nav:
         - Changelog: 'changelog.md'
         - Credits: 'credits.md'
         - License: 'license.md'
-    - Tutorials:
-        - Datastore: 'tutorials/API/datastore.ipynb'
-        - Registry: 'tutorials/API/registry.ipynb'
-        - Using from R: 'tutorials/Using Mosqlient from R.ipynb'
-        - Model Scoring: 'tutorials/scoring.ipynb'
-        - Simple forecast model: 'tutorials/baseline_model.ipynb'
-        - Ensemble predictions: 'tutorials/ensemble.ipynb'
+    - Datastore: tutorials/API/datastore.ipynb
+    - Registry: tutorials/API/registry.ipynb
+    - Using from R: tutorials/Using Mosqlient from R.ipynb
+    - Model Scoring: tutorials/scoring.ipynb
+    - Simple forecast model: 'tutorials/baseline_model.ipynb'
+    - Ensemble predictions: 'tutorials/ensemble.ipynb'
     - Code Reference:
         - Infodengue data: 'reference/infodengue.md'
         - Climate data: 'reference/climate.md'
