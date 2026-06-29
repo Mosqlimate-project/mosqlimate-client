@@ -299,7 +299,7 @@ class Mosqlient:
 
     async def __get_all(self, url: str, params: dict) -> List[dict]:
         self._request_lock = asyncio.Lock()
-        self._last_request_time = asyncio.get_event_loop().time()
+        self._last_request_time = time.monotonic()
 
         async with ClientSession(
             timeout=ClientTimeout(total=self.timeout)
@@ -340,10 +340,6 @@ class Mosqlient:
         async def fetch_all():
             return await self.__get_all(url=url, params=params)
 
-        if asyncio.get_event_loop().is_running():
-            loop = asyncio.get_event_loop()
-            future = asyncio.ensure_future(fetch_all())
-            return loop.run_until_complete(future)
         return asyncio.run(fetch_all())
 
     def __fetch_openapi(self):
