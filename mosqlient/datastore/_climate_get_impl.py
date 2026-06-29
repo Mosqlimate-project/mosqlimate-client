@@ -14,8 +14,8 @@ def get_climate(
     api_key: str | None = None,
     start_date: date | str = "2024-01-01",
     end_date: date | str = "2024-01-01",
-    uf: Optional[types.UF] = "RJ",
-    geocode: Optional[int] = 3304557,
+    uf: Optional[types.UF] = None,
+    geocode: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Retrieve historical climate data from the Mosqlimate API for a specific region and date range.

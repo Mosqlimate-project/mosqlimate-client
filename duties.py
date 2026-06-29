@@ -381,6 +381,7 @@ def test(ctx, match: str = ""):
             "config/pytest.ini",
             "-n",
             "auto",
+            "-v",
             "--cov=mosqlient",
             "--cov-config=config/coverage.ini",
             "-k",
