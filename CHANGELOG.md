@@ -1,3 +1,10 @@
+## [2.5.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.5.1...2.5.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* **client:** minor fix on async session when creating future tasks ([#101](https://github.com/Mosqlimate-project/mosqlimate-client/issues/101)) ([c0820b4](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c0820b47290ad5b0444a67eba77a105d0603d8d5))
+
 ## [2.5.1](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.5.0...2.5.1) (2026-06-23)
 
 
