@@ -5,6 +5,7 @@
 [![pypi version](https://img.shields.io/pypi/v/mosqlimate-client.svg)](https://pypi.org/project/mosqlient)
 [![gitter](https://badges.gitter.im/join%20chat.svg)](https://gitter.im/mosqlimate-client/community)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![EpidBot Ready](https://img.shields.io/badge/EpidBot-Ready-brightgreen?style=flat-square&logo=robot&logoColor=white)](https://api.epidbot.kwar-ai.com.br)
 
 client library for the [Mosqlimate project](https://mosqlimate.org/) data platform. The package documentation is available [here](https://mosqlimate-client.readthedocs.io/en/latest/).
 
