@@ -9,8 +9,6 @@ matplotlib.use("Agg")
 from mosqlient.forecast.baseline import (
     get_next_n_weeks,
     get_prediction_dataframe,
-    plot_predictions,
-    plot_forecast,
     InvalidDataFrameError,
     Arima,
 )
@@ -66,51 +64,6 @@ class TestGetPredictionDataFrame:
         )
         assert "pred" in result.columns
         assert "date" in result.columns
-
-
-class TestPlotPredictions:
-    def test_returns_none(self):
-        df_preds = pd.DataFrame(
-            {
-                "date": pd.date_range("2023-01-01", periods=5, freq="W-SUN"),
-                "data": [10, 15, 20, 25, 30],
-                "pred": [12, 16, 18, 24, 28],
-                "lower_95": [8, 12, 14, 20, 24],
-                "upper_95": [16, 20, 22, 28, 32],
-                "lower_90": [9, 13, 15, 21, 25],
-                "upper_90": [15, 19, 21, 27, 31],
-                "lower_80": [10, 14, 16, 22, 26],
-                "upper_80": [14, 18, 20, 26, 30],
-                "lower_50": [11, 15, 17, 23, 27],
-                "upper_50": [13, 17, 19, 25, 29],
-            }
-        )
-        result = plot_predictions(df_preds, title="Test")
-        assert result is None
-
-
-class TestPlotForecast:
-    def test_returns_none(self):
-        df_for = pd.DataFrame(
-            {
-                "date": pd.date_range("2023-01-01", periods=5, freq="W-SUN"),
-                "pred": [12, 16, 18, 24, 28],
-                "lower_95": [8, 12, 14, 20, 24],
-                "upper_95": [16, 20, 22, 28, 32],
-                "lower_90": [9, 13, 15, 21, 25],
-                "upper_90": [15, 19, 21, 27, 31],
-                "lower_80": [10, 14, 16, 22, 26],
-                "upper_80": [14, 18, 20, 26, 30],
-                "lower_50": [11, 15, 17, 23, 27],
-                "upper_50": [13, 17, 19, 25, 29],
-            }
-        )
-        df_train = pd.DataFrame(
-            {"data": [10, 15, 20, 25, 30]},
-            index=pd.date_range("2022-12-01", periods=5, freq="W-SUN"),
-        )
-        result = plot_forecast(df_for, df_train, last_obs=3)
-        assert result is None
 
 
 class TestInvalidDataFrameError:
