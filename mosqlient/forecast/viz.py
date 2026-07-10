@@ -151,7 +151,11 @@ def plot_forecasts(
             obs_df = obs_df.tail(last_obs)
 
         ax.plot(
-            obs_df[date_col], obs_df[target_col], color="black", label="Data"
+            obs_df[date_col],
+            obs_df[target_col],
+            color="black",
+            marker=".",
+            label="Data",
         )
 
         if len(obs_df) > 0:
@@ -282,6 +286,16 @@ def plot_single_forecast(
         (fig, ax) Modified Matplotlib figure and axes objects.
     """
 
+    if date_col in df_train.columns:
+
+        df_train = df_train.loc[
+            df_train[date_col] < pd.to_datetime(df_for[date_col].min())
+        ]
+    else:
+        df_train = df_train.loc[
+            df_train.index < pd.to_datetime(df_for[date_col].min())
+        ]
+
     fig, ax = plot_forecasts(
         df_preds=df_for,
         data=df_train,
@@ -354,3 +368,21 @@ def plot_model_comparison(
     ax.set_ylabel(ylabel)
 
     return fig, ax
+
+
+def plot_training_model_loss(hist, figsize=(8, 4)):
+
+    _, ax = plt.subplots(figsize=figsize)
+
+    ax.plot(hist["train_loss"], label="Training")
+    ax.plot(hist["val_loss"], label="Validation")
+
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Loss")
+    ax.set_title("Training History")
+
+    ax.legend()
+    ax.grid(True)
+    plt.show()
+
+    return _, ax
