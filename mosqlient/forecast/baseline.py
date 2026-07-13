@@ -2,10 +2,9 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 from pmdarima.arima import auto_arima
 from pmdarima import preprocessing as ppc
+from mosqlient.forecast.viz import plot_model_comparison, plot_single_forecast
 
 
 def get_next_n_weeks(ini_date: str, next_days: int) -> list:
@@ -88,106 +87,6 @@ def get_prediction_dataframe(
     df_preds["date"] = date
 
     return df_preds
-
-
-def plot_predictions(
-    df_preds: pd.DataFrame, title: str = "", alphas=[0.05, 0.1, 0.2, 0.5]
-) -> None:
-    """
-    Function to plot the predictions of the model.
-
-    Parameters
-    ----------
-    df_preds: pd.DataFrame
-        Dataframe with the columns: ['date', 'data', 'pred', 'lower', 'upper'].
-    title: str
-        Title of the plot.
-    """
-
-    fig, ax = plt.subplots(1, figsize=(6, 4))
-
-    ax.plot(df_preds.date, df_preds.data, color="black", label="Data")
-
-    ax.plot(df_preds.date, df_preds.pred, color="tab:orange", label="ARIMA")
-
-    for alpha in alphas:
-
-        ax.fill_between(
-            df_preds.date,
-            df_preds[f"lower_{int((1-alpha)*100)}"],
-            df_preds[f"upper_{int((1-alpha)*100)}"],
-            color="tab:orange",
-            alpha=0.1,
-        )
-
-    ax.legend()
-
-    ax.grid()
-
-    ax.set_title(title)
-
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b\n%y"))
-
-    ax.set_xlabel("Date")
-
-    ax.set_ylabel("New cases")
-
-
-def plot_forecast(
-    df_for: pd.DataFrame,
-    df_train: pd.DataFrame,
-    last_obs: int,
-    alphas=[0.05, 0.1, 0.2, 0.5],
-) -> None:
-    """
-    Function to plot the forecast of the model.
-
-    Parameters
-    ----------
-    df_for: pd.DataFrame
-        Dataframe with the forecast results, with the columns: ['date', 'pred', 'lower', 'upper']
-    df_preds: pd.DataFrame
-        Dataframe with the columns: ['data'] and a datetime index.
-    last_obs: int
-        Number of previous observations of the data included.
-    """
-
-    df_train = df_train.tail(last_obs)
-
-    fig, ax = plt.subplots(1, figsize=(6, 4))
-
-    ax.plot(df_train.index, df_train.data, color="black", label="Data")
-
-    ax.plot(df_for.date, df_for.pred, color="tab:red", label="Forecast")
-
-    for alpha in alphas:
-
-        ax.fill_between(
-            df_for.date,
-            df_for[f"lower_{int((1-alpha)*100)}"],
-            df_for[f"upper_{int((1-alpha)*100)}"],
-            color="tab:red",
-            alpha=0.1,
-        )
-
-    ax.plot(
-        [df_train.index[-1], df_for.date[0]],
-        [df_train[f"data"].values[-1], df_for.pred.values[0]],
-        ls="--",
-        color="black",
-    )
-
-    ax.legend()
-
-    ax.grid()
-
-    ax.set_title("Forecast ARIMA")
-
-    ax.set_xlabel("Date")
-
-    ax.set_ylabel("New cases")
-
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b-%d\n%Y"))
 
 
 class InvalidDataFrameError(Exception):
@@ -323,7 +222,15 @@ class Arima:
         )[0]
 
         if plot:
-            plot_predictions(df_in_sample, title="In sample predictions")
+            fig, ax = plot_model_comparison(
+                df_preds=df_in_sample.reset_index(),
+                date_col="date",
+                target_col="data",
+                conf_levels=[0.95],
+                title="In sample predictions",
+                xlabel="Date",
+                ylabel="New cases",
+            )
 
         return df_in_sample
 
@@ -388,8 +295,16 @@ class Arima:
         df_preds = df_preds.rename(columns={"y": "data"})
 
         if plot:
-
-            plot_predictions(df_preds, title="Out of sample predictions")
+            fig, ax = plot_model_comparison(
+                df_preds=df_preds.reset_index(),
+                date_col="date",
+                target_col="data",
+                conf_levels=[0.95],
+                label="Arima",
+                title="Ouf of sample predictions",
+                xlabel="Date",
+                ylabel="New cases",
+            )
 
         return df_preds
 
@@ -429,7 +344,16 @@ class Arima:
         )
 
         if plot:
-
-            plot_forecast(df_preds, df_train, last_obs)
+            fig, ax = plot_single_forecast(
+                df_preds,
+                df_train,
+                last_obs,
+                conf_levels=[0.5, 0.90, 0.95],
+                label="Arima",
+                title="Forecast ARIMA",
+                xlabel="Date",
+                ylabel="New Cases",
+                figsize=(7, 4),
+            )
 
         return df_preds
