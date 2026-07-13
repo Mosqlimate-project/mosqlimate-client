@@ -469,7 +469,7 @@ class EnsembleDistPool:
 
             df_for = pd.concat([df_for, df_], axis=0).reset_index(drop=True)
 
-        df_for.date = pd.to_datetime(df_for.date)
+        df_for["date"] = pd.to_datetime(df_for["date"])
 
         return df_for
 
@@ -812,8 +812,8 @@ def get_quantiles_linear(
 
     if dist == "log_normal":
         quantiles = compute_ppf(
-            mu=preds["mu"].values,
-            sigma=preds["sigma"].values,
+            mu=np.asarray(preds["mu"].values, dtype=np.float64),
+            sigma=np.asarray(preds["sigma"].values, dtype=np.float64),
             weights=weights,
             p=p,
         )

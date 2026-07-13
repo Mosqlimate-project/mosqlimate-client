@@ -126,7 +126,7 @@ def compute_wis(
             alpha=alpha,
         )
 
-    median_error = np.abs(observed_value - df["pred"].values.reshape(-1))
+    median_error = np.abs(observed_value - df["pred"].to_numpy().reshape(-1))
     return (w_0 * median_error + interval_scores) / (K + 0.5)
 
 
@@ -427,7 +427,7 @@ class Scorer:
                 f"{set(cols_df_true).difference(set(list(df_true.columns)))}"
             )
 
-        df_true.date = pd.to_datetime(df_true.date)
+        df_true["date"] = pd.to_datetime(df_true["date"])
         # Ensure all the dates has the same lenght
         min_dates = [min(df_true.date)]
         max_dates = [max(df_true.date)]
@@ -465,7 +465,7 @@ class Scorer:
                 pred = get_df_pars_ls(pred.copy())
 
             dict_df_ids["pred"] = pred
-            pred.date = pd.to_datetime(pred.date)
+            pred["date"] = pd.to_datetime(pred["date"])
             min_dates.append(min(pred.date))
             max_dates.append(max(pred.date))
 
@@ -485,7 +485,7 @@ class Scorer:
                 df_ = prediction.to_dataframe()
                 df_ = df_.dropna(axis=1)
                 df_ = df_.sort_values(by="date")
-                df_.date = pd.to_datetime(df_.date)
+                df_["date"] = pd.to_datetime(df_["date"])
 
                 if len(df_.columns) == 4:
                     df_ = get_df_pars(
@@ -502,10 +502,10 @@ class Scorer:
                 min_dates.append(min(df_.date))
                 max_dates.append(max(df_.date))
 
-        min_dates = pd.to_datetime(min_dates)
-        max_dates = pd.to_datetime(max_dates)
-        min_date = max(min_dates)
-        max_date = min(max_dates)
+        min_dates_ts = pd.to_datetime(min_dates)
+        max_dates_ts = pd.to_datetime(max_dates)
+        min_date = max(min_dates_ts)
+        max_date = min(max_dates_ts)
 
         # updating the dates interval
         df_true = df_true.loc[

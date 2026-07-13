@@ -282,11 +282,11 @@ class Arima:
                 ]
             )
 
-        df_preds.date = pd.to_datetime(df_preds.date)
+        df_preds["date"] = pd.to_datetime(df_preds["date"])
 
         df_preds = df_preds.merge(df, left_on="date", right_index=True)
 
-        df_preds = df_preds.loc[df_preds.date <= end_date]
+        df_preds = df_preds.loc[df_preds["date"] <= end_date]
 
         df_preds = df_preds.dropna()
 
