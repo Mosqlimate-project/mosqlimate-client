@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from typing import Optional, Tuple
 from datetime import timedelta, datetime
-from typing import Tuple, Optional, Dict, Callable
+from typing import cast, Tuple, Optional, Dict, Callable
 from numpy.typing import NDArray
 
 
@@ -211,7 +211,7 @@ def split_data(df, look_back=12, ratio=0.8, predict_n=5, Y_column=0):
 
 
 def _base_preprocess(
-    df_data: pd.DataFrame,
+    df_data: Optional[pd.DataFrame],
     method: str,
     ini_train_date: Optional[str],
     end_train_date: Optional[str],
@@ -286,7 +286,7 @@ def _base_preprocess(
     if target_col_name not in df.columns:
         raise ValueError(f"Target column '{target_col_name}' not found.")
 
-    target_col = df.columns.get_loc(target_col_name)
+    target_col = cast(int, df.columns.get_loc(target_col_name))
 
     # Apply date filters
     if ini_train_date:
@@ -772,7 +772,7 @@ def enable_dropout(model):
 
 
 class MSLELoss(nn.Module):
-    """
+    r"""
     Mean Squared Logarithmic Error (MSLE) loss function.
 
     MSLE measures the risk corresponding to the expected value of the squared
@@ -1368,7 +1368,7 @@ class ForecastLSTM:
             use_log=self.use_log,
         )
 
-        df_preds.date = pd.to_datetime(df_preds.date)
+        df_preds["date"] = pd.to_datetime(df_preds["date"])
         return df_preds.merge(
             self.df_model[self.target_col], left_on="date", right_index=True
         )

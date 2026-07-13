@@ -15,7 +15,7 @@ mpl.rcParams["ytick.labelcolor"] = "black"
 
 def plot_forecasts(
     df_preds: pd.DataFrame,
-    data: pd.DataFrame = None,
+    data: pd.DataFrame | None = None,
     last_obs: int | None = None,
     conf_levels=[0.90],
     target_col: str = "data",
@@ -121,6 +121,7 @@ def plot_forecasts(
         if last_obs is not None:
             data = data.tail(last_obs)
 
+        hist_x: pd.Series | pd.Index
         if date_col in data.columns:
             hist_x = data[date_col]
         else:
