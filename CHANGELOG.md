@@ -1,3 +1,17 @@
+# [2.6.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.5.2...2.6.0) (2026-07-15)
+
+
+### Bug Fixes
+
+* make package compatible with more recent python versions ([5eeb914](https://github.com/Mosqlimate-project/mosqlimate-client/commit/5eeb91412ee2b4c3ed0e706fbbb1a9f662e9c302))
+* minor updates ([3893086](https://github.com/Mosqlimate-project/mosqlimate-client/commit/3893086b5682df8feac2066a414ad5b5444d8566))
+* mypy errors eliminated ([60673f2](https://github.com/Mosqlimate-project/mosqlimate-client/commit/60673f2d1ebb0a97e4a4fc3715dc65c10aa3766e))
+
+
+### Features
+
+* **ForecastLSTM:** add forecast lstm model ([a132f54](https://github.com/Mosqlimate-project/mosqlimate-client/commit/a132f54233fdcb794ac35ad5f885d631a759d209))
+
 ## [2.5.2](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.5.1...2.5.2) (2026-06-29)
 
 
