@@ -15,6 +15,7 @@ nav:
     - Using from R: tutorials/Using Mosqlient from R.ipynb
     - Model Scoring: tutorials/scoring.ipynb
     - Simple forecast model: 'tutorials/baseline_model.ipynb'
+    - XGBoost forecast model: 'tutorials/xgb_model.ipynb'
     - Ensemble predictions: 'tutorials/ensemble.ipynb'
     - Code Reference:
         - Infodengue data: 'reference/infodengue.md'
