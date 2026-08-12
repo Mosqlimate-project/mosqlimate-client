@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from xgboost import XGBRegressor
+
+if TYPE_CHECKING:
+    from xgboost import XGBRegressor
 
 QUANTILES = np.array([0.025, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.975])
 QUANTILE_COLUMNS = (
@@ -236,6 +241,8 @@ class ForecastXGB:
             "early_stopping_rounds": early_stopping_rounds,
             **self.xgb_kwargs,
         }
+
+        from xgboost import XGBRegressor
 
         self.models = []
         train_loss: list[float] = []
