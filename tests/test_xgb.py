@@ -74,8 +74,9 @@ class TestForecastXGB:
             date - pd.Timedelta(weeks=1), "casos"
         ]
         assert features.loc[date, "casos_lag_1"] == np.log1p(previous)
+        next_date = date + pd.Timedelta(weeks=1)
         assert targets.loc[date, "target_h1"] == np.log1p(
-            sample_forecast_df.set_index("date").loc[date, "casos"]
+            sample_forecast_df.set_index("date").loc[next_date, "casos"]
         )
 
         changed = sample_forecast_df.copy()
@@ -106,7 +107,7 @@ class TestForecastXGB:
         )
 
         assert model.Y_train is not None
-        assert model.Y_train.index.max() + pd.Timedelta(weeks=3) <= cutoff
+        assert model.Y_train.index.max() + pd.Timedelta(weeks=4) <= cutoff
 
         assert model.X_test is not None
         assert model.X_test.index.max() == sample_forecast_df["date"].max()
@@ -136,7 +137,7 @@ class TestForecastXGB:
         end_train = "2021-06-01"
         end_date = "2021-12-01"
 
-        fitted_model, _history = model.train(
+        fitted_model, history = model.train(
             ini_train_date=ini_train,
             end_train_date=end_train,
             end_date=end_date,
@@ -147,6 +148,8 @@ class TestForecastXGB:
         assert model.X_train is not None
         assert not model.X_train.empty
         assert model.X_test is not None
+        assert len(history["train_loss"]) == len(history["val_loss"])
+        assert history["train_loss"]
 
     def test_predict_in_sample(self, sample_forecast_df):
         model = ForecastXGB(
@@ -169,6 +172,26 @@ class TestForecastXGB:
         assert "casos" in res.columns
         assert "date" in res.columns
         assert len(res) > 0
+        assert res["date"].iloc[0] == model.X_train.index[0] + pd.Timedelta(
+            weeks=1
+        )
+        assert list(res["horizon"].unique()) == [1, 2, 3, 4]
+        interval_columns = [
+            "lower_95",
+            "lower_90",
+            "lower_80",
+            "lower_50",
+            "pred",
+            "upper_50",
+            "upper_80",
+            "upper_90",
+            "upper_95",
+        ]
+        assert set(interval_columns).issubset(res.columns)
+        assert (
+            res[interval_columns].to_numpy()[:, :-1]
+            <= res[interval_columns].to_numpy()[:, 1:]
+        ).all()
 
     def test_predict_out_of_sample(self, sample_forecast_df):
         model = ForecastXGB(
@@ -189,6 +212,10 @@ class TestForecastXGB:
         assert isinstance(res, pd.DataFrame)
         assert "pred" in res.columns
         assert "date" in res.columns
+        assert res["date"].iloc[0] == model.X_test.index[0] + pd.Timedelta(
+            weeks=1
+        )
+        assert res["casos"].notna().all()
 
     def test_forecast_future(self, sample_forecast_df):
         model = ForecastXGB(
@@ -212,6 +239,58 @@ class TestForecastXGB:
         assert "pred" in res.columns
         assert "date" in res.columns
         assert len(res) > 0
+        train_last_date = sample_forecast_df["date"].max()
+        assert res["date"].min() == train_last_date + pd.Timedelta(weeks=1)
+        assert len(res) == 4
+        assert res["horizon"].tolist() == [1, 2, 3, 4]
+        assert "lower_90" in res.columns
+        assert "upper_90" in res.columns
+
+    def test_residual_returns_prediction_intervals(self, sample_forecast_df):
+        model = ForecastXGBResidual(
+            sample_forecast_df,
+            columns=["casos", "temp"],
+            look_back=4,
+            predict_n=4,
+            n_estimators=10,
+        )
+        model.train(
+            ini_train_date="2020-01-05",
+            end_train_date="2021-06-01",
+            end_date="2021-12-01",
+        )
+
+        result = model.predict_in_sample()
+        assert {"lower_90", "pred", "upper_90"}.issubset(result.columns)
+        assert (result["lower_90"] <= result["pred"]).all()
+        assert (result["pred"] <= result["upper_90"]).all()
+
+    def test_forecast_does_not_use_data_after_training_cutoff(
+        self, sample_forecast_df
+    ):
+        changed = sample_forecast_df.copy()
+        changed.loc[changed["date"] > "2021-06-01", "casos"] = 999999
+
+        kwargs = {
+            "columns": ["casos", "temp"],
+            "date_col": "date",
+            "target_col": "casos",
+            "n_estimators": 10,
+        }
+        original_model = ForecastXGB(sample_forecast_df, **kwargs)
+        changed_model = ForecastXGB(changed, **kwargs)
+        train_args = {
+            "ini_train_date": "2020-01-05",
+            "end_train_date": "2021-06-01",
+            "end_date": "2021-12-01",
+        }
+        original_model.train(**train_args)
+        changed_model.train(**train_args)
+
+        pd.testing.assert_frame_equal(
+            original_model.forecast("2021-06-01"),
+            changed_model.forecast("2021-06-01"),
+        )
 
     def test_predict_before_train_raises(self, sample_forecast_df):
         model = ForecastXGB(
