@@ -4,6 +4,19 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBRegressor
 
+QUANTILES = np.array([0.025, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.975])
+QUANTILE_COLUMNS = (
+    "lower_95",
+    "lower_90",
+    "lower_80",
+    "lower_50",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
+)
+
 
 class ForecastXGB:
     """XGBoost forecaster with lag, rolling and calendar features."""
@@ -68,6 +81,7 @@ class ForecastXGB:
         self.df_model = df_model.sort_index()
 
         self.model: XGBRegressor | None = None
+        self.models: list[XGBRegressor] = []
         self.feature_names: list[str] = []
         self.X_train: pd.DataFrame | None = None
         self.Y_train: pd.DataFrame | None = None
@@ -114,12 +128,10 @@ class ForecastXGB:
                     previous.rolling(window=self.look_back).max()
                 )
 
-        # 3. Multi-step target horizon (predict_n steps ahead)
+        # Multi-step target horizon: row t predicts t+1 through t+predict_n.
         target_df = pd.DataFrame(index=df_feat.index)
         for h in range(1, self.predict_n + 1):
-            target_df[f"target_h{h}"] = df_feat[self.target_col].shift(
-                -(h - 1)
-            )
+            target_df[f"target_h{h}"] = df_feat[self.target_col].shift(-h)
 
         # Drop rows only where target is NaN (XGBoost handles feature NaNs natively)
         valid_mask = feature_df.index.isin(df_feat.index[self.look_back :])
@@ -179,11 +191,11 @@ class ForecastXGB:
         self.feature_names = list(X_all.columns)
 
         # Keep every label of a training row inside the training period.  A row
-        # near the cutoff otherwise carries target_h2...target_hN from the test
+        # near the cutoff otherwise carries target_h1...target_hN from the test
         # period into XGBoost's fit.
         target_end_dates = pd.Series(
             df_filtered.index, index=df_filtered.index
-        ).shift(-(self.predict_n - 1))
+        ).shift(-self.predict_n)
         target_end_dates = target_end_dates.reindex(X_all.index)
 
         # Train / Test split
@@ -211,11 +223,6 @@ class ForecastXGB:
                 self._residual_baseline(self.X_train), axis=0
             )
 
-        # Validation split for early stopping
-        n_val = max(1, int(len(self.X_train) * val_ratio))
-        X_tr, X_va = self.X_train.iloc[:-n_val], self.X_train.iloc[-n_val:]
-        Y_tr, Y_va = fit_Y_all.iloc[:-n_val], fit_Y_all.iloc[-n_val:]
-
         model_params = {
             "n_estimators": self.n_estimators,
             "max_depth": self.max_depth,
@@ -224,67 +231,119 @@ class ForecastXGB:
             "min_child_weight": 5,
             "subsample": 0.8,
             "colsample_bytree": 0.8,
+            "objective": "reg:quantileerror",
+            "quantile_alpha": QUANTILES,
             "early_stopping_rounds": early_stopping_rounds,
             **self.xgb_kwargs,
         }
 
-        self.model = XGBRegressor(**model_params)
+        self.models = []
+        train_loss: list[float] = []
+        val_loss: list[float] = []
+        best_iterations: list[int] = []
+        best_scores: list[float] = []
 
-        if not X_va.empty and early_stopping_rounds > 0:
-            self.model.fit(
-                X_tr,
-                Y_tr,
-                eval_set=[(X_va, Y_va)],
-                verbose=verbose,
+        for horizon in range(self.predict_n):
+            model = XGBRegressor(**model_params)
+            target_train = fit_Y_all.iloc[:, horizon]
+
+            if len(self.X_train) > 1 and early_stopping_rounds > 0:
+                n_val = min(
+                    max(1, int(len(self.X_train) * val_ratio)),
+                    len(self.X_train) - 1,
+                )
+                X_tr, X_va = (
+                    self.X_train.iloc[:-n_val],
+                    self.X_train.iloc[-n_val:],
+                )
+                Y_tr, Y_va = (
+                    target_train.iloc[:-n_val],
+                    target_train.iloc[-n_val:],
+                )
+                model.fit(
+                    X_tr,
+                    Y_tr,
+                    eval_set=[(X_tr, Y_tr), (X_va, Y_va)],
+                    verbose=verbose,
+                )
+            else:
+                model.fit(self.X_train, target_train, verbose=verbose)
+
+            self.models.append(model)
+            evals_result = model.evals_result()
+            metrics = evals_result.get("validation_0", {})
+            validation_metrics = evals_result.get("validation_1", {})
+            train_loss = list(next(iter(metrics.values()), train_loss))
+            val_loss = list(next(iter(validation_metrics.values()), val_loss))
+            best_iterations.append(
+                getattr(model, "best_iteration", self.n_estimators)
             )
-        else:
-            self.model.fit(self.X_train, fit_Y_all, verbose=verbose)
+            best_scores.append(getattr(model, "best_score", np.nan))
 
         history = {
-            "best_iteration": getattr(
-                self.model, "best_iteration", self.n_estimators
-            ),
-            "best_score": getattr(self.model, "best_score", None),
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+            "best_iteration": best_iterations,
+            "best_score": best_scores,
         }
 
+        self.model = self.models[0]
         return self.model, history
+
+    def _predict_quantiles(self, X_data: pd.DataFrame) -> np.ndarray:
+        """Return predictions with shape ``(rows, quantiles, horizons)``."""
+        if self.model is None or not self.models:
+            raise RuntimeError(
+                "The model must be trained using .train() before generating predictions."
+            )
+        predictions = [
+            np.asarray(model.predict(X_data)) for model in self.models
+        ]
+        return np.stack(predictions, axis=2)
+
+    def _restore_scale(
+        self, predictions: np.ndarray, X_data: pd.DataFrame
+    ) -> np.ndarray:
+        if self.residual:
+            baseline = self._residual_baseline(X_data).to_numpy()
+            predictions = predictions + baseline[:, None, None]
+        if self.use_log:
+            predictions = np.expm1(predictions)
+
+        predictions = np.clip(predictions, a_min=0, a_max=None)
+        # Quantile crossing can occur with independent boosted trees.
+        return np.maximum.accumulate(predictions, axis=1)
 
     def _format_predictions(
         self, X_data: pd.DataFrame, Y_data: pd.DataFrame | None = None
     ) -> pd.DataFrame:
-        if self.model is None:
-            raise RuntimeError(
-                "The model must be trained using .train() before generating predictions."
-            )
-
-        preds = self.model.predict(X_data)
-        if self.residual:
-            baseline = self._residual_baseline(X_data).to_numpy()
-            preds = (
-                preds + baseline[:, None]
-                if preds.ndim > 1
-                else preds + baseline
-            )
-        if self.use_log:
-            preds = np.expm1(preds)
-            preds = np.clip(preds, a_min=0, a_max=None)
-
-        df_res = pd.DataFrame(index=X_data.index)
-
-        if len(preds.shape) > 1 and preds.shape[1] > 1:
-            df_res["pred"] = preds[:, 0]
-            for h in range(1, preds.shape[1] + 1):
-                df_res[f"pred_h{h}"] = preds[:, h - 1]
-        else:
-            df_res["pred"] = preds
-
-        df_res["date"] = df_res.index
-
         if Y_data is not None and not Y_data.empty:
-            actual = self.df_model.loc[X_data.index, self.target_col]
-            df_res[self.target_col] = actual.values
+            valid = Y_data.notna().all(axis=1).to_numpy()
+            X_data = X_data.loc[valid]
+            Y_data = Y_data.loc[valid]
 
-        return df_res
+        preds = self._restore_scale(self._predict_quantiles(X_data), X_data)
+
+        step = self.df_model.index.to_series().diff().dropna().median()
+        if pd.isna(step):
+            step = timedelta(days=7)
+        rows = []
+        for row, origin in enumerate(X_data.index):
+            dates = [origin + step * h for h in range(1, self.predict_n + 1)]
+            values = {
+                column: preds[row, index]
+                for index, column in enumerate(QUANTILE_COLUMNS)
+            }
+            result = pd.DataFrame(values, index=dates)
+            result.insert(0, "horizon", np.arange(1, self.predict_n + 1))
+            result.insert(0, "date", dates)
+            result.insert(0, "last_date", origin)
+            if Y_data is not None and not Y_data.empty:
+                result[self.target_col] = self.df_model.reindex(dates)[
+                    self.target_col
+                ].to_numpy()
+            rows.append(result)
+        return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
 
     def predict_in_sample(self) -> pd.DataFrame:
         """Generates forecast predictions for the training set."""
@@ -303,62 +362,47 @@ class ForecastXGB:
         return self._format_predictions(self.X_test, self.Y_test)
 
     def forecast(self, end_date: str) -> pd.DataFrame:
-        """Performs multi-step forecasting up to a specified end_date."""
+        """Forecast the next ``predict_n`` steps from ``end_date``."""
         if self.model is None or self.X_train is None:
             raise RuntimeError(
                 "The model must be trained before performing out-of-sample forecasts."
             )
 
         end_dt = pd.to_datetime(end_date)
-        last_date = self.df_model.index.max()
-
-        if end_dt <= last_date:
-            X_all, _Y_all = self._create_features(
-                self.df_model,
-                use_log=self.use_log,
-                require_complete_targets=False,
+        history = self.df_model.loc[
+            (self.df_model.index >= pd.to_datetime(self.ini_train_date))
+            & (self.df_model.index <= end_dt)
+        ]
+        if len(history) <= self.look_back:
+            raise ValueError(
+                "Not enough observations are available before end_date."
             )
-            forecast_mask = X_all.index > self.X_train.index.max()
-            X_fc = X_all.loc[forecast_mask]
-            return self._format_predictions(X_fc)
+        X_for, _ = self._create_features(
+            history,
+            use_log=self.use_log,
+            require_complete_targets=False,
+        )
+        last_X = X_for.iloc[[-1]]
+        predictions = self._restore_scale(
+            self._predict_quantiles(last_X), last_X
+        )[0]
 
-        df_curr = self.df_model.copy()
-        future_preds = []
-
-        curr_date = last_date
-        while curr_date < end_dt:
-            X_step, _ = self._create_features(
-                df_curr, use_log=self.use_log, require_complete_targets=False
-            )
-            if X_step.empty:
-                break
-
-            last_X = X_step.iloc[[-1]]
-            pred_step = self.model.predict(last_X)
-            if self.residual:
-                pred_step = (
-                    pred_step
-                    + self._residual_baseline(last_X).to_numpy()[:, None]
-                )
-            if self.use_log:
-                pred_step = np.expm1(pred_step)
-                pred_step = np.clip(pred_step, a_min=0, a_max=None)
-
-            next_val = (
-                pred_step[0, 0] if len(pred_step.shape) > 1 else pred_step[0]
-            )
-            curr_date = curr_date + timedelta(days=7)
-
-            new_row = {col: df_curr[col].iloc[-1] for col in df_curr.columns}
-            new_row[self.target_col] = next_val
-            df_curr.loc[curr_date] = new_row
-
-            future_preds.append({"date": curr_date, "pred": next_val})
-
-        df_out = pd.DataFrame(future_preds)
-        if not df_out.empty:
-            df_out["date"] = pd.to_datetime(df_out["date"])
-        return df_out
+        step = self.df_model.index.to_series().diff().dropna().median()
+        if pd.isna(step):
+            step = timedelta(days=7)
+        last_date = history.index[-1]
+        dates = [last_date + step * h for h in range(1, self.predict_n + 1)]
+        return pd.DataFrame(
+            {
+                "last_date": [last_date] * self.predict_n,
+                "date": dates,
+                **{
+                    column: predictions[index]
+                    for index, column in enumerate(QUANTILE_COLUMNS)
+                },
+                "horizon": np.arange(1, self.predict_n + 1),
+            }
+        )
 
 
 class ForecastXGBResidual(ForecastXGB):
