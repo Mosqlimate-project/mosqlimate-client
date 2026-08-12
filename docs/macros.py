@@ -42,7 +42,7 @@ def get_credits_data() -> dict:
     packages = {}
     all_pkgs = poetry_dependencies.copy()
     all_pkgs.update(indirect_dependencies)
-    for pkg in search_packages_info(list(all_pkgs)):
+    for pkg in search_packages_info(list(all_pkgs), include_files=False):
         # NOTE walrus can be used
         name = pkg.name
         if name:
