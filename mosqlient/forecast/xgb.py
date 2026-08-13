@@ -38,7 +38,7 @@ class ForecastXGB:
         max_depth: int = 3,
         learning_rate: float = 0.03,
         random_state: int = 42,
-        residual: bool = False,
+        residual: bool = True,
         **xgb_kwargs,
     ):
         """Initializes the ForecastXGB handler and validates dataset columns.
@@ -54,7 +54,7 @@ class ForecastXGB:
             max_depth (int, optional): Maximum tree depth. Defaults to 3.
             learning_rate (float, optional): Boosting learning rate. Defaults to 0.03.
             random_state (int, optional): Random seed. Defaults to 42.
-            residual (bool, optional): Learn corrections over the recent-case baseline. Defaults to False.
+            residual (bool, optional): Learn corrections over the recent-case baseline. Defaults to True.
             **xgb_kwargs: Additional parameters passed to XGBRegressor.
 
         Raises:
@@ -410,11 +410,3 @@ class ForecastXGB:
                 "horizon": np.arange(1, self.predict_n + 1),
             }
         )
-
-
-class ForecastXGBResidual(ForecastXGB):
-    """ForecastXGB variant that learns a correction over recent cases."""
-
-    def __init__(self, *args, **kwargs):
-        kwargs["residual"] = True
-        super().__init__(*args, **kwargs)

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from mosqlient.forecast.xgb import ForecastXGB, ForecastXGBResidual
+from mosqlient.forecast.xgb import ForecastXGB
 
 
 @pytest.fixture
@@ -67,8 +67,15 @@ def test_invalid_target_is_rejected(sample_forecast_df):
         )
 
 
-def test_residual_uses_same_contract(sample_forecast_df):
-    model = make_model(sample_forecast_df, ForecastXGBResidual)
+def test_residual_is_default_and_can_be_disabled(sample_forecast_df):
+    model = make_model(sample_forecast_df)
 
     assert model.residual is True
     assert model.columns == ["casos", "temp"]
+
+    current = ForecastXGB(
+        sample_forecast_df,
+        columns=["casos", "temp"],
+        residual=False,
+    )
+    assert current.residual is False
