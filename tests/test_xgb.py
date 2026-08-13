@@ -101,9 +101,12 @@ def test_train_and_predictions_return_intervals(
         def predict(self, X):
             return np.tile(np.arange(9, dtype=float), (len(X), 1))
 
-    import xgboost
+    import sys
+    from types import ModuleType
 
-    monkeypatch.setattr(xgboost, "XGBRegressor", FakeXGBRegressor)
+    fake_xgboost = ModuleType("xgboost")
+    fake_xgboost.XGBRegressor = FakeXGBRegressor
+    monkeypatch.setitem(sys.modules, "xgboost", fake_xgboost)
 
     model = ForecastXGB(
         train_forecast_df,
