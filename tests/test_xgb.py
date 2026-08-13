@@ -79,7 +79,32 @@ def test_features_can_use_raw_target_values(sample_forecast_df):
     assert targets.loc[first_date, "target_h1"] == 5
 
 
-def test_train_and_predictions_return_intervals(train_forecast_df):
+def test_train_and_predictions_return_intervals(
+    train_forecast_df, monkeypatch
+):
+    class FakeXGBRegressor:
+        best_iteration = 1
+        best_score = 0.1
+
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def fit(self, X, y, **kwargs):
+            return self
+
+        def evals_result(self):
+            return {
+                "validation_0": {"quantile": [0.2]},
+                "validation_1": {"quantile": [0.1]},
+            }
+
+        def predict(self, X):
+            return np.tile(np.arange(9, dtype=float), (len(X), 1))
+
+    import xgboost
+
+    monkeypatch.setattr(xgboost, "XGBRegressor", FakeXGBRegressor)
+
     model = ForecastXGB(
         train_forecast_df,
         columns=["casos", "temp"],
@@ -133,7 +158,9 @@ def test_prediction_methods_require_training(sample_forecast_df):
 def test_residual_baseline_requires_rolling_feature(sample_forecast_df):
     model = make_model(sample_forecast_df)
 
-    with pytest.raises(ValueError, match="Residual baseline feature is missing"):
+    with pytest.raises(
+        ValueError, match="Residual baseline feature is missing"
+    ):
         model._residual_baseline(pd.DataFrame(index=[0]))
 
 
