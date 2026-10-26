@@ -6,6 +6,13 @@ Install `uv` from <https://docs.astral.sh/uv/> and retry. This skill declares
 `uv` as its only required binary because the helper script uses PEP 723 inline
 dependencies.
 
+## First run is slow or downloads a lot
+
+The helper installs `mosqlient`, which declares a large scientific dependency
+tree. The first `uv run` may take several minutes; later runs reuse uv's cache.
+If a lighter environment is already available, run the script with that
+environment's Python instead.
+
 ## Missing or invalid API key
 
 - The key format is `username:uuid`.

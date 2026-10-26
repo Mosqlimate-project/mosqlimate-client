@@ -55,7 +55,9 @@ uv run skills/mosqlimate/scripts/mosqlimate.py --help
 ```
 
 The base install covers data access and the registry. Forecasting and scoring
-helpers need the `mosqlient[analyze]` extra and are not part of this skill.
+helpers need the `mosqlient[analyze]` extra and are not part of this skill. The
+first `uv run` can take several minutes because `mosqlient` has a large
+scientific dependency tree; later runs reuse the cache.
 
 ## Authentication
 
