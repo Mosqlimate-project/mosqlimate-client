@@ -57,3 +57,5 @@ UF_CODES = {
     "SP": 35,
     "TO": 17,
 }
+
+CODE_UFS = {code: uf for uf, code in UF_CODES.items()}

@@ -1,5 +1,7 @@
 from typing import Optional, Literal
 
+from pydantic import AliasChoices, Field
+
 from mosqlient import types
 
 
@@ -36,7 +38,10 @@ class VegetationGETParams(types.Params):
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
     geocode: Optional[types.Geocode] = None
-    uf: Optional[types.UF] = None
+    uf: Optional[types.UF] = Field(
+        default=None,
+        validation_alias=AliasChoices("uf", "adm_1"),
+    )
     collection: Optional[str] = None
     attribute: Optional[str] = None
 
@@ -63,8 +68,11 @@ class InfodengueGETParams(types.Params):
     #
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
-    disease: Optional[Literal["dengue", "zika", "chikungunya"]] = None
-    uf: Optional[types.UF] = None
+    disease: Optional[types.DiseaseName] = None
+    uf: Optional[types.UF] = Field(
+        default=None,
+        validation_alias=AliasChoices("uf", "adm_1"),
+    )
     geocode: Optional[types.Geocode] = None
 
     def params(self) -> dict:
@@ -90,7 +98,10 @@ class ClimateGETParams(types.Params):
     start: Optional[types.Date] = None
     end: Optional[types.Date] = None
     geocode: Optional[types.Geocode] = None
-    uf: Optional[types.UF] = None
+    uf: Optional[types.UF] = Field(
+        default=None,
+        validation_alias=AliasChoices("uf", "adm_1"),
+    )
 
     def params(self) -> dict:
         p = {
@@ -113,7 +124,10 @@ class ClimateWeeklyGETParams(types.Params):
     #
     start: str
     end: str
-    uf: Optional[types.UF] = None
+    uf: Optional[types.UF] = Field(
+        default=None,
+        validation_alias=AliasChoices("uf", "adm_1"),
+    )
     geocode: Optional[types.Geocode] = None
     macro_health_code: Optional[types.MacroHealthGeocode] = None
 
@@ -135,8 +149,10 @@ class EpiscannerGETParams(types.Params):
     app: types.APP = "datastore"
     endpoint: str = "episcanner"
     #
-    disease: Literal["dengue", "zika", "chikungunya"]
-    uf: types.UF
+    disease: types.DiseaseName
+    uf: types.UF = Field(
+        validation_alias=AliasChoices("uf", "adm_1"),
+    )
     year: Optional[int] = None
 
     def params(self) -> dict:
@@ -155,7 +171,10 @@ class MosquitoGETParams(types.Params):
     #
     date_start: Optional[types.Date] = None
     date_end: Optional[types.Date] = None
-    state: Optional[types.UF] = None
+    state: Optional[types.UF] = Field(
+        default=None,
+        validation_alias=AliasChoices("state", "uf", "adm_1"),
+    )
     municipality: Optional[str] = None
     page_: Optional[int] = None
 

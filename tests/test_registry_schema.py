@@ -355,6 +355,10 @@ class TestModelGETParams:
         params = p.params()
         assert params == {"id": 1, "page": 1, "per_page": 10}
 
+    def test_params_normalizes_disease_name(self):
+        p = ModelGETParams(disease="dengue")
+        assert p.params()["disease"] == "A90"
+
 
 class TestPredictionGETParams:
     def test_default_values(self):
@@ -373,6 +377,10 @@ class TestPredictionGETParams:
         params = p.params()
         assert "start" in params
         assert "end" in params
+
+    def test_params_normalizes_disease_name(self):
+        p = PredictionGETParams(disease="zika")
+        assert p.params()["disease"] == "A92.5"
 
 
 class TestPredictionPOSTParams:
@@ -393,6 +401,23 @@ class TestPredictionPOSTParams:
         assert params["repository"] == "owner/repo"
         assert params["disease"] == "A90"
         assert params["published"] is True
+
+    def test_params_with_disease_and_state_aliases(self):
+        p = PredictionPOSTParams(
+            repository="owner/repo",
+            description="Test",
+            disease="dengue",
+            commit="a" * 40,
+            case_definition="probable",
+            published=False,
+            adm_level=1,
+            adm_0="BRA",
+            uf="RJ",
+            prediction=[],
+        )
+        params = p.params()
+        assert params["disease"] == "A90"
+        assert params["adm_1"] == 33
 
 
 class TestPredictionDELETEParams:

@@ -482,3 +482,83 @@ class TestPredictionValidateFunctions:
                     adm_level=1,
                     adm_1=33,
                 )
+
+
+class TestRegistryParameterAliases:
+    def test_upload_prediction_uf_alias(self, valid_api_key):
+        import pandas as pd
+
+        prediction_df = pd.DataFrame(
+            {
+                "date": ["2023-01-01"],
+                "lower_95": [10.0],
+                "lower_90": [15.0],
+                "lower_80": [20.0],
+                "lower_50": [30.0],
+                "pred": [50.0],
+                "upper_50": [70.0],
+                "upper_80": [80.0],
+                "upper_90": [85.0],
+                "upper_95": [90.0],
+            }
+        )
+
+        with patch(
+            "mosqlient.registry._prediction_post_impl.Prediction.post"
+        ) as mock_post:
+            mock_post.return_value = MagicMock()
+            upload_prediction(
+                api_key=valid_api_key,
+                repository="owner/repo",
+                disease="dengue",
+                description="Test",
+                commit="a" * 40,
+                prediction=prediction_df,
+                adm_level=1,
+                uf="RJ",
+            )
+            kwargs = mock_post.call_args.kwargs
+            assert kwargs["disease"] == "dengue"
+            assert kwargs["adm_1"] == "RJ"
+
+
+class TestPredictionAdmFilters:
+    @staticmethod
+    def _predictions():
+        from types import SimpleNamespace
+
+        return [
+            SimpleNamespace(id=1, adm_1=33, adm_2=None),
+            SimpleNamespace(id=2, adm_1=35, adm_2=None),
+            SimpleNamespace(id=3, adm_1=33, adm_2=3304557),
+        ]
+
+    def test_get_predictions_filters_adm_1(self, valid_api_key):
+        with patch(
+            "mosqlient.registry._prediction_get_impl.Prediction.get",
+            return_value=self._predictions(),
+        ) as mock_get:
+            result = get_predictions(valid_api_key, adm_1="RJ")
+
+        assert [prediction.id for prediction in result] == [1, 3]
+        assert "adm_1" not in mock_get.call_args.kwargs
+
+    def test_get_predictions_filters_adm_2(self, valid_api_key):
+        with patch(
+            "mosqlient.registry._prediction_get_impl.Prediction.get",
+            return_value=self._predictions(),
+        ):
+            result = get_predictions(valid_api_key, adm_2=3304557)
+
+        assert [prediction.id for prediction in result] == [3]
+
+    def test_get_predictions_by_model_name_filters_adm(self, valid_api_key):
+        with patch(
+            "mosqlient.registry._prediction_get_impl.Prediction.get",
+            return_value=self._predictions(),
+        ):
+            result = get_predictions_by_model_name(
+                valid_api_key, "owner/repo", adm_1=33
+            )
+
+        assert [prediction.id for prediction in result] == [1, 3]

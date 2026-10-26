@@ -14,6 +14,8 @@ __all__ = [
 from datetime import date
 from typing import Optional, List, Literal
 
+from mosqlient import types
+from mosqlient.validations import validate_adm_1, validate_geocode
 from .models import Prediction
 
 
@@ -28,7 +30,7 @@ def get_predictions(
     model_time_resolution: Optional[
         Literal["day", "week", "month", "year"]
     ] = None,
-    disease: Optional[str] = None,
+    disease: Optional[types.Disease] = None,
     model_category: Optional[
         Literal[
             "quantitative",
@@ -42,6 +44,8 @@ def get_predictions(
     imdc_year: Optional[int] = None,
     start: Optional[date] = None,
     end: Optional[date] = None,
+    adm_1: Optional[types.ADM1] = None,
+    adm_2: Optional[types.Geocode] = None,
 ) -> List[Prediction]:
     """
     Retrieve one or more prediction records from the Mosqlimate API.
@@ -65,7 +69,8 @@ def get_predictions(
     model_time_resolution : str, optional
         Temporal resolution ('day', 'week', 'month', 'year').
     disease : str, optional
-        Disease code (e.g., 'A90' for Dengue, 'A92.0' for Chikungunya, 'A92.5' for Zika).
+        Disease code ('A90', 'A92.0', 'A92.5') or name ('dengue',
+        'chikungunya', 'zika').
     model_category : str, optional
         Category of the model (e.g., 'quantitative', 'spatio_temporal_quantitative').
     imdc_year : int, optional
@@ -74,6 +79,12 @@ def get_predictions(
         Filter predictions with data starting on or after this date.
     end : date, optional
         Filter predictions with data ending on or before this date.
+    adm_1 : int or str, optional
+        Filter results by state code (e.g., 33) or UF abbreviation (e.g.,
+        'RJ'). Applied client-side after retrieving predictions.
+    adm_2 : int, optional
+        Filter results by municipality IBGE geocode (7 digits). Applied
+        client-side after retrieving predictions.
 
     Returns
     -------
@@ -94,7 +105,24 @@ def get_predictions(
         "start": str(start) if start else None,
         "end": str(end) if end else None,
     }
-    return Prediction.get(api_key=api_key, **params)
+    predictions = Prediction.get(api_key=api_key, **params)
+
+    adm_1_code = validate_adm_1(adm_1) if adm_1 is not None else None
+    adm_2_code = validate_geocode(adm_2) if adm_2 is not None else None
+
+    if adm_1_code is not None:
+        predictions = [
+            prediction
+            for prediction in predictions
+            if prediction.adm_1 == adm_1_code
+        ]
+    if adm_2_code is not None:
+        predictions = [
+            prediction
+            for prediction in predictions
+            if prediction.adm_2 == adm_2_code
+        ]
+    return predictions
 
 
 def get_prediction_by_id(api_key: str, id: int) -> Prediction | None:
@@ -111,10 +139,18 @@ def get_predictions_by_model_id(
 
 
 def get_predictions_by_model_name(
-    api_key: str, model_name: str
+    api_key: str,
+    model_name: str,
+    adm_1: Optional[types.ADM1] = None,
+    adm_2: Optional[types.Geocode] = None,
 ) -> List[Prediction]:
-    """Retrieve predictions for a specific model name (repository name)."""
-    return Prediction.get(api_key=api_key, model_name=model_name)
+    """Retrieve predictions for a model name, optionally filtered by adm."""
+    return get_predictions(
+        api_key,
+        model_name=model_name,
+        adm_1=adm_1,
+        adm_2=adm_2,
+    )
 
 
 def get_predictions_by_model_owner(
@@ -149,8 +185,10 @@ def get_predictions_by_time_resolution(
     )
 
 
-def get_predictions_by_disease(api_key: str, disease: str) -> List[Prediction]:
-    """Retrieve predictions by disease code (e.g. A90)."""
+def get_predictions_by_disease(
+    api_key: str, disease: types.Disease
+) -> List[Prediction]:
+    """Retrieve predictions by disease code or name."""
     return Prediction.get(api_key=api_key, disease=disease)
 
 

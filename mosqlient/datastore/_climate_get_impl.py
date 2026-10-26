@@ -16,6 +16,7 @@ def get_climate(
     end_date: date | str = "2024-01-01",
     uf: Optional[types.UF] = None,
     geocode: Optional[int] = None,
+    adm_1: Optional[types.ADM1] = None,
 ) -> pd.DataFrame:
     """
     Retrieve historical climate data from the Mosqlimate API for a specific region and date range.
@@ -29,9 +30,12 @@ def get_climate(
         end_date : date or str
             End date of the data range (as a `datetime.date` or ISO format string).
         uf : types.UF, optional
-            The Brazilian state abbreviation (e.g., 'SP', 'MG'). If provided and `geocode` is not, filters by state.
+            The Brazilian state abbreviation (e.g., 'SP', 'MG') or state IBGE
+            code (e.g., 33). If provided and `geocode` is not, filters by state.
         geocode : int, optional
             IBGE geocode of a municipality. If provided, overrides `uf`.
+        adm_1 : types.ADM1, optional
+            Alias for `uf`. Accepts a state abbreviation or IBGE state code.
 
     Returns
     -------
@@ -53,6 +57,9 @@ def get_climate(
     ... )
     """
 
+    if uf is None:
+        uf = adm_1
+
     return pd.DataFrame(
         Climate.get(
             api_key=api_key,
@@ -71,6 +78,7 @@ def get_climate_weekly(
     uf: Optional[types.UF] = None,
     geocode: Optional[int] = None,
     macro_health_code: Optional[int] = None,
+    adm_1: Optional[types.ADM1] = None,
 ) -> pd.DataFrame:
     """
     Retrieve historical climate data weekly aggregated
@@ -83,12 +91,15 @@ def get_climate_weekly(
             Start epiweek in YYYYWW format (example: 202501).
         end : str
             End epiweek in YYYYWW format (example: 202501).
-        uf : str, optional
-            The Brazilian state abbreviation (e.g., 'SP', 'MG').
+        uf : str or int, optional
+            The Brazilian state abbreviation (e.g., 'SP', 'MG') or state IBGE
+            code (e.g., 33).
         geocode : int, optional
             IBGE geocode of a municipality.
         macro_health_code : int, optional
             Macro Health IBGE geocode. Example: 1101
+        adm_1 : types.ADM1, optional
+            Alias for `uf`. Accepts a state abbreviation or IBGE state code.
 
     Returns
     -------
@@ -111,6 +122,9 @@ def get_climate_weekly(
     ...     geocode=3550308
     ... )
     """
+
+    if uf is None:
+        uf = adm_1
 
     return pd.DataFrame(
         ClimateWeekly.get(

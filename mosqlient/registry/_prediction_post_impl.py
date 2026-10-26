@@ -2,13 +2,15 @@ __all__ = ["upload_prediction"]
 
 from typing import Optional, Union, List, Dict, Any
 import pandas as pd
+
+from mosqlient import types
 from .models import Prediction
 
 
 def upload_prediction(
     api_key: str,
     repository: str,
-    disease: str,
+    disease: types.Disease,
     description: str,
     commit: str,
     prediction: Union[List[Dict], pd.DataFrame],
@@ -16,9 +18,10 @@ def upload_prediction(
     case_definition: str = "probable",
     published: bool = True,
     adm_0: str = "BRA",
-    adm_1: Optional[int] = None,
+    adm_1: Optional[types.ADM1] = None,
     adm_2: Optional[int] = None,
     adm_3: Optional[int] = None,
+    uf: Optional[types.UF] = None,
 ) -> Prediction:
     """
     Upload a prediction to the Mosqlimate API.
@@ -30,7 +33,8 @@ def upload_prediction(
     repository : str
         The repository identifier in the format "owner/repo_name".
     disease : str
-        The disease code in the IDC-10 format. Example: "A90".
+        Disease code ("A90", "A92.0", "A92.5") or name ("dengue",
+        "chikungunya", "zika").
     description : str
         Textual description of the prediction run.
     commit : str
@@ -47,12 +51,14 @@ def upload_prediction(
         Whether the prediction should be visible to the public.
     adm_0 : str, default="BRA"
         ISO 3166-1 alpha-3 country code.
-    adm_1 : int, optional
-        State-level administrative division geocode.
+    adm_1 : int or str, optional
+        State-level administrative division geocode or UF abbreviation.
     adm_2 : int, optional
         Municipality-level geocode.
     adm_3 : int, optional
         Sub-municipality-level geocode.
+    uf : str or int, optional
+        Alias for `adm_1`. Accepts a UF abbreviation or IBGE state code.
 
     Returns
     -------
@@ -92,6 +98,9 @@ def upload_prediction(
             else:
                 i[field] = None
         clean_prediction.append(i)
+
+    if adm_1 is None:
+        adm_1 = uf
 
     return Prediction.post(
         api_key=api_key,

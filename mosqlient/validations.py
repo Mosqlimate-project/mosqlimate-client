@@ -13,7 +13,23 @@ from mosqlient._config import (
     TIME_RESOLUTIONS,
     PREDICTION_DATA_COLUMNS,
 )
-from mosqlient._utils.brasil import UF_CODES
+from mosqlient._utils.brasil import CODE_UFS, UF_CODES
+
+DISEASE_ALIASES = {
+    "dengue": "A90",
+    "a90": "A90",
+    "chikungunya": "A92.0",
+    "chik": "A92.0",
+    "a92.0": "A92.0",
+    "zika": "A92.5",
+    "a92.5": "A92.5",
+}
+
+DISEASE_NAMES = {
+    "A90": "dengue",
+    "A92.0": "chikungunya",
+    "A92.5": "zika",
+}
 
 
 def validate_django_app(app: str) -> str:
@@ -95,11 +111,18 @@ def validate_implementation_language(implementation_language: str) -> str:
     return implementation_language
 
 
-def validate_disease(disease: Literal["A90", "A92.0", "A92.5"]) -> str:
-    assert (
-        disease in DISEASES
-    ), f"Unknown disease '{disease}'. Options: {DISEASES}"
-    return disease
+def validate_disease(disease: str) -> str:
+    key = str(disease).strip().lower()
+    err = (
+        f"Unknown disease '{disease}'. Options: 'dengue' (A90), "
+        "'chikungunya' (A92.0), 'zika' (A92.5)"
+    )
+    assert key in DISEASE_ALIASES, err
+    return DISEASE_ALIASES[key]
+
+
+def validate_disease_name(disease: str) -> str:
+    return DISEASE_NAMES[validate_disease(disease)]
 
 
 def validate_category(
@@ -189,16 +212,25 @@ def validate_tags(tags: list[int]) -> list[int]:
     return tags
 
 
-# fmt: off
-def validate_uf(
-    uf: Literal[
-        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
-        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
-        "SE", "TO", "DF"
-]) -> str:
-    # fmt: on
-    assert uf.upper() in UF_CODES, f"Unknown UF {uf}. Example: 'SP'"
-    return uf.upper()
+def validate_uf(uf: str | int) -> str:
+    if isinstance(uf, bool):
+        raise AssertionError(f"Unknown UF {uf}. Example: 'SP'")
+
+    if isinstance(uf, int):
+        assert uf in CODE_UFS, f"Unknown UF code {uf}. Example: 33"
+        return CODE_UFS[uf]
+
+    value = str(uf).strip()
+    if value.isdigit():
+        return validate_uf(int(value))
+
+    value = value.upper()
+    assert value in UF_CODES, f"Unknown UF {value}. Example: 'SP'"
+    return value
+
+
+def validate_adm_1(adm_1: str | int) -> int:
+    return UF_CODES[validate_uf(adm_1)]
 
 
 def validate_geocode(geocode: int) -> int:

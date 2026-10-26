@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Literal, Optional
+from typing import Optional
 
 from mosqlient.datastore import schema
 from mosqlient import types, Mosqlient
@@ -19,7 +19,9 @@ class Vegetation(types.Model):
         collection: Optional[str] = None,
         attribute: Optional[str] = None,
         page: Optional[int] = None,
+        adm_1: Optional[types.ADM1] = None,
     ):
+        uf = uf if uf is not None else adm_1
         client = Mosqlient(x_uid_key=api_key)
         params = schema.VegetationGETParams(
             start=start,
@@ -39,14 +41,16 @@ class Infodengue(types.Model):
     @classmethod
     def get(
         cls,
-        disease: Literal["dengue", "zika", "chikungunya"],
+        disease: types.DiseaseName,
         start: str | date,
         end: str | date,
         api_key: Optional[str] = None,
         uf: Optional[types.UF] = None,
         geocode: Optional[int] = None,
         page: Optional[int] = None,
+        adm_1: Optional[types.ADM1] = None,
     ):
+        uf = uf if uf is not None else adm_1
         client = Mosqlient(x_uid_key=api_key)
         params = schema.InfodengueGETParams(
             start=start,
@@ -68,10 +72,12 @@ class Climate(types.Model):
         start: str | date,
         end: str | date,
         api_key: Optional[str] = None,
-        uf: Optional[str] = None,
+        uf: Optional[types.UF] = None,
         geocode: Optional[int] = None,
         page: Optional[int] = None,
+        adm_1: Optional[types.ADM1] = None,
     ):
+        uf = uf if uf is not None else adm_1
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ClimateGETParams(
             start=start, end=end, uf=uf, geocode=geocode, page=page
@@ -88,11 +94,13 @@ class ClimateWeekly(types.Model):
         start: str,
         end: str,
         api_key: Optional[str] = None,
-        uf: Optional[str] = None,
+        uf: Optional[types.UF] = None,
         geocode: Optional[int] = None,
         macro_health_code: Optional[int] = None,
         page: Optional[int] = None,
+        adm_1: Optional[types.ADM1] = None,
     ):
+        uf = uf if uf is not None else adm_1
         client = Mosqlient(x_uid_key=api_key)
         params = schema.ClimateWeeklyGETParams(
             start=start,
@@ -111,11 +119,15 @@ class Episcanner(types.Model):
     @classmethod
     def get(
         cls,
-        disease: Literal["dengue", "zika", "chikungunya"],
-        uf: str,
+        disease: types.DiseaseName,
+        uf: Optional[types.UF] = None,
         api_key: Optional[str] = None,
         year: Optional[int] = date.today().year,
+        adm_1: Optional[types.ADM1] = None,
     ):
+        uf = uf if uf is not None else adm_1
+        if uf is None:
+            uf = "RJ"
         client = Mosqlient(x_uid_key=api_key)
         params = schema.EpiscannerGETParams(disease=disease, uf=uf, year=year)
         return client.get(params=params)
@@ -133,7 +145,12 @@ class Mosquito(types.Model):
         state: Optional[types.UF] = None,
         municipality: Optional[str] = None,
         page: Optional[int] = None,
+        uf: Optional[types.UF] = None,
+        adm_1: Optional[types.ADM1] = None,
     ):
+        state = state if state is not None else uf
+        if state is None:
+            state = adm_1
         client = Mosqlient(x_uid_key=api_key)
         params = schema.MosquitoGETParams(
             date_start=date_start,

@@ -303,3 +303,19 @@ class TestGetMosquito:
             ):
                 result = get_mosquito(api_key=valid_api_key)
                 assert len(result) == 0
+
+
+class TestDatastoreParameterAliases:
+    def test_get_infodengue_adm_1_alias(self, valid_api_key):
+        with patch(
+            "mosqlient.datastore._infodengue_get_impl.Infodengue.get"
+        ) as mock_get:
+            mock_get.return_value = []
+            get_infodengue(
+                api_key=valid_api_key,
+                disease="A90",
+                adm_1=33,
+            )
+            kwargs = mock_get.call_args.kwargs
+            assert kwargs["disease"] == "A90"
+            assert kwargs["uf"] == 33

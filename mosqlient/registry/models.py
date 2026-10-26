@@ -7,6 +7,7 @@ import pandas as pd
 
 from mosqlient import types
 from mosqlient.client import Mosqlient, Client
+from mosqlient.validations import validate_adm_1
 from mosqlient.registry import schema
 
 nest_asyncio.apply()
@@ -195,7 +196,7 @@ class Prediction(types.Model):
     def validate_prediction(
         api_key: str,
         repository: str,
-        disease: str,
+        disease: types.Disease,
         description: str,
         commit: str,
         prediction: Union[List[Dict], pd.DataFrame],
@@ -203,14 +204,20 @@ class Prediction(types.Model):
         case_definition: str = "probable",
         published: bool = True,
         adm_0: str = "BRA",
-        adm_1: Optional[int] = None,
+        adm_1: Optional[types.ADM1] = None,
         adm_2: Optional[int] = None,
         adm_3: Optional[int] = None,
+        uf: Optional[types.UF] = None,
     ) -> None:
         owner, repo_name = repository.split("/")
+        if adm_1 is None and uf is not None:
+            adm_1 = validate_adm_1(uf)
+        elif isinstance(adm_1, str):
+            adm_1 = validate_adm_1(adm_1)
+
         model = Model.get(
             api_key=api_key,
-            repository_onwer=owner,
+            repository_owner=owner,
             repository_name=repo_name,
         )
         if not model:

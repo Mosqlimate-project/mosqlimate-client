@@ -11,6 +11,7 @@ __all__ = [
 
 from typing import Optional, List, Literal
 
+from mosqlient import types
 from .models import Model
 
 
@@ -36,7 +37,7 @@ def get_models(
     repository_owner: Optional[str] = None,
     repository_organization: Optional[str] = None,
     repository_name: Optional[str] = None,
-    disease: Optional[Literal["A90", "A92.0", "A92.5"]] = None,
+    disease: Optional[types.Disease] = None,
     category: Optional[
         Literal[
             "quantitative",
@@ -68,7 +69,8 @@ def get_models(
         repository_name: str, optional
             Name of the repository.
         disease: str, optional
-            Disease code. Options: 'A90' (Dengue), 'A92.0' (Chikungunya), 'A92.5' (Zika).
+            Disease code ('A90', 'A92.0', 'A92.5') or name ('dengue',
+            'chikungunya', 'zika').
         category: str, optional
             Model category. Options: 'quantitative', 'categorical', 'spatial_quantitative', etc.
         adm_level: int, optional
@@ -132,16 +134,17 @@ def get_model_by_repository(
     return res[0] if len(res) == 1 else None
 
 
-def get_models_by_disease(api_key: str, disease: str) -> List[Model]:
+def get_models_by_disease(api_key: str, disease: types.Disease) -> List[Model]:
     """
-    Returns a list of models based on the disease code.
+    Returns a list of models based on the disease.
 
     Parameters
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
         disease: str
-            Disease code (e.g., 'A90', 'A92.0').
+            Disease code ('A90', 'A92.0', 'A92.5') or name ('dengue',
+            'chikungunya', 'zika').
     Returns
     -------
     List of Models

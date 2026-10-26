@@ -1,6 +1,6 @@
 __all__ = ["get_infodengue"]
 
-from typing import Optional, Literal
+from typing import Optional
 from datetime import date
 
 import pandas as pd
@@ -11,11 +11,12 @@ from .models import Infodengue
 
 def get_infodengue(
     api_key: str | None = None,
-    disease: Literal["dengue", "zika", "chikungunya"] = "dengue",
+    disease: types.DiseaseName = "dengue",
     start_date: date | str = "2024-01-01",
     end_date: date | str = "2024-02-01",
     uf: Optional[types.UF] = None,
     geocode: Optional[int] = None,
+    adm_1: Optional[types.ADM1] = None,
 ) -> pd.DataFrame:
     """
     Fetch InfoDengue Data from Mosqlimate API for dengue, zika, or chikungunya.
@@ -24,16 +25,20 @@ def get_infodengue(
     ----------
         api_key : str
             API key used to authenticate with the Mosqlimate service.
-        disease : {'dengue', 'zika', 'chikungunya'}
-            The arbovirus to retrieve data for.
+        disease : str
+            Disease name ('dengue', 'zika', 'chikungunya') or ICD-10 code
+            ('A90', 'A92.5', 'A92.0').
         start_date : date or str
             Start date of the data range (as a `datetime.date` or ISO format string).
         end_date : date or str
             End date of the data range (as a `datetime.date` or ISO format string).
         uf : types.UF, optional
-            The Brazilian state abbreviation (e.g., 'SP', 'RJ'). If provided without `geocode`, filters by state.
+            The Brazilian state abbreviation (e.g., 'SP', 'RJ') or state IBGE
+            code (e.g., 33). If provided without `geocode`, filters by state.
         geocode : int, optional
             IBGE geocode of a municipality. If provided, overrides `uf`.
+        adm_1 : types.ADM1, optional
+            Alias for `uf`. Accepts a state abbreviation or IBGE state code.
 
     Returns
     -------
@@ -56,6 +61,9 @@ def get_infodengue(
     ...     uf="RJ"
     ... )
     """
+
+    if uf is None:
+        uf = adm_1
 
     return pd.DataFrame(
         Infodengue.get(
