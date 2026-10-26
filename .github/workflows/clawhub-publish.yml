@@ -28,6 +28,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
+      id-token: write
     uses: openclaw/clawhub/.github/workflows/skill-publish.yml@main
     with:
       skill_path: skills/mosqlimate
