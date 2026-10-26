@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  pull_request_target:
+    branches:
+    - main
 
 permissions:
   contents: read
@@ -32,6 +35,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+        allow-unsafe-pr-checkout: true
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -71,6 +77,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+        allow-unsafe-pr-checkout: true
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
