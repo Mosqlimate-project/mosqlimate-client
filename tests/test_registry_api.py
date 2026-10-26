@@ -520,3 +520,45 @@ class TestRegistryParameterAliases:
             kwargs = mock_post.call_args.kwargs
             assert kwargs["disease"] == "dengue"
             assert kwargs["adm_1"] == "RJ"
+
+
+class TestPredictionAdmFilters:
+    @staticmethod
+    def _predictions():
+        from types import SimpleNamespace
+
+        return [
+            SimpleNamespace(id=1, adm_1=33, adm_2=None),
+            SimpleNamespace(id=2, adm_1=35, adm_2=None),
+            SimpleNamespace(id=3, adm_1=33, adm_2=3304557),
+        ]
+
+    def test_get_predictions_filters_adm_1(self, valid_api_key):
+        with patch(
+            "mosqlient.registry._prediction_get_impl.Prediction.get",
+            return_value=self._predictions(),
+        ) as mock_get:
+            result = get_predictions(valid_api_key, adm_1="RJ")
+
+        assert [prediction.id for prediction in result] == [1, 3]
+        assert "adm_1" not in mock_get.call_args.kwargs
+
+    def test_get_predictions_filters_adm_2(self, valid_api_key):
+        with patch(
+            "mosqlient.registry._prediction_get_impl.Prediction.get",
+            return_value=self._predictions(),
+        ):
+            result = get_predictions(valid_api_key, adm_2=3304557)
+
+        assert [prediction.id for prediction in result] == [3]
+
+    def test_get_predictions_by_model_name_filters_adm(self, valid_api_key):
+        with patch(
+            "mosqlient.registry._prediction_get_impl.Prediction.get",
+            return_value=self._predictions(),
+        ):
+            result = get_predictions_by_model_name(
+                valid_api_key, "owner/repo", adm_1=33
+            )
+
+        assert [prediction.id for prediction in result] == [1, 3]
