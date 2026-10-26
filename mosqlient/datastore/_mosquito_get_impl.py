@@ -5,6 +5,7 @@ from typing import Optional
 
 import pandas as pd
 
+from mosqlient import types
 from .models import Mosquito
 
 
@@ -12,9 +13,11 @@ def get_mosquito(
     api_key: str | None = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    state: Optional[str] = None,
+    state: Optional[types.UF] = None,
     municipality: Optional[str] = None,
     page: Optional[int] = None,
+    uf: Optional[types.UF] = None,
+    adm_1: Optional[types.ADM1] = None,
 ) -> pd.DataFrame:
     """
     Parameters
@@ -25,11 +28,15 @@ def get_mosquito(
             Format: YYYY-MM-dd
         date_end : str, optional
             Format: YYYY-MM-dd
-        state : str, optional
-            Example: MG
+        state : str or int, optional
+            State abbreviation (e.g., 'MG') or IBGE state code (e.g., 31).
         municipality : str, optional
             Name of the municipality. Example: "Ponta Porã"
         page : int, optional
+        uf : str or int, optional
+            Alias for `state`.
+        adm_1 : types.ADM1, optional
+            Alias for `state`. Accepts a state abbreviation or IBGE state code.
 
     Returns
     -------
@@ -48,6 +55,10 @@ def get_mosquito(
     ...     municipality="Ponta Porã",
     ... )
     """
+
+    state = state if state is not None else uf
+    if state is None:
+        state = adm_1
 
     return pd.DataFrame(
         Mosquito.get(

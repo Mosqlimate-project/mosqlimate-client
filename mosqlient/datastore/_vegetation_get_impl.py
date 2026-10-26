@@ -18,6 +18,7 @@ def get_vegetation(
     geocode: Optional[int] = None,
     collection: Optional[str] = None,
     attribute: Optional[str] = None,
+    adm_1: Optional[types.ADM1] = None,
 ) -> pd.DataFrame:
     """
     Retrieve historical vegetation metrics from the Mosqlimate API for a specific region and date range.
@@ -31,13 +32,16 @@ def get_vegetation(
         end_date : date or str
             End date of the data range (as a `datetime.date` or ISO format string).
         uf : types.UF, optional
-            The Brazilian state abbreviation (e.g., 'SP', 'MG').
+            The Brazilian state abbreviation (e.g., 'SP', 'MG') or state IBGE
+            code (e.g., 33).
         geocode : int, optional
             IBGE geocode of a municipality. If provided, overrides `uf`.
         collection : str, optional
             Specific satellite dataset collection identifier (e.g., 'modis').
         attribute : str, optional
             Specific vegetation index metric or band name (e.g., 'ndvi', 'evi').
+        adm_1 : types.ADM1, optional
+            Alias for `uf`. Accepts a state abbreviation or IBGE state code.
 
     Returns
     -------
@@ -59,6 +63,9 @@ def get_vegetation(
     ...     attribute="ndvi"
     ... )
     """
+
+    if uf is None:
+        uf = adm_1
 
     return pd.DataFrame(
         Vegetation.get(

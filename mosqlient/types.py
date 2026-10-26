@@ -12,6 +12,7 @@ APP = Annotated[str, AfterValidator(v.validate_django_app)]
 ID = Annotated[int, AfterValidator(v.validate_id)]
 Description = Annotated[str, AfterValidator(v.validate_description)]
 Disease = Annotated[str, AfterValidator(v.validate_disease)]
+DiseaseName = Annotated[str, AfterValidator(v.validate_disease_name)]
 Category = Annotated[str, AfterValidator(v.validate_category)]
 Repository = Annotated[str, AfterValidator(v.validate_repository)]
 ADMLevel = Annotated[int, AfterValidator(v.validate_adm_level)]
@@ -21,7 +22,8 @@ Date = Annotated[Union[str, date], AfterValidator(v.validate_date)]
 PredictionData = Annotated[
     List[Dict], AfterValidator(v.validate_prediction_data)
 ]
-UF = Annotated[str, AfterValidator(v.validate_uf)]
+UF = Annotated[str | int, AfterValidator(v.validate_uf)]
+ADM1 = Annotated[str | int, AfterValidator(v.validate_adm_1)]
 Geocode = Annotated[int, AfterValidator(v.validate_geocode)]
 MacroHealthGeocode = Annotated[
     int, AfterValidator(v.validate_macro_health_geocode)

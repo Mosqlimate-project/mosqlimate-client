@@ -14,6 +14,7 @@ __all__ = [
 from datetime import date
 from typing import Optional, List, Literal
 
+from mosqlient import types
 from .models import Prediction
 
 
@@ -28,7 +29,7 @@ def get_predictions(
     model_time_resolution: Optional[
         Literal["day", "week", "month", "year"]
     ] = None,
-    disease: Optional[str] = None,
+    disease: Optional[types.Disease] = None,
     model_category: Optional[
         Literal[
             "quantitative",
@@ -65,7 +66,8 @@ def get_predictions(
     model_time_resolution : str, optional
         Temporal resolution ('day', 'week', 'month', 'year').
     disease : str, optional
-        Disease code (e.g., 'A90' for Dengue, 'A92.0' for Chikungunya, 'A92.5' for Zika).
+        Disease code ('A90', 'A92.0', 'A92.5') or name ('dengue',
+        'chikungunya', 'zika').
     model_category : str, optional
         Category of the model (e.g., 'quantitative', 'spatio_temporal_quantitative').
     imdc_year : int, optional
@@ -149,8 +151,10 @@ def get_predictions_by_time_resolution(
     )
 
 
-def get_predictions_by_disease(api_key: str, disease: str) -> List[Prediction]:
-    """Retrieve predictions by disease code (e.g. A90)."""
+def get_predictions_by_disease(
+    api_key: str, disease: types.Disease
+) -> List[Prediction]:
+    """Retrieve predictions by disease code or name."""
     return Prediction.get(api_key=api_key, disease=disease)
 
 

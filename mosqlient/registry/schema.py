@@ -4,7 +4,12 @@ from typing import Optional, List, Literal, Mapping
 
 import pandas as pd
 from mosqlient import types
-from pydantic import model_validator, field_serializer
+from pydantic import (
+    AliasChoices,
+    Field,
+    field_serializer,
+    model_validator,
+)
 from epiweeks import Week
 
 
@@ -193,7 +198,7 @@ class ModelGETParams(types.Params):
     repository_organization: Optional[str] = None
     repository_name: Optional[str] = None
     description: Optional[str] = None
-    disease: Optional[str] = None
+    disease: Optional[types.Disease] = None
     category: Optional[str] = None
     adm_level: Optional[int] = None
     time_resolution: Optional[str] = None
@@ -241,7 +246,7 @@ class PredictionGETParams(types.Params):
     model_time_resolution: Optional[
         Literal["day", "week", "month", "year"]
     ] = None
-    disease: Optional[str] = None
+    disease: Optional[types.Disease] = None
     model_category: Optional[str] = None
     imdc_year: Optional[int] = None
     start: Optional[dt] = None
@@ -274,14 +279,17 @@ class PredictionPOSTParams(types.Params):
 
     repository: str
     description: str
-    disease: str
+    disease: types.Disease
     commit: str
     case_definition: str
     published: bool
     prediction: List[PredictionDataRow]
     adm_level: int
     adm_0: Optional[str] = "BRA"
-    adm_1: Optional[int] = None
+    adm_1: Optional[types.ADM1] = Field(
+        default=None,
+        validation_alias=AliasChoices("adm_1", "uf"),
+    )
     adm_2: Optional[int] = None
     adm_3: Optional[int] = None
 
