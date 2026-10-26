@@ -1,0 +1,38 @@
+name: Publish ClawHub skill
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/mosqlimate/**"
+      - ".github/workflows/clawhub-publish.yml"
+  pull_request:
+    paths:
+      - "skills/mosqlimate/**"
+      - ".github/workflows/clawhub-publish.yml"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate only; do not publish"
+        type: boolean
+        default: true
+
+concurrency:
+  group: clawhub-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+    uses: openclaw/clawhub/.github/workflows/skill-publish.yml@main
+    with:
+      skill_path: skills/mosqlimate
+      dry_run: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+      # Set the CLAWHUB_OWNER repository variable to publish for an
+      # organization. Omit it to publish as the authenticated user.
+      owner: ${{ vars.CLAWHUB_OWNER }}
+      categories: integrations,research
+      topics: epidemiology,forecasting,dengue,brazil
+    secrets:
+      clawhub_token: ${{ secrets.CLAWHUB_TOKEN }}
