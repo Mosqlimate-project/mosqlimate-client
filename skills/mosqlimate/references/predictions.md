@@ -72,7 +72,7 @@ uv run scripts/mosqlimate.py validate-prediction \
   --disease A90 \
   --description "Out-of-sample forecast for Rio de Janeiro" \
   --commit 0123456789abcdef0123456789abcdef01234567 \
-  --adm-level 2 --adm-2 3304557
+  --adm-level 2 --adm-1 33 --adm-2 3304557
 ```
 
 Validation checks the model lookup, schema, bounds, dates, weekly gaps, and
@@ -89,7 +89,7 @@ uv run scripts/mosqlimate.py upload-prediction \
   --disease A90 \
   --description "Out-of-sample forecast for Rio de Janeiro" \
   --commit 0123456789abcdef0123456789abcdef01234567 \
-  --adm-level 2 --adm-2 3304557 \
+  --adm-level 2 --adm-1 33 --adm-2 3304557 \
   --dry-run
 ```
 
@@ -103,7 +103,7 @@ uv run scripts/mosqlimate.py upload-prediction \
   --disease A90 \
   --description "Out-of-sample forecast for Rio de Janeiro" \
   --commit 0123456789abcdef0123456789abcdef01234567 \
-  --adm-level 2 --adm-2 3304557 \
+  --adm-level 2 --adm-1 33 --adm-2 3304557 \
   --yes
 ```
 
@@ -119,7 +119,8 @@ and published flag.
 | --- | --- | --- |
 | `--case-definition` | `probable` | `probable` or `reported`. |
 | `--adm-0` | `BRA` | Country code. |
-| `--adm-1` | none | Required at level 1 or higher. |
+| `--adm-1` | none | State abbreviation or IBGE state code; required at level 1 or higher. |
+| `--uf` | none | Alias for `--adm-1`. |
 | `--adm-2` | none | Required at level 2 or higher. |
 | `--adm-3` | none | Required at level 3. |
 
@@ -138,7 +139,8 @@ web platform, not this skill.
 ## Safety checklist
 
 1. Confirm the model repository exists.
-2. Confirm disease code, administrative level, and geocode with the user.
+2. Confirm disease, administrative level, and geocode with the user. Disease
+   can be a name or an ICD-10 code; `--adm-1` accepts a UF or state code.
 3. Run validation or `--dry-run`.
 4. Summarize the row count, date range, and whether the upload is published.
 5. Ask for explicit confirmation.

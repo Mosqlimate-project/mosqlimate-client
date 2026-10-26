@@ -85,7 +85,9 @@ create a temporary demo user with limited access and rate limits.
 | `validate-prediction` | Validate a forecast without uploading. |
 | `upload-prediction` | Validate and upload a forecast. |
 
-All read commands accept `--output csv|json` and `--out FILE`.
+All read commands accept `--output csv|json` and `--out FILE`. Disease flags
+accept names or ICD-10 codes. State filters accept a UF abbreviation or an IBGE
+state code, and `--adm-1` is an alias for `--uf`.
 
 ## Examples
 
@@ -100,11 +102,11 @@ uv run scripts/mosqlimate.py infodengue \
   --output csv --out dengue_rj.csv
 ```
 
-All municipalities in Parana state:
+All municipalities in Parana state (UF or state code):
 
 ```bash
 uv run scripts/mosqlimate.py infodengue \
-  --disease dengue --start 2023-01-01 --end 2023-06-30 --uf PR
+  --disease A90 --start 2023-01-01 --end 2023-06-30 --adm-1 41
 ```
 
 Daily climate for Curitiba:
@@ -127,6 +129,14 @@ uv run scripts/mosqlimate.py climate --weekly \
 uv run scripts/mosqlimate.py models --disease A90 --imdc-year 2024
 ```
 
+Predictions for a model, filtered by state and municipality:
+
+```bash
+uv run scripts/mosqlimate.py predictions \
+  --model-name forecast_models_dengue \
+  --adm-1 RJ --adm-2 3304557
+```
+
 One prediction and its data:
 
 ```bash
@@ -142,7 +152,7 @@ uv run scripts/mosqlimate.py validate-prediction \
   --disease A90 \
   --description "Out-of-sample forecast for Rio de Janeiro" \
   --commit 0123456789abcdef0123456789abcdef01234567 \
-  --adm-level 2 --adm-2 3304557
+  --adm-level 2 --adm-1 33 --adm-2 3304557
 ```
 
 Upload an unpublished forecast:
@@ -154,7 +164,7 @@ uv run scripts/mosqlimate.py upload-prediction \
   --disease A90 \
   --description "Out-of-sample forecast for Rio de Janeiro" \
   --commit 0123456789abcdef0123456789abcdef01234567 \
-  --adm-level 2 --adm-2 3304557 \
+  --adm-level 2 --adm-1 33 --adm-2 3304557 \
   --dry-run          # remove this line to upload
   --yes
 ```
@@ -195,12 +205,13 @@ upper_80 <= upper_90 <= upper_95`.
 
 ## Conventions
 
-- Datastore disease names: `dengue`, `zika`, `chikungunya`.
-- Registry disease codes: `A90` (dengue), `A92.0` (chikungunya), `A92.5`
-  (zika).
+- Disease flags accept either names (`dengue`, `zika`, `chikungunya`, `chik`)
+  or ICD-10 codes (`A90`, `A92.5`, `A92.0`). The script normalizes them for the
+  target API.
+- State filters accept a UF abbreviation (`RJ`) or an IBGE state code (`33`).
+  Use `--adm-1` as an alias for `--uf`.
 - Administrative levels: 0 country, 1 state, 2 municipality, 3 sub-municipality.
-- Municipality geocodes are 7-digit IBGE codes. State filters use the two-letter
-  UF code.
+- Municipality geocodes are 7-digit IBGE codes.
 
 ## References
 

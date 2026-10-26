@@ -17,10 +17,11 @@ uv run scripts/mosqlimate.py infodengue \
 
 | Flag | Required | Notes |
 | --- | --- | --- |
-| `--disease` | no | `dengue` (default), `zika`, `chikungunya`. |
+| `--disease` | no | `dengue` (default), `zika`, `chikungunya`, or `A90`, `A92.5`, `A92.0`. |
 | `--start` | yes | `YYYY-MM-DD`. |
 | `--end` | yes | `YYYY-MM-DD`. |
-| `--uf` | one of | Two-letter state code. |
+| `--uf` | one of | Two-letter state code or IBGE state code. |
+| `--adm-1` | one of | Alias for `--uf`; accepts a UF or state code. |
 | `--geocode` | one of | 7-digit IBGE municipality code. |
 
 `--geocode` takes precedence when both are set. The API returns one row per
@@ -47,7 +48,8 @@ uv run scripts/mosqlimate.py climate --weekly \
 | --- | --- | --- |
 | `--start` | yes | `YYYY-MM-DD`, or `YYYYWW` with `--weekly`. |
 | `--end` | yes | `YYYY-MM-DD`, or `YYYYWW` with `--weekly`. |
-| `--uf` | one of | Two-letter state code. |
+| `--uf` | one of | Two-letter state code or IBGE state code. |
+| `--adm-1` | one of | Alias for `--uf`; accepts a UF or state code. |
 | `--geocode` | one of | 7-digit IBGE municipality code. |
 | `--weekly` | no | Use weekly aggregation. |
 | `--macro-health-code` | no | 4-digit macro health geocode (weekly only). |
@@ -60,9 +62,12 @@ uv run scripts/mosqlimate.py episcanner --uf SP --disease dengue --year 2024
 
 | Flag | Required | Notes |
 | --- | --- | --- |
-| `--uf` | yes | Two-letter state code. |
-| `--disease` | no | `dengue` (default), `zika`, `chikungunya`. |
+| `--uf` | yes* | Two-letter state code or IBGE state code. |
+| `--adm-1` | yes* | Alias for `--uf`; accepts a UF or state code. |
+| `--disease` | no | `dengue` (default), `zika`, `chikungunya`, or `A90`, `A92.5`, `A92.0`. |
 | `--year` | no | Defaults to the current year in the API. |
+
+*Provide one of `--uf` or `--adm-1`.
 
 ## mosquito
 
@@ -77,7 +82,8 @@ uv run scripts/mosqlimate.py mosquito \
 | --- | --- | --- |
 | `--date-start` | no | `YYYY-MM-DD`. |
 | `--date-end` | no | `YYYY-MM-DD`. |
-| `--state` | no | Two-letter state code. |
+| `--state` | no | Two-letter state code or IBGE state code. |
+| `--uf` / `--adm-1` | no | Aliases for `--state`. |
 | `--municipality` | no | Municipality name, for example `Ponta Pora`. |
 | `--page` | no | Pagination page. |
 
@@ -93,7 +99,8 @@ uv run scripts/mosqlimate.py vegetation \
 | --- | --- | --- |
 | `--start` | yes | `YYYY-MM-DD`. |
 | `--end` | yes | `YYYY-MM-DD`. |
-| `--uf` | one of | Two-letter state code. |
+| `--uf` | one of | Two-letter state code or IBGE state code. |
+| `--adm-1` | one of | Alias for `--uf`; accepts a UF or state code. |
 | `--geocode` | one of | 7-digit IBGE municipality code. |
 | `--collection` | no | Satellite collection, for example `modis`. |
 | `--attribute` | no | Index or band, for example `ndvi` or `evi`. |
