@@ -49,6 +49,16 @@ class FakeMosqlient:
         self.calls.append(("infodengue", kwargs))
         return FakeFrame([{"casos": 1}])
 
+    def get_predictions(self, **kwargs):
+        from types import SimpleNamespace
+
+        self.calls.append(("predictions", kwargs))
+        return [
+            SimpleNamespace(id=1, adm_1=33, adm_2=None),
+            SimpleNamespace(id=2, adm_1=35, adm_2=None),
+            SimpleNamespace(id=3, adm_1=33, adm_2=3304557),
+        ]
+
     def validate_prediction(self, **kwargs):
         self.calls.append(("validate", kwargs))
 
@@ -102,6 +112,8 @@ def _upload_args(path, extra=None):
         "a" * 40,
         "--adm-level",
         "2",
+        "--adm-1",
+        "33",
         "--adm-2",
         "3304557",
         "--api-key",
@@ -226,3 +238,78 @@ def test_upload_can_publish_when_explicit(skill, monkeypatch, tmp_path):
 
     assert code == 0
     assert fake.calls[1][1]["published"] is True
+
+
+def test_infodengue_accepts_disease_code_and_adm_1(skill, monkeypatch, capsys):
+    fake = FakeMosqlient()
+    monkeypatch.setattr(skill, "_load_mosqlient", lambda _url: fake)
+    monkeypatch.setenv("MOSQLIMATE_API_KEY", "user:key")
+
+    code = skill.main(
+        [
+            "infodengue",
+            "--disease",
+            "A90",
+            "--adm-1",
+            "33",
+            "--start",
+            "2024-01-01",
+            "--end",
+            "2024-01-31",
+        ]
+    )
+
+    assert code == 0
+    kwargs = fake.calls[0][1]
+    assert kwargs["disease"] == "dengue"
+    assert kwargs["uf"] == "RJ"
+    capsys.readouterr()
+
+
+def test_predictions_filters_by_adm(skill, monkeypatch, capsys):
+    fake = FakeMosqlient()
+    monkeypatch.setattr(skill, "_load_mosqlient", lambda _url: fake)
+    monkeypatch.setattr(
+        skill,
+        "_prediction_record",
+        lambda prediction, include_data=False: {"id": prediction.id},
+    )
+    monkeypatch.setenv("MOSQLIMATE_API_KEY", "user:key")
+
+    code = skill.main(
+        [
+            "predictions",
+            "--adm-1",
+            "RJ",
+            "--adm-2",
+            "3304557",
+        ]
+    )
+
+    assert code == 0
+    kwargs = fake.calls[0][1]
+    assert "adm_1" not in kwargs
+    assert "adm_2" not in kwargs
+    assert json.loads(capsys.readouterr().out) == [{"id": 3}]
+
+
+def test_upload_accepts_uf_alias(skill, monkeypatch, tmp_path):
+    fake = FakeMosqlient()
+    monkeypatch.setattr(skill, "_load_mosqlient", lambda _url: fake)
+    path = _write_prediction(tmp_path, [_prediction_row()])
+
+    code = skill.main(_upload_args(path, ["--yes", "--uf", "RJ"]))
+
+    assert code == 0
+    kwargs = fake.calls[1][1]
+    assert kwargs["adm_1"] == 33
+    assert kwargs["disease"] == "A90"
+
+
+def test_normalizers_accept_aliases(skill):
+    assert skill._normalize_disease_code("dengue") == "A90"
+    assert skill._normalize_disease_code("A92.0") == "A92.0"
+    assert skill._normalize_disease_name("zika") == "zika"
+    assert skill._normalize_uf("33") == "RJ"
+    assert skill._normalize_uf("rj") == "RJ"
+    assert skill._normalize_adm_1("RJ") == 33

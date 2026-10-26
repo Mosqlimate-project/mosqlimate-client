@@ -46,6 +46,91 @@ PREDICTION_COLUMNS = (
     "upper_90",
     "upper_95",
 )
+DISEASE_CODES_BY_NAME = {
+    "dengue": "A90",
+    "zika": "A92.5",
+    "chikungunya": "A92.0",
+    "chik": "A92.0",
+}
+DISEASE_NAMES_BY_CODE = {
+    "A90": "dengue",
+    "A92.0": "chikungunya",
+    "A92.5": "zika",
+}
+DISEASE_CHOICES = tuple(DISEASE_CODES_BY_NAME) + ICD10
+UF_CODES = {
+    "AC": 12,
+    "AL": 27,
+    "AM": 13,
+    "AP": 16,
+    "BA": 29,
+    "CE": 23,
+    "DF": 53,
+    "ES": 32,
+    "GO": 52,
+    "MA": 21,
+    "MG": 31,
+    "MS": 50,
+    "MT": 51,
+    "PA": 15,
+    "PB": 25,
+    "PE": 26,
+    "PI": 22,
+    "PR": 41,
+    "RJ": 33,
+    "RN": 24,
+    "RO": 11,
+    "RR": 14,
+    "RS": 43,
+    "SC": 42,
+    "SE": 28,
+    "SP": 35,
+    "TO": 17,
+}
+CODE_UFS = {code: uf for uf, code in UF_CODES.items()}
+
+
+def _normalize_disease_code(value: str) -> str:
+    key = value.strip().lower()
+    if key in DISEASE_CODES_BY_NAME:
+        return DISEASE_CODES_BY_NAME[key]
+    if key.upper() in DISEASE_NAMES_BY_CODE:
+        return key.upper()
+    raise SystemExit(
+        f"Unknown disease {value}. Use a name (dengue, zika, chikungunya) "
+        "or an ICD-10 code (A90, A92.0, A92.5)."
+    )
+
+
+def _normalize_disease_name(value: str) -> str:
+    return DISEASE_NAMES_BY_CODE[_normalize_disease_code(value)]
+
+
+def _normalize_uf(value: str | int) -> str:
+    if isinstance(value, int):
+        if value in CODE_UFS:
+            return CODE_UFS[value]
+        raise SystemExit(f"Unknown state code {value}. Example: 33 (RJ).")
+
+    text = value.strip()
+    if text.isdigit():
+        return _normalize_uf(int(text))
+    uf = text.upper()
+    if uf in UF_CODES:
+        return uf
+    raise SystemExit(f"Unknown state {value}. Example: RJ or 33.")
+
+
+def _normalize_adm_1(value: str | int) -> int:
+    return UF_CODES[_normalize_uf(value)]
+
+
+def _normalize_adm_2(value: int) -> int:
+    if len(str(value)) != 7:
+        raise SystemExit(
+            f"Invalid municipality geocode {value}. Example: 3304557."
+        )
+    return value
 
 
 def _load_mosqlient(api_url: str | None):
@@ -101,7 +186,14 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_location_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--uf", default=None, help="Brazilian state code.")
+    parser.add_argument(
+        "--uf", default=None, help="Brazilian state abbreviation (e.g. RJ)."
+    )
+    parser.add_argument(
+        "--adm-1",
+        default=None,
+        help="State abbreviation or IBGE state code (alias for --uf).",
+    )
     parser.add_argument(
         "--geocode",
         type=int,
@@ -124,8 +216,8 @@ def _add_prediction_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--disease",
         required=True,
-        choices=ICD10,
-        help="ICD-10 disease code.",
+        choices=DISEASE_CHOICES,
+        help="Disease name or ICD-10 code.",
     )
     parser.add_argument(
         "--description",
@@ -155,7 +247,16 @@ def _add_prediction_args(parser: argparse.ArgumentParser) -> None:
         default="BRA",
         help="Country code (default: BRA).",
     )
-    parser.add_argument("--adm-1", type=int, default=None)
+    parser.add_argument(
+        "--adm-1",
+        default=None,
+        help="State abbreviation or IBGE state code (required at level 1+).",
+    )
+    parser.add_argument(
+        "--uf",
+        default=None,
+        help="Alias for --adm-1.",
+    )
     parser.add_argument("--adm-2", type=int, default=None)
     parser.add_argument("--adm-3", type=int, default=None)
 
@@ -172,7 +273,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_common_args(infodengue)
     _add_location_args(infodengue)
-    infodengue.add_argument("--disease", choices=DISEASES, default="dengue")
+    infodengue.add_argument(
+        "--disease", choices=DISEASE_CHOICES, default="dengue"
+    )
     infodengue.add_argument("--start", required=True)
     infodengue.add_argument("--end", required=True)
     infodengue.set_defaults(func=_cmd_infodengue)
@@ -199,8 +302,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "episcanner", help="Fetch Episcanner data."
     )
     _add_common_args(episcanner)
-    episcanner.add_argument("--uf", required=True)
-    episcanner.add_argument("--disease", choices=DISEASES, default="dengue")
+    episcanner.add_argument("--uf", default=None)
+    episcanner.add_argument("--adm-1", default=None)
+    episcanner.add_argument(
+        "--disease", choices=DISEASE_CHOICES, default="dengue"
+    )
     episcanner.add_argument("--year", type=int, default=None)
     episcanner.set_defaults(func=_cmd_episcanner)
 
@@ -211,6 +317,8 @@ def _build_parser() -> argparse.ArgumentParser:
     mosquito.add_argument("--date-start", default=None)
     mosquito.add_argument("--date-end", default=None)
     mosquito.add_argument("--state", default=None)
+    mosquito.add_argument("--uf", default=None)
+    mosquito.add_argument("--adm-1", default=None)
     mosquito.add_argument("--municipality", default=None)
     mosquito.add_argument("--page", type=int, default=None)
     mosquito.set_defaults(func=_cmd_mosquito)
@@ -234,7 +342,7 @@ def _build_parser() -> argparse.ArgumentParser:
     models.add_argument("--repository-owner", default=None)
     models.add_argument("--repository-organization", default=None)
     models.add_argument("--repository-name", default=None)
-    models.add_argument("--disease", choices=ICD10, default=None)
+    models.add_argument("--disease", choices=DISEASE_CHOICES, default=None)
     models.add_argument("--category", choices=CATEGORIES, default=None)
     models.add_argument(
         "--adm-level", type=int, choices=ADM_LEVELS, default=None
@@ -264,13 +372,26 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=TIME_RESOLUTIONS,
         default=None,
     )
-    predictions.add_argument("--disease", choices=ICD10, default=None)
+    predictions.add_argument(
+        "--disease", choices=DISEASE_CHOICES, default=None
+    )
     predictions.add_argument(
         "--model-category", choices=CATEGORIES, default=None
     )
     predictions.add_argument("--imdc-year", type=int, default=None)
     predictions.add_argument("--start", default=None)
     predictions.add_argument("--end", default=None)
+    predictions.add_argument(
+        "--adm-1",
+        default=None,
+        help="Filter by state abbreviation or IBGE state code.",
+    )
+    predictions.add_argument(
+        "--adm-2",
+        type=int,
+        default=None,
+        help="Filter by municipality IBGE geocode (7 digits).",
+    )
     predictions.add_argument(
         "--include-data",
         action="store_true",
@@ -310,9 +431,19 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _resolve_uf(args: argparse.Namespace) -> str | None:
+    value = args.uf if args.uf is not None else args.adm_1
+    return _normalize_uf(value) if value is not None else None
+
+
 def _require_location(args: argparse.Namespace) -> None:
-    if not args.uf and not args.geocode:
-        raise SystemExit("Provide --uf or --geocode.")
+    if not (args.uf or args.adm_1 or args.geocode):
+        raise SystemExit("Provide --uf, --adm-1, or --geocode.")
+
+
+def _require_state(args: argparse.Namespace) -> None:
+    if not (args.uf or args.adm_1):
+        raise SystemExit("Provide --uf or --adm-1.")
 
 
 def _records(data: Any) -> list[dict[str, Any]]:
@@ -456,16 +587,17 @@ def _load_prediction(path: str) -> list[dict[str, Any]]:
 def _prediction_kwargs(
     args: argparse.Namespace, published: bool = False
 ) -> dict[str, Any]:
+    adm_1 = args.adm_1 if args.adm_1 is not None else args.uf
     return {
         "repository": args.repository,
-        "disease": args.disease,
+        "disease": _normalize_disease_code(args.disease),
         "description": args.description,
         "commit": args.commit,
         "adm_level": args.adm_level,
         "case_definition": args.case_definition,
         "published": published,
         "adm_0": args.adm_0,
-        "adm_1": args.adm_1,
+        "adm_1": _normalize_adm_1(adm_1) if adm_1 is not None else None,
         "adm_2": args.adm_2,
         "adm_3": args.adm_3,
     }
@@ -476,10 +608,10 @@ def _cmd_infodengue(args: argparse.Namespace) -> int:
     mosqlient = _load_mosqlient(args.api_url)
     data = mosqlient.get_infodengue(
         api_key=_get_api_key(args),
-        disease=args.disease,
+        disease=_normalize_disease_name(args.disease),
         start_date=args.start,
         end_date=args.end,
-        uf=args.uf,
+        uf=_resolve_uf(args),
         geocode=args.geocode,
     )
     _write_records(_records(data), args.output, args.out)
@@ -494,7 +626,7 @@ def _cmd_climate(args: argparse.Namespace) -> int:
             api_key=_get_api_key(args),
             start=args.start,
             end=args.end,
-            uf=args.uf,
+            uf=_resolve_uf(args),
             geocode=args.geocode,
             macro_health_code=args.macro_health_code,
         )
@@ -503,7 +635,7 @@ def _cmd_climate(args: argparse.Namespace) -> int:
             api_key=_get_api_key(args),
             start_date=args.start,
             end_date=args.end,
-            uf=args.uf,
+            uf=_resolve_uf(args),
             geocode=args.geocode,
         )
     _write_records(_records(data), args.output, args.out)
@@ -511,11 +643,12 @@ def _cmd_climate(args: argparse.Namespace) -> int:
 
 
 def _cmd_episcanner(args: argparse.Namespace) -> int:
+    _require_state(args)
     mosqlient = _load_mosqlient(args.api_url)
     kwargs: dict[str, Any] = {
         "api_key": _get_api_key(args),
-        "uf": args.uf,
-        "disease": args.disease,
+        "uf": _resolve_uf(args),
+        "disease": _normalize_disease_name(args.disease),
     }
     if args.year is not None:
         kwargs["year"] = args.year
@@ -526,11 +659,14 @@ def _cmd_episcanner(args: argparse.Namespace) -> int:
 
 def _cmd_mosquito(args: argparse.Namespace) -> int:
     mosqlient = _load_mosqlient(args.api_url)
+    state = args.state if args.state is not None else args.uf
+    if state is None:
+        state = args.adm_1
     data = mosqlient.get_mosquito(
         api_key=_get_api_key(args),
         date_start=args.date_start,
         date_end=args.date_end,
-        state=args.state,
+        state=_normalize_uf(state) if state is not None else None,
         municipality=args.municipality,
         page=args.page,
     )
@@ -545,7 +681,7 @@ def _cmd_vegetation(args: argparse.Namespace) -> int:
         api_key=_get_api_key(args),
         start_date=args.start,
         end_date=args.end,
-        uf=args.uf,
+        uf=_resolve_uf(args),
         geocode=args.geocode,
         collection=args.collection,
         attribute=args.attribute,
@@ -562,7 +698,11 @@ def _cmd_models(args: argparse.Namespace) -> int:
         repository_owner=args.repository_owner,
         repository_organization=args.repository_organization,
         repository_name=args.repository_name,
-        disease=args.disease,
+        disease=(
+            _normalize_disease_code(args.disease)
+            if args.disease is not None
+            else None
+        ),
         category=args.category,
         adm_level=args.adm_level,
         time_resolution=args.time_resolution,
@@ -587,12 +727,32 @@ def _cmd_predictions(args: argparse.Namespace) -> int:
         model_organization=args.model_organization,
         adm_level=args.adm_level,
         model_time_resolution=args.model_time_resolution,
-        disease=args.disease,
+        disease=(
+            _normalize_disease_code(args.disease)
+            if args.disease is not None
+            else None
+        ),
         model_category=args.model_category,
         imdc_year=args.imdc_year,
         start=args.start,
         end=args.end,
     )
+
+    if args.adm_1 is not None:
+        adm_1 = _normalize_adm_1(args.adm_1)
+        predictions = [
+            prediction
+            for prediction in predictions
+            if prediction.adm_1 == adm_1
+        ]
+    if args.adm_2 is not None:
+        adm_2 = _normalize_adm_2(args.adm_2)
+        predictions = [
+            prediction
+            for prediction in predictions
+            if prediction.adm_2 == adm_2
+        ]
+
     _write_records(
         (
             _prediction_record(prediction, args.include_data)
