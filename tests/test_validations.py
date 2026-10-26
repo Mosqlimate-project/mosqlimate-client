@@ -191,6 +191,32 @@ class TestValidateDisease:
     def test_valid_diseases(self, disease):
         assert validations.validate_disease(disease) == disease
 
+    @pytest.mark.parametrize(
+        "alias,code",
+        [
+            ("dengue", "A90"),
+            ("DENGUE", "A90"),
+            ("chikungunya", "A92.0"),
+            ("chik", "A92.0"),
+            ("zika", "A92.5"),
+        ],
+    )
+    def test_disease_aliases(self, alias, code):
+        assert validations.validate_disease(alias) == code
+
+    @pytest.mark.parametrize(
+        "disease,name",
+        [
+            ("A90", "dengue"),
+            ("dengue", "dengue"),
+            ("A92.0", "chikungunya"),
+            ("chik", "chikungunya"),
+            ("A92.5", "zika"),
+        ],
+    )
+    def test_disease_names(self, disease, name):
+        assert validations.validate_disease_name(disease) == name
+
     def test_invalid_disease(self):
         with pytest.raises(AssertionError, match="Unknown disease"):
             validations.validate_disease("A99")
@@ -373,9 +399,44 @@ class TestValidateUf:
         result = validations.validate_uf("sp")
         assert result == "SP"
 
+    @pytest.mark.parametrize(
+        "value,uf",
+        [
+            (33, "RJ"),
+            ("33", "RJ"),
+            (41, "PR"),
+            ("41", "PR"),
+        ],
+    )
+    def test_state_code_as_uf(self, value, uf):
+        assert validations.validate_uf(value) == uf
+
     def test_invalid_uf(self):
         with pytest.raises(AssertionError, match="Unknown UF"):
             validations.validate_uf("XX")
+
+    def test_invalid_state_code(self):
+        with pytest.raises(AssertionError, match="Unknown UF"):
+            validations.validate_uf(99)
+
+
+class TestValidateAdm1:
+    @pytest.mark.parametrize(
+        "value,code",
+        [
+            ("RJ", 33),
+            ("rj", 33),
+            (33, 33),
+            ("33", 33),
+            ("PR", 41),
+        ],
+    )
+    def test_valid_adm_1(self, value, code):
+        assert validations.validate_adm_1(value) == code
+
+    def test_invalid_adm_1(self):
+        with pytest.raises(AssertionError, match="Unknown UF"):
+            validations.validate_adm_1("XX")
 
 
 class TestValidateGeocode:

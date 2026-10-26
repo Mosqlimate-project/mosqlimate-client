@@ -482,3 +482,41 @@ class TestPredictionValidateFunctions:
                     adm_level=1,
                     adm_1=33,
                 )
+
+
+class TestRegistryParameterAliases:
+    def test_upload_prediction_uf_alias(self, valid_api_key):
+        import pandas as pd
+
+        prediction_df = pd.DataFrame(
+            {
+                "date": ["2023-01-01"],
+                "lower_95": [10.0],
+                "lower_90": [15.0],
+                "lower_80": [20.0],
+                "lower_50": [30.0],
+                "pred": [50.0],
+                "upper_50": [70.0],
+                "upper_80": [80.0],
+                "upper_90": [85.0],
+                "upper_95": [90.0],
+            }
+        )
+
+        with patch(
+            "mosqlient.registry._prediction_post_impl.Prediction.post"
+        ) as mock_post:
+            mock_post.return_value = MagicMock()
+            upload_prediction(
+                api_key=valid_api_key,
+                repository="owner/repo",
+                disease="dengue",
+                description="Test",
+                commit="a" * 40,
+                prediction=prediction_df,
+                adm_level=1,
+                uf="RJ",
+            )
+            kwargs = mock_post.call_args.kwargs
+            assert kwargs["disease"] == "dengue"
+            assert kwargs["adm_1"] == "RJ"

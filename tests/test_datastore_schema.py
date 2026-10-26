@@ -77,6 +77,17 @@ class TestInfodengueGETParams:
         assert params["page"] == 1
         assert params["per_page"] == 10
 
+    def test_params_with_disease_code_and_adm_1(self):
+        p = InfodengueGETParams(disease="A90", adm_1=33)
+        params = p.params()
+        assert params["disease"] == "dengue"
+        assert params["uf"] == "RJ"
+        assert "adm_1" not in params
+
+    def test_params_with_state_code_as_uf(self):
+        p = InfodengueGETParams(uf=33)
+        assert p.params()["uf"] == "RJ"
+
 
 class TestClimateGETParams:
     def test_default_values(self):
@@ -100,6 +111,12 @@ class TestClimateGETParams:
         p = ClimateGETParams()
         params = p.params()
         assert params == {}
+
+    def test_params_with_adm_1(self):
+        p = ClimateGETParams(adm_1="RJ")
+        params = p.params()
+        assert params["uf"] == "RJ"
+        assert "adm_1" not in params
 
 
 class TestClimateWeeklyGETParams:
@@ -129,6 +146,10 @@ class TestClimateWeeklyGETParams:
         assert params["start"] == "202401"
         assert params["end"] == "202452"
 
+    def test_params_with_adm_1(self):
+        p = ClimateWeeklyGETParams(start="202401", end="202452", adm_1=33)
+        assert p.params()["uf"] == "RJ"
+
 
 class TestEpiscannerGETParams:
     def test_default_values(self):
@@ -149,6 +170,12 @@ class TestEpiscannerGETParams:
         params = p.params()
         assert params["disease"] == "dengue"
         assert "year" not in params
+
+    def test_params_with_aliases(self):
+        p = EpiscannerGETParams(disease="A92.0", adm_1="RJ")
+        params = p.params()
+        assert params["disease"] == "chikungunya"
+        assert params["uf"] == "RJ"
 
 
 class TestMosquitoGETParams:
@@ -175,3 +202,11 @@ class TestMosquitoGETParams:
         p = MosquitoGETParams()
         params = p.params()
         assert params == {}
+
+    def test_params_with_state_code_alias(self):
+        p = MosquitoGETParams(adm_1=31)
+        assert p.params()["state"] == "MG"
+
+    def test_params_with_uf_alias(self):
+        p = MosquitoGETParams(uf="SP")
+        assert p.params()["state"] == "SP"
