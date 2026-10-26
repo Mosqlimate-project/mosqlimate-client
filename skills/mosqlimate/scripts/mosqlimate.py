@@ -416,14 +416,14 @@ def _load_prediction(path: str) -> list[dict[str, Any]]:
         raise ValueError(f"Prediction file not found: {path}")
     suffix = source.suffix.lower()
     if suffix == ".json":
-        payload = json.loads(source.read_text(encoding="utf-8"))
+        payload = json.loads(source.read_text(encoding="utf-8-sig"))
         if isinstance(payload, dict):
             payload = payload.get("prediction", payload.get("data"))
         if not isinstance(payload, list):
             raise ValueError("JSON must contain a list of prediction rows.")
         rows = payload
     elif suffix == ".csv":
-        with source.open(newline="", encoding="utf-8") as handle:
+        with source.open(newline="", encoding="utf-8-sig") as handle:
             rows = list(csv.DictReader(handle))
     else:
         raise ValueError("Prediction file must be .json or .csv.")
@@ -512,12 +512,14 @@ def _cmd_climate(args: argparse.Namespace) -> int:
 
 def _cmd_episcanner(args: argparse.Namespace) -> int:
     mosqlient = _load_mosqlient(args.api_url)
-    data = mosqlient.get_episcanner(
-        api_key=_get_api_key(args),
-        uf=args.uf,
-        disease=args.disease,
-        year=args.year,
-    )
+    kwargs: dict[str, Any] = {
+        "api_key": _get_api_key(args),
+        "uf": args.uf,
+        "disease": args.disease,
+    }
+    if args.year is not None:
+        kwargs["year"] = args.year
+    data = mosqlient.get_episcanner(**kwargs)
     _write_records(_records(data), args.output, args.out)
     return 0
 
