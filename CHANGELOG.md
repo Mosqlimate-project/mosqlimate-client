@@ -1,3 +1,22 @@
+# [2.7.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.6.0...2.7.0) (2026-10-26)
+
+
+### Bug Fixes
+
+* **api:** accept state codes and disease aliases ([#109](https://github.com/Mosqlimate-project/mosqlimate-client/issues/109)) ([debb6e4](https://github.com/Mosqlimate-project/mosqlimate-client/commit/debb6e4c7e450d68a943a6c7ebaf1d3bb05b7d92))
+* **docs:** pass include_files to package metadata lookup ([8771956](https://github.com/Mosqlimate-project/mosqlimate-client/commit/877195611ee8e75d544367ba6b8fd4118b6d6fbb))
+* **forecast:** load XGBoost only when training ([9d973cc](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9d973cc5f12f960d806d07172f871ec21966007a))
+
+
+### Features
+
+* **forecast:** add quantile predictions to XGBoost ([4776e6f](https://github.com/Mosqlimate-project/mosqlimate-client/commit/4776e6f1dff8d6a88602c775a379121749f5ac94))
+* **forecast:** add XGBoost forecast models ([c11f272](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c11f2725a5c10bb678c13ea4c99611a36ac53664))
+* **forecast:** make residual XGBoost the default ([ff4d0c4](https://github.com/Mosqlimate-project/mosqlimate-client/commit/ff4d0c4cdefe1eeac2811bc8410f164bddef4caa))
+* **tests:** add mock XGBRegressor for training and prediction interval tests ([c583852](https://github.com/Mosqlimate-project/mosqlimate-client/commit/c58385278094d58f0b2489ff4afda884269407ae))
+* **tests:** add train_forecast_df fixture and enhance XGBoost tests ([d38d48b](https://github.com/Mosqlimate-project/mosqlimate-client/commit/d38d48b9828361d89877c4e96ea9e0000074a1ec))
+* **tests:** mock xgboost module for testing with FakeXGBRegressor ([9b7a37c](https://github.com/Mosqlimate-project/mosqlimate-client/commit/9b7a37cfdb9a2d91d4310d58e9b2e73308fb200c))
+
 # [2.6.0](https://github.com/Mosqlimate-project/mosqlimate-client/compare/2.5.2...2.6.0) (2026-07-15)
 
 
