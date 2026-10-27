@@ -6,6 +6,7 @@
 [![gitter](https://badges.gitter.im/join%20chat.svg)](https://gitter.im/mosqlimate-client/community)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![EpidBot Ready](https://img.shields.io/badge/EpidBot-Ready-brightgreen?style=flat-square&logo=robot&logoColor=white)](https://api.epidbot.kwar-ai.com.br)
+[![ClawHub skill](https://img.shields.io/badge/ClawHub-mosqlimate-blue?style=flat-square)](https://clawhub.ai/mosqlimate-project/skills/mosqlimate)
 
 Client library for the [Mosqlimate](https://api.mosqlimate.org/) data platform — an open platform for epidemiological forecasting of arboviruses (dengue, zika, chikungunya) in Brazil. It provides access to epidemiological and climate data, a model registry, forecasting tools, and scoring utilities.
 
@@ -24,6 +25,19 @@ For forecasting and scoring features (ARIMA baseline model, ensemble model, scor
 ```bash
 pip install "mosqlient[analyze]"
 ```
+
+## ClawHub skill
+
+The [Mosqlimate skill](https://clawhub.ai/mosqlimate-project/skills/mosqlimate) lets
+OpenClaw agents query Mosqlimate data, search models and predictions, and
+validate or upload forecasts.
+
+```bash
+openclaw skills install @mosqlimate-project/mosqlimate
+```
+
+Set `MOSQLIMATE_API_KEY` before use. The skill includes command references and
+safety rules for prediction uploads.
 
 ## Authentication
 
