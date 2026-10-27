@@ -89,6 +89,18 @@ All read commands accept `--output csv|json` and `--out FILE`. Disease flags
 accept names or ICD-10 codes. State filters accept a UF abbreviation or an IBGE
 state code, and `--adm-1` is an alias for `--uf`.
 
+## API endpoints
+
+Base URL: `https://api.mosqlimate.org/api/`
+
+The helper uses `GET` for datastore and registry reads and `POST` for prediction
+uploads. Build full URLs by appending the partial paths below to the base URL.
+The API also exposes `DELETE` and `PATCH` operations that this helper does not
+call.
+
+See [API endpoints and output schemas](references/api.md) for every method,
+partial URL, response envelope, and field schema.
+
 ## Examples
 
 Dengue cases for Rio de Janeiro city:
@@ -218,5 +230,6 @@ upper_80 <= upper_90 <= upper_95`.
 - [Datastore commands](references/datastore.md)
 - [Registry commands](references/registry.md)
 - [Prediction uploads](references/predictions.md)
+- [API endpoints and output schemas](references/api.md)
 - [Troubleshooting](references/troubleshooting.md)
 - [Mosqlimate API documentation](https://api.mosqlimate.org/docs/)

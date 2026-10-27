@@ -3,6 +3,19 @@
 All commands print JSON by default. Use `--output csv` and `--out FILE` to save
 a CSV. A one-line row count goes to stderr so stdout stays parseable.
 
+Base URL: `https://api.mosqlimate.org/api/`
+
+| Command | Method | Partial endpoint | Output |
+| --- | --- | --- | --- |
+| `infodengue` | `GET` | `datastore/infodengue/` | Paged `HistoricoAlertaSchema`. |
+| `climate` | `GET` | `datastore/climate/` | Paged `CopernicusBrasilSchema`. |
+| `climate --weekly` | `GET` | `datastore/climate/weekly/` | Paged `CopernicusBrasilWeeklySchema`. |
+| `episcanner` | `GET` | `datastore/episcanner/` | `{"items": [EpiScannerSchema]}`. |
+| `mosquito` | `GET` | `datastore/mosquito/` | `{"items": [ContaOvosSchema]}`. |
+| `vegetation` | `GET` | `datastore/vegetation/` | Paged `VegetationIndexMetricSchema`. |
+
+Full field schemas are in [api.md](api.md#datastore).
+
 ## infodengue
 
 Fetch notified and estimated arbovirus cases.
