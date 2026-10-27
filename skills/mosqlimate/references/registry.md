@@ -3,6 +3,20 @@
 The registry lists models and their predictions. Registry reads require a real
 API key; demo users may have restricted access.
 
+Base URL: `https://api.mosqlimate.org/api/`
+
+| Command | Method | Partial endpoint | Output |
+| --- | --- | --- | --- |
+| `models` | `GET` | `registry/models/` | Paged `Model`. |
+| `predictions` | `GET` | `registry/predictions/` | Paged `Prediction`. |
+| `predictions --include-data` | `GET` | `registry/predictions/{id}/data/` | `[PredictionData]`. |
+| `validate-prediction` | `GET` | `registry/models/` | Client-side validation lookup. |
+| `upload-prediction` | `POST` | `registry/predictions/` | `{"id": integer}`. |
+| Not exposed by helper | `DELETE` | `registry/predictions/{id}/` | Delete a prediction. |
+| Not exposed by helper | `PATCH` | `registry/prediction/{prediction_id}/publish/` | Change publication status. |
+
+Full field schemas are in [api.md](api.md#registry).
+
 ## models
 
 List all models:

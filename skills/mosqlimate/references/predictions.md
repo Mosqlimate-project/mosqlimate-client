@@ -4,6 +4,18 @@ Uploads write to the Mosqlimate registry. Always validate first, always ask the
 user, and keep predictions unpublished unless the user explicitly asks to
 publish.
 
+Base URL: `https://api.mosqlimate.org/api/`
+
+| Operation | Method | Partial endpoint | Output |
+| --- | --- | --- | --- |
+| Validate | `GET` | `registry/models/` | Client-side lookup, no write. |
+| Upload | `POST` | `registry/predictions/` | `{"id": integer}`. |
+| Fetch rows | `GET` | `registry/predictions/{id}/data/` | `[PredictionData]`. |
+| Delete | `DELETE` | `registry/predictions/{id}/` | Not exposed by the helper. |
+| Change visibility | `PATCH` | `registry/prediction/{prediction_id}/publish/` | Not exposed by the helper. |
+
+Full request/response schemas are in [api.md](api.md#registry).
+
 ## Required row schema
 
 Every prediction row must contain exactly these columns:
