@@ -39,6 +39,7 @@ torch = "^2.13.0"
 xgboost = "^2.0.0"
 scipy = "*"
 pandas-stubs = "~=2.3.3"
+timesfm = {extras = ["torch"], version = "^3.0.2"}
 
 [tool.poetry.extras]
 analyze = [
