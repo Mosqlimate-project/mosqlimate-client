@@ -23,7 +23,6 @@ import pandas as pd
 from timesfm3 import ModelConfig, TimesFM3Evaluator
 from sklearn.isotonic import IsotonicRegression
 
-
 _INV_CDF = NormalDist().inv_cdf
 
 
@@ -48,17 +47,27 @@ def map_quantile_curve(
     values = np.asarray(avail_values, dtype=float)
 
     if levels.ndim != 1 or values.ndim != 1 or levels.size != values.size:
-        raise ValueError("Quantile levels and values must be matching 1D arrays.")
-    if levels.size < 2 or not np.isfinite(levels).all() or not np.isfinite(values).all():
+        raise ValueError(
+            "Quantile levels and values must be matching 1D arrays."
+        )
+    if (
+        levels.size < 2
+        or not np.isfinite(levels).all()
+        or not np.isfinite(values).all()
+    ):
         raise ValueError("At least two finite quantiles are required.")
     if not (0.0 < target_level < 1.0):
-        raise ValueError("target_level must lie strictly between zero and one.")
+        raise ValueError(
+            "target_level must lie strictly between zero and one."
+        )
 
     order = np.argsort(levels)
     levels = levels[order]
     values = values[order]
     if levels[0] <= 0 or levels[-1] >= 1 or np.any(np.diff(levels) <= 0):
-        raise ValueError("Quantile levels must be unique and between zero and one.")
+        raise ValueError(
+            "Quantile levels must be unique and between zero and one."
+        )
 
     # Non-negative support. Source quantile crossings, if any, are handled
     # by the final isotonic correction over the entire returned quantile curve.
@@ -106,11 +115,19 @@ def enforce_quantile_order(df: pd.DataFrame) -> pd.DataFrame:
     on the remaining rows.
     """
     quantile_cols = [
-        "lower_95", "lower_90", "lower_80", "lower_50", "pred",
-        "upper_50", "upper_80", "upper_90", "upper_95",
+        "lower_95",
+        "lower_90",
+        "lower_80",
+        "lower_50",
+        "pred",
+        "upper_50",
+        "upper_80",
+        "upper_90",
+        "upper_95",
     ]
-    levels = np.array([0.025, 0.05, 0.10, 0.25, 0.50,
-                       0.75, 0.90, 0.95, 0.975], dtype=float)
+    levels = np.array(
+        [0.025, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.975], dtype=float
+    )
 
     missing = [col for col in quantile_cols if col not in df.columns]
     if missing:
@@ -131,10 +148,9 @@ def enforce_quantile_order(df: pd.DataFrame) -> pd.DataFrame:
         return result
 
     model = IsotonicRegression(increasing=True, y_min=0.0)
-    corrected = np.stack([
-        model.fit_transform(levels, row)
-        for row in values[correction_mask]
-    ])
+    corrected = np.stack(
+        [model.fit_transform(levels, row) for row in values[correction_mask]]
+    )
     result.loc[correction_mask, quantile_cols] = corrected
     return result
 
@@ -264,7 +280,7 @@ class ForecastTimesFM3:
 
         The original DataFrame is not modified.
         """
-        
+
         if not isinstance(df_data, pd.DataFrame) or df_data.empty:
             raise ValueError("df_data must be a non-empty pandas DataFrame.")
 
@@ -279,15 +295,21 @@ class ForecastTimesFM3:
         if df.index.has_duplicates:
             raise ValueError("The date index contains duplicated timestamps.")
         if self.target_col not in df.columns:
-            raise ValueError(f"Target column '{self.target_col}' was not found.")
+            raise ValueError(
+                f"Target column '{self.target_col}' was not found."
+            )
         if not df.index.is_monotonic_increasing:
             raise ValueError("Dates must be sorted in ascending order.")
 
-        df[self.target_col] = pd.to_numeric(df[self.target_col], errors="raise")
+        df[self.target_col] = pd.to_numeric(
+            df[self.target_col], errors="raise"
+        )
         if df[self.target_col].isna().any():
             raise ValueError("The historical target contains missing values.")
         if not np.isfinite(df[self.target_col].to_numpy(dtype=float)).all():
-            raise ValueError("The historical target contains non-finite values.")
+            raise ValueError(
+                "The historical target contains non-finite values."
+            )
         return df
 
     @staticmethod
@@ -412,7 +434,9 @@ class ForecastTimesFM3:
             future = future.sort_index()
 
             if future.index.has_duplicates:
-                raise ValueError("future_covariates contains duplicated dates.")
+                raise ValueError(
+                    "future_covariates contains duplicated dates."
+                )
             if not future.index.equals(future_dates):
                 raise ValueError(
                     "future_covariates index must match the forecast dates exactly. "
@@ -438,10 +462,12 @@ class ForecastTimesFM3:
             self.forecaster.predict_batch(
                 contexts=[target],
                 horizon=predict_n,
-                past_only_covariates=[past_only] if past_only is not None else None,
-                past_future_covariates=[past_future]
-                if past_future is not None
-                else None,
+                past_only_covariates=(
+                    [past_only] if past_only is not None else None
+                ),
+                past_future_covariates=(
+                    [past_future] if past_future is not None else None
+                ),
                 return_quantiles=return_quantiles,
                 use_symmetric_averaging=use_symmetric_averaging,
             )

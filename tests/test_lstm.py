@@ -34,29 +34,40 @@ from mosqlient.forecast.lstm import (
 )
 
 QUANTILE_COLUMNS = [
-    "lower_95", "lower_90", "lower_80", "lower_50", "pred",
-    "upper_50", "upper_80", "upper_90", "upper_95",
+    "lower_95",
+    "lower_90",
+    "lower_80",
+    "lower_50",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
 ]
 
 
 @pytest.fixture
 def sample_forecast_df():
     dates = pd.date_range("2020-01-05", periods=20, freq="W-SUN")
-    return pd.DataFrame({
-        "date": dates,
-        "casos": np.arange(1, 21, dtype=float),
-        "temp": np.linspace(20, 25, 20),
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "casos": np.arange(1, 21, dtype=float),
+            "temp": np.linspace(20, 25, 20),
+        }
+    )
 
 
 @pytest.fixture
 def train_forecast_df():
     dates = pd.date_range("2020-01-05", periods=40, freq="W-SUN")
-    return pd.DataFrame({
-        "date": dates,
-        "casos": np.arange(1, 41, dtype=float),
-        "temp": np.linspace(20, 25, 40),
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "casos": np.arange(1, 41, dtype=float),
+            "temp": np.linspace(20, 25, 40),
+        }
+    )
 
 
 def make_model(df, **kwargs):
@@ -82,11 +93,16 @@ def _dated(df):
 def _fake_forecast_dataframe(X, predict_n, *, last_date="2020-02-02"):
     """A deterministic forecast in the real function's output schema."""
     n = len(X)
-    output = pd.DataFrame({
-        "last_date": [last_date] * (n * predict_n),
-        "date": pd.date_range("2020-02-09", periods=predict_n, freq="W-SUN").tolist() * n,
-        "horizon": list(range(1, predict_n + 1)) * n,
-    })
+    output = pd.DataFrame(
+        {
+            "last_date": [last_date] * (n * predict_n),
+            "date": pd.date_range(
+                "2020-02-09", periods=predict_n, freq="W-SUN"
+            ).tolist()
+            * n,
+            "horizon": list(range(1, predict_n + 1)) * n,
+        }
+    )
     for i, col in enumerate(QUANTILE_COLUMNS):
         output[col] = float(i + 1)
     return output
@@ -103,7 +119,9 @@ def test_lstm_contract(sample_forecast_df):
 
 
 def test_invalid_target_is_rejected(sample_forecast_df):
-    with pytest.raises(ValueError, match="must be one of the available columns"):
+    with pytest.raises(
+        ValueError, match="must be one of the available columns"
+    ):
         ForecastLSTM(sample_forecast_df, columns=["date", "temp"])
 
 
@@ -115,7 +133,9 @@ def test_constructor_currently_requires_date_in_columns(sample_forecast_df):
 
 def test_get_next_n_weeks():
     assert get_next_n_weeks("2020-01-05", 3) == [
-        date(2020, 1, 12), date(2020, 1, 19), date(2020, 1, 26)
+        date(2020, 1, 12),
+        date(2020, 1, 19),
+        date(2020, 1, 26),
     ]
     assert get_next_n_weeks("2020-01-05", 0) == []
 
@@ -133,17 +153,24 @@ def test_normalize_robust_uses_training_subset(sample_forecast_df):
     scaled, params = normalize_data(df, method="robust", ratio=0.5)
     train_values = df.iloc[:10]
     expected_median = train_values["casos"].median()
-    expected_iqr = train_values["casos"].quantile(0.75) - train_values["casos"].quantile(0.25)
+    expected_iqr = train_values["casos"].quantile(0.75) - train_values[
+        "casos"
+    ].quantile(0.25)
     assert params["median"]["casos"] == expected_median
     assert params["iqr"]["casos"] == expected_iqr
-    assert scaled.iloc[0]["casos"] == pytest.approx((1 - expected_median) / expected_iqr)
+    assert scaled.iloc[0]["casos"] == pytest.approx(
+        (1 - expected_median) / expected_iqr
+    )
 
 
 def test_normalize_dates_and_missing_values(sample_forecast_df):
     df = _dated(sample_forecast_df)[["casos", "temp"]].copy()
     df.iloc[0, 0] = np.nan
     scaled, params = normalize_data(
-        df, method="max", ini_train_date="2020-01-05", end_train_date="2020-02-02"
+        df,
+        method="max",
+        ini_train_date="2020-01-05",
+        end_train_date="2020-02-02",
     )
     assert params["max"]["casos"] == 5
     assert scaled.iloc[0]["casos"] == 0
@@ -163,11 +190,21 @@ def test_normalize_invalid_method(sample_forecast_df):
 def test_normalize_invalid_dates(sample_forecast_df):
     df = sample_forecast_df[["casos"]]
     with pytest.raises(TypeError, match="DatetimeIndex"):
-        normalize_data(df, ini_train_date="2020-01-01", end_train_date="2020-03-01")
+        normalize_data(
+            df, ini_train_date="2020-01-01", end_train_date="2020-03-01"
+        )
     with pytest.raises(ValueError, match="earlier"):
-        normalize_data(_dated(sample_forecast_df)[["casos"]], ini_train_date="2020-03-01", end_train_date="2020-01-01")
+        normalize_data(
+            _dated(sample_forecast_df)[["casos"]],
+            ini_train_date="2020-03-01",
+            end_train_date="2020-01-01",
+        )
     with pytest.raises(ValueError, match="empty"):
-        normalize_data(_dated(sample_forecast_df)[["casos"]], ini_train_date="1990-01-01", end_train_date="1990-03-01")
+        normalize_data(
+            _dated(sample_forecast_df)[["casos"]],
+            ini_train_date="1990-01-01",
+            end_train_date="1990-03-01",
+        )
 
 
 def test_normalize_rejects_zero_max_and_iqr():
@@ -209,9 +246,13 @@ def test_base_preprocess_invalid_data(sample_forecast_df):
     with pytest.raises(ValueError, match="not found"):
         _base_preprocess(df, "max", None, None, None, "missing", False, 0.5)
     with pytest.raises(ValueError, match="No data remaining"):
-        _base_preprocess(df, "max", "2030-01-01", None, None, "casos", False, 0.5)
+        _base_preprocess(
+            df, "max", "2030-01-01", None, None, "casos", False, 0.5
+        )
     with pytest.raises(ValueError, match="earlier"):
-        _base_preprocess(df, "max", "2020-01-05", "2020-05-01", "2020-03-01", "casos", False)
+        _base_preprocess(
+            df, "max", "2020-01-05", "2020-05-01", "2020-03-01", "casos", False
+        )
 
 
 def test_get_nn_data_shapes_and_types(train_forecast_df):
@@ -230,9 +271,14 @@ def test_get_nn_data_shapes_and_types(train_forecast_df):
 
 def test_get_nn_data_with_date_split(train_forecast_df):
     norm, params, x_train, y_train, x_test, y_test = get_nn_data(
-        _dated(train_forecast_df), method="max", ratio=None,
-        ini_train_date="2020-01-05", end_train_date="2020-06-28",
-        end_date="2020-10-04", look_back=4, predict_n=2,
+        _dated(train_forecast_df),
+        method="max",
+        ratio=None,
+        ini_train_date="2020-01-05",
+        end_train_date="2020-06-28",
+        end_date="2020-10-04",
+        look_back=4,
+        predict_n=2,
     )
     assert "max" in params
     assert x_train.shape[0] > 0
@@ -255,9 +301,12 @@ def test_split_data_for_selects_last_context(train_forecast_df):
 
 def test_get_nn_data_for_context_and_params(train_forecast_df):
     x, params = get_nn_data_for(
-        _dated(train_forecast_df), ini_train_date="2020-01-05",
-        end_train_date="2020-06-28", end_date="2020-10-04",
-        look_back=4, predict_n=2,
+        _dated(train_forecast_df),
+        ini_train_date="2020-01-05",
+        end_train_date="2020-06-28",
+        end_date="2020-10-04",
+        look_back=4,
+        predict_n=2,
         use_log=False,
     )
     assert x.shape == (1, 4, 2)
@@ -270,10 +319,30 @@ def test_get_nn_data_for_requires_train_end_date(train_forecast_df):
         get_nn_data_for(_dated(train_forecast_df))
 
 
-@pytest.mark.parametrize("activation", ["relu", "gelu", "sigmoid", "tanh", "elu", "selu", "softplus", "linear", "none", None])
+@pytest.mark.parametrize(
+    "activation",
+    [
+        "relu",
+        "gelu",
+        "sigmoid",
+        "tanh",
+        "elu",
+        "selu",
+        "softplus",
+        "linear",
+        "none",
+        None,
+    ],
+)
 def test_lstm_model_activations(activation):
-    model = LSTMModel(features=2, hidden=4, predict_n=3, num_layers=2,
-                      dropout=0, output_activation=activation)
+    model = LSTMModel(
+        features=2,
+        hidden=4,
+        predict_n=3,
+        num_layers=2,
+        dropout=0,
+        output_activation=activation,
+    )
     output = model(torch.randn(5, 4, 2))
     assert output.shape == (5, 3)
     assert torch.isfinite(output).all()
@@ -302,9 +371,13 @@ def test_early_stopping_patience_and_improvement():
 def test_compute_loss_supports_deterministic_and_probabilistic_models():
     target = torch.tensor([[1.0]])
     output = torch.tensor([[2.0]])
-    assert compute_loss(output, target, nn.MSELoss()).item() == pytest.approx(1)
+    assert compute_loss(output, target, nn.MSELoss()).item() == pytest.approx(
+        1
+    )
     criterion = lambda mu, sigma, y: ((mu - y) ** 2 + sigma).mean()
-    assert compute_loss((output, torch.tensor([[0.5]])), target, criterion).item() == pytest.approx(1.5)
+    assert compute_loss(
+        (output, torch.tensor([[0.5]])), target, criterion
+    ).item() == pytest.approx(1.5)
 
 
 def test_msle_loss_clamps_negative_predictions():
@@ -330,12 +403,25 @@ def test_train_requires_criterion():
 
 def test_train_returns_history_on_cpu():
     torch.manual_seed(7)
-    model = LSTMModel(features=2, hidden=4, num_layers=1, predict_n=2,
-                      dropout=0, output_activation="linear")
+    model = LSTMModel(
+        features=2,
+        hidden=4,
+        num_layers=1,
+        predict_n=2,
+        dropout=0,
+        output_activation="linear",
+    )
     x = torch.randn(12, 4, 2)
     y = torch.randn(12, 2)
-    fitted, history = train(model, x, y, epochs=2, batch_size=4,
-                            criterion=nn.MSELoss(), device="cpu")
+    fitted, history = train(
+        model,
+        x,
+        y,
+        epochs=2,
+        batch_size=4,
+        criterion=nn.MSELoss(),
+        device="cpu",
+    )
     assert fitted is model
     assert len(history["train_loss"]) == 2
     assert len(history["val_loss"]) == 2
@@ -353,33 +439,51 @@ def test_predict_mc_dropout_max_and_robust_scaling():
 
     model = ConstantModel()
     x = torch.ones(3, 4, 2)
-    pred = predict_mc_dropout(model, x, {"max": 5.0}, n_samples=3, device="cpu")
+    pred = predict_mc_dropout(
+        model, x, {"max": 5.0}, n_samples=3, device="cpu"
+    )
     assert pred.shape == (3, 3, 2)
     torch.testing.assert_close(pred, torch.full((3, 3, 2), 10.0))
 
-    pred = predict_mc_dropout(model, x, {"median": 2.0, "iqr": 3.0},
-                               n_samples=2, device="cpu")
+    pred = predict_mc_dropout(
+        model, x, {"median": 2.0, "iqr": 3.0}, n_samples=2, device="cpu"
+    )
     torch.testing.assert_close(pred, torch.full((2, 3, 2), 8.0))
 
-    pred = predict_mc_dropout(model, x, {"max": 1.0}, n_samples=2,
-                               device="cpu", use_log=True)
+    pred = predict_mc_dropout(
+        model, x, {"max": 1.0}, n_samples=2, device="cpu", use_log=True
+    )
     torch.testing.assert_close(pred, torch.full((2, 3, 2), np.exp(2.0)))
 
 
 def test_predict_mc_dropout_rejects_missing_scaling():
     model = LSTMModel(features=2, hidden=4, num_layers=1, predict_n=2)
     with pytest.raises(ValueError, match="target_params"):
-        predict_mc_dropout(model, torch.zeros(1, 4, 2), {}, n_samples=2, device="cpu")
+        predict_mc_dropout(
+            model, torch.zeros(1, 4, 2), {}, n_samples=2, device="cpu"
+        )
 
 
 def test_generate_forecast_df_future_dates_and_quantiles(monkeypatch):
-    predictions = torch.tensor([
-        [[1.0, 2.0]], [[2.0, 3.0]], [[3.0, 4.0]], [[4.0, 5.0]],
-    ])
-    monkeypatch.setattr(lstm_module, "predict_mc_dropout", lambda *a, **kw: predictions)
+    predictions = torch.tensor(
+        [
+            [[1.0, 2.0]],
+            [[2.0, 3.0]],
+            [[3.0, 4.0]],
+            [[4.0, 5.0]],
+        ]
+    )
+    monkeypatch.setattr(
+        lstm_module, "predict_mc_dropout", lambda *a, **kw: predictions
+    )
     df = generate_forecast_df(
-        model=object(), X=torch.zeros(1, 4, 2), target_params={"max": 1.0},
-        predict_n=2, end_date="2020-01-05", device="cpu", n_samples=4,
+        model=object(),
+        X=torch.zeros(1, 4, 2),
+        target_params={"max": 1.0},
+        predict_n=2,
+        end_date="2020-01-05",
+        device="cpu",
+        n_samples=4,
     )
     assert len(df) == 2
     assert df["date"].tolist() == [date(2020, 1, 12), date(2020, 1, 19)]
@@ -388,29 +492,48 @@ def test_generate_forecast_df_future_dates_and_quantiles(monkeypatch):
     assert (np.diff(df[QUANTILE_COLUMNS].to_numpy(), axis=1) >= 0).all()
 
 
-def test_generate_forecast_df_matches_historical_reference(monkeypatch, sample_forecast_df):
+def test_generate_forecast_df_matches_historical_reference(
+    monkeypatch, sample_forecast_df
+):
     reference = _dated(sample_forecast_df)[["casos", "temp"]]
-    x = torch.tensor(reference.iloc[2:6].values[None, :, :], dtype=torch.float32)
-    monkeypatch.setattr(lstm_module, "predict_mc_dropout", lambda *a, **kw: torch.ones(3, 1, 2))
+    x = torch.tensor(
+        reference.iloc[2:6].values[None, :, :], dtype=torch.float32
+    )
+    monkeypatch.setattr(
+        lstm_module, "predict_mc_dropout", lambda *a, **kw: torch.ones(3, 1, 2)
+    )
     df = generate_forecast_df(
-        model=object(), X=x, target_params={"max": 1.0}, predict_n=2,
-        norm_df=reference, device="cpu",
+        model=object(),
+        X=x,
+        target_params={"max": 1.0},
+        predict_n=2,
+        norm_df=reference,
+        device="cpu",
     )
     assert df["last_date"].tolist() == ["2020-02-09", "2020-02-09"]
 
 
 def test_generate_forecast_df_rejects_missing_reference():
     with pytest.raises(ValueError, match="either 'norm_df'"):
-        generate_forecast_df(None, torch.zeros(1, 4, 2), {"max": 1}, 2, device="cpu")
+        generate_forecast_df(
+            None, torch.zeros(1, 4, 2), {"max": 1}, 2, device="cpu"
+        )
 
 
-def test_generate_forecast_df_rejects_unmatched_sequence(monkeypatch, sample_forecast_df):
-    monkeypatch.setattr(lstm_module, "predict_mc_dropout", lambda *a, **kw: torch.ones(3, 1, 2))
+def test_generate_forecast_df_rejects_unmatched_sequence(
+    monkeypatch, sample_forecast_df
+):
+    monkeypatch.setattr(
+        lstm_module, "predict_mc_dropout", lambda *a, **kw: torch.ones(3, 1, 2)
+    )
     with pytest.raises(ValueError, match="could not be matched"):
         generate_forecast_df(
-            model=object(), X=torch.full((1, 4, 2), 999),
-            target_params={"max": 1}, predict_n=2,
-            norm_df=_dated(sample_forecast_df)[["casos", "temp"]], device="cpu",
+            model=object(),
+            X=torch.full((1, 4, 2), 999),
+            target_params={"max": 1},
+            predict_n=2,
+            norm_df=_dated(sample_forecast_df)[["casos", "temp"]],
+            device="cpu",
         )
 
 
@@ -426,11 +549,19 @@ def test_apply_forecast_forwards_arguments(monkeypatch, train_forecast_df):
         return _fake_forecast_dataframe(X, kwargs["predict_n"])
 
     monkeypatch.setattr(lstm_module, "get_nn_data_for", fake_get_nn_data_for)
-    monkeypatch.setattr(lstm_module, "generate_forecast_df", fake_generate_forecast_df)
+    monkeypatch.setattr(
+        lstm_module, "generate_forecast_df", fake_generate_forecast_df
+    )
     result = apply_forecast(
-        model=object(), df_data=_dated(train_forecast_df),
-        end_train_date="2020-06-28", end_date="2020-10-04",
-        predict_n=2, look_back=4, n_samples=5, device="cpu", use_log=False,
+        model=object(),
+        df_data=_dated(train_forecast_df),
+        end_train_date="2020-06-28",
+        end_date="2020-10-04",
+        predict_n=2,
+        look_back=4,
+        n_samples=5,
+        device="cpu",
+        use_log=False,
     )
     assert len(result) == 2
     assert observed["preprocess"]["look_back"] == 4
@@ -448,9 +579,14 @@ def test_wrapper_train_and_forecast_contract(monkeypatch, train_forecast_df):
 
     monkeypatch.setattr(lstm_module, "train", fake_train)
     fitted, history = model.train(
-        ini_train_date="2020-01-05", end_train_date="2020-06-28",
-        end_date="2020-10-04", method="max", use_log=False,
-        epochs=1, device="cpu", verbose=0,
+        ini_train_date="2020-01-05",
+        end_train_date="2020-06-28",
+        end_date="2020-10-04",
+        method="max",
+        use_log=False,
+        epochs=1,
+        device="cpu",
+        verbose=0,
     )
     assert fitted is model.model
     assert history["train_loss"] == [0.1]
@@ -470,8 +606,11 @@ def test_wrapper_train_and_forecast_contract(monkeypatch, train_forecast_df):
         assert set(QUANTILE_COLUMNS + ["date", "casos"]).issubset(df.columns)
 
     monkeypatch.setattr(
-        lstm_module, "apply_forecast",
-        lambda *a, **kw: _fake_forecast_dataframe(torch.zeros(1, 4, 2), kw["predict_n"]),
+        lstm_module,
+        "apply_forecast",
+        lambda *a, **kw: _fake_forecast_dataframe(
+            torch.zeros(1, 4, 2), kw["predict_n"]
+        ),
     )
     future = model.forecast("2020-10-04", n_samples=3)
     assert len(future) == 2
@@ -479,17 +618,27 @@ def test_wrapper_train_and_forecast_contract(monkeypatch, train_forecast_df):
     assert (future["pred"] <= future["upper_95"]).all()
 
 
-@pytest.mark.xfail(strict=True, raises=AttributeError,
-                   reason="ForecastLSTM does not initialize X_train before train()")
-def test_predict_before_training_should_raise_runtime_error(sample_forecast_df):
+@pytest.mark.xfail(
+    strict=True,
+    raises=AttributeError,
+    reason="ForecastLSTM does not initialize X_train before train()",
+)
+def test_predict_before_training_should_raise_runtime_error(
+    sample_forecast_df,
+):
     model = make_model(sample_forecast_df)
     with pytest.raises(RuntimeError, match="trained"):
         model.predict_in_sample()
 
 
-@pytest.mark.xfail(strict=True, raises=AttributeError,
-                   reason="ForecastLSTM does not initialize method before train()")
-def test_forecast_before_training_should_raise_runtime_error(sample_forecast_df):
+@pytest.mark.xfail(
+    strict=True,
+    raises=AttributeError,
+    reason="ForecastLSTM does not initialize method before train()",
+)
+def test_forecast_before_training_should_raise_runtime_error(
+    sample_forecast_df,
+):
     model = make_model(sample_forecast_df)
     with pytest.raises(RuntimeError, match="trained"):
         model.forecast("2020-05-31")

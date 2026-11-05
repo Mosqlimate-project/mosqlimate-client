@@ -12,10 +12,16 @@ from mosqlient.forecast.timesfm import (
     map_quantile_curve,
 )
 
-
 QUANTILE_COLUMNS = [
-    "lower_95", "lower_90", "lower_80", "lower_50", "pred",
-    "upper_50", "upper_80", "upper_90", "upper_95",
+    "lower_95",
+    "lower_90",
+    "lower_80",
+    "lower_50",
+    "pred",
+    "upper_50",
+    "upper_80",
+    "upper_90",
+    "upper_95",
 ]
 
 
@@ -147,7 +153,10 @@ def test_numeric_matrix_transposes_and_validates(sample_forecast_df):
     assert matrix.shape == (2, 20)
     assert matrix.dtype == np.float32
     np.testing.assert_allclose(matrix[0], sample_forecast_df["temp"])
-    assert ForecastTimesFM3._numeric_matrix(sample_forecast_df, [], 20, "test") is None
+    assert (
+        ForecastTimesFM3._numeric_matrix(sample_forecast_df, [], 20, "test")
+        is None
+    )
 
 
 @pytest.mark.parametrize(
@@ -158,7 +167,9 @@ def test_numeric_matrix_transposes_and_validates(sample_forecast_df):
         ({"temp": [1.0, np.nan]}, ["temp"], 2, "non-finite values"),
     ],
 )
-def test_numeric_matrix_rejects_invalid_covariates(data, columns, expected_rows, message):
+def test_numeric_matrix_rejects_invalid_covariates(
+    data, columns, expected_rows, message
+):
     with pytest.raises(ValueError, match=message):
         ForecastTimesFM3._numeric_matrix(
             pd.DataFrame(data), columns, expected_rows, "test"
@@ -169,15 +180,18 @@ def test_forecast_without_covariates_or_quantiles(sample_forecast_df):
     evaluator = FakeTimesFM3Evaluator(forecast=[-3.0, 4.0, 5.0])
     model = make_model(evaluator)
 
-    result = model.forecast(sample_forecast_df, predict_n=3, return_quantiles=False)
+    result = model.forecast(
+        sample_forecast_df, predict_n=3, return_quantiles=False
+    )
     call = evaluator.calls[0]
 
     assert result.columns.tolist() == ["date", "horizon", "pred"]
     assert result["horizon"].tolist() == [1, 2, 3]
     assert result["pred"].tolist() == [0.0, 4.0, 5.0]
-    assert result["date"].tolist() == pd.date_range(
-        "2020-05-24", periods=3, freq="W-SUN"
-    ).tolist()
+    assert (
+        result["date"].tolist()
+        == pd.date_range("2020-05-24", periods=3, freq="W-SUN").tolist()
+    )
     assert call["horizon"] == 3
     assert call["return_quantiles"] is False
     assert call["past_only_covariates"] is None
@@ -186,7 +200,9 @@ def test_forecast_without_covariates_or_quantiles(sample_forecast_df):
     assert call["contexts"][0].shape == (1, 20)
 
 
-def test_forecast_respects_look_back_and_past_only_covariates(sample_forecast_df):
+def test_forecast_respects_look_back_and_past_only_covariates(
+    sample_forecast_df,
+):
     evaluator = FakeTimesFM3Evaluator()
     model = make_model(evaluator)
 
@@ -226,7 +242,9 @@ def test_forecast_combines_historical_and_future_covariates(
 
     matrix = evaluator.calls[0]["past_future_covariates"][0]
     assert matrix.shape == (2, 10)
-    np.testing.assert_allclose(matrix[0, :6], sample_forecast_df["temp"].tail(6))
+    np.testing.assert_allclose(
+        matrix[0, :6], sample_forecast_df["temp"].tail(6)
+    )
     np.testing.assert_allclose(matrix[0, 6:], future_forecast_df["temp"])
     np.testing.assert_allclose(matrix[1, 6:], future_forecast_df["humidity"])
 
@@ -234,7 +252,7 @@ def test_forecast_combines_historical_and_future_covariates(
 def test_forecast_returns_nonnegative_ordered_quantiles(sample_forecast_df):
     # Original q10 is negative, so the forecast must repair the lower tail.
     original_quantiles = np.tile(
-        np.array([-2., -1., 2., 3., 4., 5., 6., 7., 8.]), (3, 1)
+        np.array([-2.0, -1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]), (3, 1)
     )
     evaluator = FakeTimesFM3Evaluator(quantiles=original_quantiles)
     result = make_model(evaluator).forecast(sample_forecast_df, predict_n=3)
@@ -252,7 +270,7 @@ def test_forecast_returns_nonnegative_ordered_quantiles(sample_forecast_df):
 def test_forecast_repairs_crossing_quantiles(sample_forecast_df):
     # Crossing from q40=10 to q50=8 in the original evaluator output.
     original_quantiles = np.tile(
-        np.array([1., 2., 3., 10., 8., 12., 13., 14., 15.]), (2, 1)
+        np.array([1.0, 2.0, 3.0, 10.0, 8.0, 12.0, 13.0, 14.0, 15.0]), (2, 1)
     )
     result = make_model(
         FakeTimesFM3Evaluator(quantiles=original_quantiles)
@@ -265,14 +283,18 @@ def test_forecast_repairs_crossing_quantiles(sample_forecast_df):
 
 @pytest.mark.parametrize("predict_n", [0, -1, 1.5, True])
 def test_forecast_rejects_invalid_horizon(sample_forecast_df, predict_n):
-    with pytest.raises(ValueError, match="predict_n must be a positive integer"):
+    with pytest.raises(
+        ValueError, match="predict_n must be a positive integer"
+    ):
         make_model().forecast(sample_forecast_df, predict_n=predict_n)
 
 
 @pytest.mark.parametrize("look_back", [0, -1, 1.5, True, 21])
 def test_forecast_rejects_invalid_look_back(sample_forecast_df, look_back):
     with pytest.raises(ValueError, match="look_back"):
-        make_model().forecast(sample_forecast_df, predict_n=2, look_back=look_back)
+        make_model().forecast(
+            sample_forecast_df, predict_n=2, look_back=look_back
+        )
 
 
 def test_forecast_rejects_conflicting_covariate_groups(sample_forecast_df):
@@ -308,7 +330,9 @@ def test_forecast_rejects_incorrect_future_dates(
 ):
     invalid = future_forecast_df.copy()
     invalid["date"] += pd.Timedelta(weeks=1)
-    with pytest.raises(ValueError, match="index must match the forecast dates"):
+    with pytest.raises(
+        ValueError, match="index must match the forecast dates"
+    ):
         make_model().forecast(
             sample_forecast_df,
             predict_n=4,
@@ -336,7 +360,10 @@ def test_forecast_rejects_duplicate_future_dates(
     [
         (FakeTimesFM3Evaluator(empty=True), "no forecast"),
         (FakeTimesFM3Evaluator(forecast=[1.0]), "Unexpected forecast size"),
-        (FakeTimesFM3Evaluator(quantiles=np.ones((1, 9))), "Unexpected quantile size"),
+        (
+            FakeTimesFM3Evaluator(quantiles=np.ones((1, 9))),
+            "Unexpected quantile size",
+        ),
     ],
 )
 def test_forecast_rejects_invalid_evaluator_results(
@@ -359,7 +386,7 @@ def test_map_quantile_curve_interpolates_and_extrapolates():
 
 def test_map_quantile_curve_allows_exact_zeros():
     levels = np.arange(0.1, 1.0, 0.1)
-    values = np.array([-5.0, -3.0, 0.0, 1., 2., 3., 4., 5., 6.])
+    values = np.array([-5.0, -3.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
 
     assert map_quantile_curve(levels, values, 0.025) == 0.0
     assert map_quantile_curve(levels, values, 0.1) == 0.0
@@ -375,7 +402,9 @@ def test_map_quantile_curve_allows_exact_zeros():
         ([0.1, 0.9], [1.0, 2.0], 1.0, "strictly between zero and one"),
     ],
 )
-def test_map_quantile_curve_rejects_invalid_inputs(levels, values, target, message):
+def test_map_quantile_curve_rejects_invalid_inputs(
+    levels, values, target, message
+):
     with pytest.raises(ValueError, match=message):
         map_quantile_curve(np.array(levels), np.array(values), target)
 
@@ -396,7 +425,7 @@ def test_enforce_quantile_order_repairs_only_invalid_rows():
     original = pd.DataFrame(
         [
             np.arange(9, dtype=float),
-            [-2., 1., 3., 4., 2., 5., 6., 7., 8.],
+            [-2.0, 1.0, 3.0, 4.0, 2.0, 5.0, 6.0, 7.0, 8.0],
         ],
         columns=QUANTILE_COLUMNS,
     )
@@ -409,10 +438,16 @@ def test_enforce_quantile_order_repairs_only_invalid_rows():
     adjusted = corrected.loc[1, QUANTILE_COLUMNS].to_numpy(dtype=float)
     assert (adjusted >= 0).all()
     assert (np.diff(adjusted) >= 0).all()
-    pd.testing.assert_frame_equal(original, pd.DataFrame(
-        [np.arange(9, dtype=float), [-2., 1., 3., 4., 2., 5., 6., 7., 8.]],
-        columns=QUANTILE_COLUMNS,
-    ))
+    pd.testing.assert_frame_equal(
+        original,
+        pd.DataFrame(
+            [
+                np.arange(9, dtype=float),
+                [-2.0, 1.0, 3.0, 4.0, 2.0, 5.0, 6.0, 7.0, 8.0],
+            ],
+            columns=QUANTILE_COLUMNS,
+        ),
+    )
 
 
 def test_enforce_quantile_order_rejects_missing_columns():
