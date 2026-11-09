@@ -482,6 +482,8 @@ class LSTMModel(nn.Module):
     ):
         super().__init__()
 
+        self.is_trained = False
+
         self.hidden = hidden
         self.look_back = look_back
         self.stateful = stateful
@@ -1334,6 +1336,9 @@ class ForecastLSTM:
         )
 
         self.model = model
+
+        self.is_trained = True
+
         return model, hist
 
     def _generate_and_merge_prediction(
@@ -1352,7 +1357,7 @@ class ForecastLSTM:
         Returns:
             pd.DataFrame: Merged historical actuals and generated predictions.
         """
-        if self.X_train is None:
+        if not self.is_trained:
             raise RuntimeError(
                 "The model must be trained using .train() before generating predictions."
             )
@@ -1412,7 +1417,7 @@ class ForecastLSTM:
         Returns:
             pd.DataFrame: Dataframe containing future timestamp dates and forecast values.
         """
-        if self.method is None:
+        if not self.is_trained:
             raise RuntimeError(
                 "The model must be trained before performing out-of-sample forecasts."
             )
